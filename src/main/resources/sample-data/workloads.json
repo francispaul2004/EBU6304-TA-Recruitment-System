@@ -1,0 +1,7 @@
+[
+  {"applicantId":"A001","acceptedJobIds":["J005"],"currentWeeklyHours":3,"riskLevel":"LOW"},
+  {"applicantId":"A002","acceptedJobIds":["J005"],"currentWeeklyHours":8,"riskLevel":"MEDIUM"},
+  {"applicantId":"A003","acceptedJobIds":[],"currentWeeklyHours":2,"riskLevel":"LOW"},
+  {"applicantId":"A004","acceptedJobIds":["J002","J006"],"currentWeeklyHours":12,"riskLevel":"HIGH"},
+  {"applicantId":"A005","acceptedJobIds":["J003"],"currentWeeklyHours":7,"riskLevel":"MEDIUM"}
+]

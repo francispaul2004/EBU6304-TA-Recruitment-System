@@ -1,0 +1,111 @@
+[ {
+  "applicationId" : "APP001",
+  "jobId" : "J001",
+  "applicantId" : "A001",
+  "applyDate" : "2026-03-18T09:00:00",
+  "statement" : "I have completed Java modules.",
+  "status" : "SUBMITTED",
+  "decisionNote" : "",
+  "matchScore" : 82,
+  "missingSkills" : [ "JavaFX" ]
+}, {
+  "applicationId" : "APP002",
+  "jobId" : "J001",
+  "applicantId" : "A002",
+  "applyDate" : "2026-03-18T09:10:00",
+  "statement" : "I can support debugging sessions.",
+  "status" : "UNDER_REVIEW",
+  "decisionNote" : "Awaiting MO interview",
+  "matchScore" : 75,
+  "missingSkills" : [ "Java" ]
+}, {
+  "applicationId" : "APP003",
+  "jobId" : "J002",
+  "applicantId" : "A004",
+  "applyDate" : "2026-03-18T09:20:00",
+  "statement" : "I have circuit lab experience.",
+  "status" : "ACCEPTED",
+  "decisionNote" : "Strong lab background",
+  "matchScore" : 90,
+  "missingSkills" : [ ]
+}, {
+  "applicationId" : "APP004",
+  "jobId" : "J003",
+  "applicantId" : "A005",
+  "applyDate" : "2026-03-18T09:25:00",
+  "statement" : "Confident in probability grading.",
+  "status" : "UNDER_REVIEW",
+  "decisionNote" : "",
+  "matchScore" : 84,
+  "missingSkills" : [ ]
+}, {
+  "applicationId" : "APP005",
+  "jobId" : "J003",
+  "applicantId" : "A003",
+  "applyDate" : "2026-03-18T09:30:00",
+  "statement" : "Good statistics and communication.",
+  "status" : "REJECTED",
+  "decisionNote" : "Need more probability module depth",
+  "matchScore" : 61,
+  "missingSkills" : [ "Advanced Probability" ]
+}, {
+  "applicationId" : "APP006",
+  "jobId" : "J005",
+  "applicantId" : "A002",
+  "applyDate" : "2026-03-18T09:35:00",
+  "statement" : "I enjoy workshop facilitation.",
+  "status" : "ACCEPTED",
+  "decisionNote" : "Fits activity profile",
+  "matchScore" : 88,
+  "missingSkills" : [ ]
+}, {
+  "applicationId" : "APP007",
+  "jobId" : "J005",
+  "applicantId" : "A001",
+  "applyDate" : "2026-03-18T09:40:00",
+  "statement" : "Can support coding camp.",
+  "status" : "SUBMITTED",
+  "decisionNote" : "",
+  "matchScore" : 73,
+  "missingSkills" : [ "Python" ]
+}, {
+  "applicationId" : "APP008",
+  "jobId" : "J006",
+  "applicantId" : "A001",
+  "applyDate" : "2026-03-18T09:50:00",
+  "statement" : "Interested in project clinics.",
+  "status" : "REJECTED",
+  "decisionNote" : "Position already filled",
+  "matchScore" : 70,
+  "missingSkills" : [ ]
+}, {
+  "applicationId" : "APP009",
+  "jobId" : "J008",
+  "applicantId" : "A003",
+  "applyDate" : "2026-03-18T10:00:00",
+  "statement" : "Frontend tutoring experience.",
+  "status" : "UNDER_REVIEW",
+  "decisionNote" : "",
+  "matchScore" : 79,
+  "missingSkills" : [ "Git" ]
+}, {
+  "applicationId" : "APP010",
+  "jobId" : "J008",
+  "applicantId" : "A005",
+  "applyDate" : "2026-03-18T10:10:00",
+  "statement" : "Can help with labs and grading.",
+  "status" : "SUBMITTED",
+  "decisionNote" : "",
+  "matchScore" : 74,
+  "missingSkills" : [ "JavaScript" ]
+}, {
+  "applicationId" : "APP011",
+  "jobId" : "J003",
+  "applicantId" : "A001",
+  "applyDate" : "2026-03-17T23:44:09.817874",
+  "statement" : "",
+  "status" : "SUBMITTED",
+  "decisionNote" : "",
+  "matchScore" : 20,
+  "missingSkills" : [ "Mathematics" ]
+} ]

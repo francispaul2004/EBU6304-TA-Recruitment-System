@@ -20,3 +20,198 @@ EBU6304-TA-Recruitment-System is a web-based system developed for the Teaching A
 The system is designed for three main user groups: Teaching Assistants (TAs), Module Organisers (MOs), and Administrators. TAs can submit and manage their applications, MOs can review candidates and make decisions for their modules, and Administrators can oversee and coordinate the overall process.
 
 By replacing manual and fragmented handling with a centralised digital platform, the project helps reduce repetitive administrative work, improve transparency, and support a more user-friendly recruitment experience.
+
+# BUPT International School TA Recruitment System
+
+Stand-alone Java 17 desktop application (JavaFX) for TA recruitment workflow management, aligned to EBU6304 handout constraints.
+
+## 1. Constraint Compliance
+
+- Language/runtime: Java 17
+- App type: JavaFX stand-alone desktop app
+- Persistence: JSON/CSV/TXT only (no database)
+- Architecture: layered `ui / controller / service / repository / model / util`
+- Core-first delivery: implemented in staged iterations (core workflow before enhancements)
+- Testability: unit + integration tests included
+- Maintainability: repository/service separation, reusable controllers, centralized utilities
+- Documentation: this README + user manual skeleton + JavaDoc generation command
+
+## 2. Tech Stack
+
+- Java 17
+- JavaFX 17
+- Maven
+- Jackson (JSON)
+- OpenCSV (CSV export)
+- JUnit 5
+- Mockito (optional dependency included)
+
+## 3. Project Structure
+
+```text
+src/main/java/edu/bupt/ta/
+  App.java
+  config/
+  model/
+  enums/
+  dto/
+  repository/
+  service/
+  controller/
+  ui/
+  util/
+src/main/resources/
+  styles/
+  sample-data/
+src/test/java/
+  service/
+  repository/
+  integration/
+```
+
+## 4. Roles and Core Workflows
+
+### Roles
+
+- TA Applicant
+- Module Organiser (MO)
+- Admin
+
+### Core features implemented
+
+- Login and role-based routing
+- Applicant profile form
+- Resume information form (structured CV)
+- Job browse/search/filter + detail
+- Job apply flow (with validation and duplicate prevention)
+- My applications status tracking
+- MO job management (create/edit/close)
+- MO applicant list and review (accept/reject)
+- Admin workload monitor
+- CSV export (workload/application reports)
+
+### Enhanced features implemented
+
+- Match score
+- Missing skills
+- Workload projection warning / risk level
+- Explainable match panel in job detail
+
+## 5. Data Files (No DB)
+
+Runtime data directory defaults to `data/` and can be overridden with:
+
+```bash
+-Dta.data.dir=/your/path
+```
+
+Required files used:
+
+- `data/users.json`
+- `data/applicant_profiles.json`
+- `data/resume_infos.json`
+- `data/jobs.json`
+- `data/applications.json`
+- `data/workloads.json`
+- `data/audit_log.txt`
+- `data/export/workload_report.csv`
+- `data/export/application_report.csv`
+
+Sample demo data is preloaded and mirrored under `src/main/resources/sample-data/`.
+
+## 6. Demo Accounts
+
+All sample accounts use password: `Password123!`
+
+- TA: `ta001`, `ta002`, `ta003`, `ta004`, `ta005`
+- MO: `mo001`, `mo002`
+- Admin: `admin`
+
+## 7. Build, Run, Test
+
+### Build
+
+```bash
+mvn clean compile
+```
+
+### Run desktop app
+
+```bash
+mvn javafx:run
+```
+
+### Run tests
+
+```bash
+mvn test
+```
+
+### Full verification
+
+```bash
+mvn verify
+```
+
+### Generate JavaDocs
+
+```bash
+mvn javadoc:javadoc
+```
+
+Output directory:
+
+- `target/site/apidocs/`
+
+## 8. Test Coverage
+
+### Unit tests
+
+- `AuthenticationServiceTest`
+- `ApplicantProfileServiceTest`
+- `ResumeServiceTest`
+- `JobServiceTest`
+- `ApplicationServiceTest`
+- `ReviewServiceTest`
+- `WorkloadServiceTest`
+- `MatchingServiceTest`
+- `JsonRepositoryTest`
+
+### Integration tests
+
+- create job -> save -> reload
+- apply job -> application visible
+- accept application -> workload updated
+- close job -> block further apply
+- expired job -> blocked
+- export csv -> file generated
+
+## 9. Iteration Plan and Delivery Status
+
+### Phase 1: skeleton + repository + sample data
+
+Completed.
+
+### Phase 2: login + jobs + apply
+
+Completed.
+
+### Phase 3: profile/resume + applications status
+
+Completed.
+
+### Phase 4: review + workload + admin monitor
+
+Completed.
+
+### Phase 5: matching + docs + tests
+
+Completed (including test suite and JavaDoc command verification).
+
+## 10. User Manual
+
+See:
+
+- `docs/User-Manual.md`
+
+This includes page-by-page operation guidance and screenshot placeholders for each main frame.

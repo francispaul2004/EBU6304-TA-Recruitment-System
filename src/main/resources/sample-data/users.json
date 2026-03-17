@@ -1,0 +1,10 @@
+[
+  {"userId":"U001","username":"ta001","passwordHash":"a109e36947ad56de1dca1cc49f0ef8ac9ad9a7b1aa0df41fb3c4cb73c1ff01ea","role":"TA","displayName":"Alice Chen","active":true},
+  {"userId":"U002","username":"ta002","passwordHash":"a109e36947ad56de1dca1cc49f0ef8ac9ad9a7b1aa0df41fb3c4cb73c1ff01ea","role":"TA","displayName":"Brian Li","active":true},
+  {"userId":"U003","username":"ta003","passwordHash":"a109e36947ad56de1dca1cc49f0ef8ac9ad9a7b1aa0df41fb3c4cb73c1ff01ea","role":"TA","displayName":"Cathy Wang","active":true},
+  {"userId":"U004","username":"ta004","passwordHash":"a109e36947ad56de1dca1cc49f0ef8ac9ad9a7b1aa0df41fb3c4cb73c1ff01ea","role":"TA","displayName":"David Zhao","active":true},
+  {"userId":"U005","username":"ta005","passwordHash":"a109e36947ad56de1dca1cc49f0ef8ac9ad9a7b1aa0df41fb3c4cb73c1ff01ea","role":"TA","displayName":"Eva Liu","active":true},
+  {"userId":"U101","username":"mo001","passwordHash":"a109e36947ad56de1dca1cc49f0ef8ac9ad9a7b1aa0df41fb3c4cb73c1ff01ea","role":"MO","displayName":"Prof. Zhang","active":true},
+  {"userId":"U102","username":"mo002","passwordHash":"a109e36947ad56de1dca1cc49f0ef8ac9ad9a7b1aa0df41fb3c4cb73c1ff01ea","role":"MO","displayName":"Dr. Sun","active":true},
+  {"userId":"U900","username":"admin","passwordHash":"a109e36947ad56de1dca1cc49f0ef8ac9ad9a7b1aa0df41fb3c4cb73c1ff01ea","role":"ADMIN","displayName":"System Admin","active":true}
+]
