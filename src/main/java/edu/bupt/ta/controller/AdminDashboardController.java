@@ -7,15 +7,15 @@ import edu.bupt.ta.service.ServiceRegistry;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 import java.nio.file.Path;
@@ -25,9 +25,9 @@ public class AdminDashboardController {
 
     private final ServiceRegistry services;
     private final User user;
-    private final VBox view = new VBox(12);
+    private final VBox view = new VBox(16);
 
-    private final ComboBox<String> riskFilter = new ComboBox<>();
+    private final TextField searchField = new TextField();
     private final TableView<Workload> table = new TableView<>();
 
     public AdminDashboardController(ServiceRegistry services, User user) {
@@ -42,86 +42,129 @@ public class AdminDashboardController {
     }
 
     private void initialize() {
-        view.setPadding(new Insets(20));
+        view.getStyleClass().add("app-surface");
+        view.setPadding(new Insets(24));
 
-        Label heading = new Label("Admin Dashboard / Workload Monitor");
-        heading.setStyle("-fx-font-size: 30px; -fx-font-weight: 800; -fx-text-fill: #0F172A;");
+        view.getChildren().add(buildTopBar());
+        view.getChildren().add(buildKpiRow());
+        view.getChildren().add(buildTableCard());
+    }
 
-        GridPane kpi = new GridPane();
-        kpi.setHgap(12);
-        kpi.setVgap(12);
+    private HBox buildTopBar() {
+        Label title = new Label("Workload Monitoring");
+        title.getStyleClass().add("page-title");
 
+        searchField.setPromptText("Search TA by name or ID...");
+        searchField.setPrefWidth(320);
+        searchField.textProperty().addListener((obs, oldV, newV) -> refresh());
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button export = new Button("Export Report");
+        export.getStyleClass().add("secondary-button");
+        export.setOnAction(event -> exportWorkload());
+
+        Button exportApp = new Button("Export Applications");
+        exportApp.getStyleClass().add("secondary-button");
+        exportApp.setOnAction(event -> exportApplication());
+
+        HBox row = new HBox(12, title, searchField, spacer, export, exportApp);
+        return row;
+    }
+
+    private HBox buildKpiRow() {
+        long totalJobs = services.jobRepository().findAll().size();
         long totalApplications = services.applicationRepository().findAll().size();
         long accepted = services.exportService().countAcceptedApplications();
-        long highRisk = services.workloadService().findAll().stream().filter(w -> w.getRiskLevel() == RiskLevel.HIGH).count();
+        long highRisk = services.workloadService().findAll().stream().filter(workload -> workload.getRiskLevel() == RiskLevel.HIGH).count();
 
-        kpi.add(card("Total Applications", String.valueOf(totalApplications)), 0, 0);
-        kpi.add(card("Accepted", String.valueOf(accepted)), 1, 0);
-        kpi.add(card("High Risk", String.valueOf(highRisk)), 2, 0);
+        HBox row = new HBox(16,
+                kpiCard("TOTAL JOBS", String.valueOf(totalJobs), "#2563eb"),
+                kpiCard("TOTAL APPLICATIONS", String.valueOf(totalApplications), "#7c3aed"),
+                kpiCard("ACCEPTED APPS", String.valueOf(accepted), "#059669"),
+                kpiCard("HIGH-RISK TAS", String.valueOf(highRisk), "#dc2626")
+        );
+        return row;
+    }
 
-        riskFilter.getItems().addAll("ALL", "LOW", "MEDIUM", "HIGH");
-        riskFilter.setValue("ALL");
-        riskFilter.valueProperty().addListener((obs, oldV, newV) -> refresh());
+    private VBox kpiCard(String title, String value, String color) {
+        VBox card = new VBox(4);
+        card.getStyleClass().add("panel-card");
+        card.setPadding(new Insets(14));
+        card.setMinWidth(240);
 
-        Button exportWorkload = new Button("Export Workload CSV");
-        exportWorkload.getStyleClass().add("secondary-button");
-        exportWorkload.setOnAction(event -> exportWorkload());
+        Label t = new Label(title);
+        t.setStyle("-fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: #64748b;");
 
-        Button exportApplication = new Button("Export Application CSV");
-        exportApplication.getStyleClass().add("secondary-button");
-        exportApplication.setOnAction(event -> exportApplication());
+        Label v = new Label(value);
+        v.setStyle("-fx-font-size: 40px; -fx-font-weight: 800; -fx-text-fill: " + color + ";");
 
-        HBox actions = new HBox(10, riskFilter, exportWorkload, exportApplication);
+        card.getChildren().addAll(t, v);
+        HBox.setHgrow(card, Priority.ALWAYS);
+        return card;
+    }
 
-        TableColumn<Workload, String> applicantCol = new TableColumn<>("Applicant ID");
+    private VBox buildTableCard() {
+        VBox card = new VBox(10);
+        card.getStyleClass().add("panel-card");
+        card.setPadding(new Insets(14));
+
+        Label heading = new Label("Workload Monitoring Table");
+        heading.getStyleClass().add("section-title");
+
+        Label subtitle = new Label("Real-time tracking of weekly teaching hours per student");
+        subtitle.getStyleClass().add("body-muted");
+
+        TableColumn<Workload, String> applicantCol = new TableColumn<>("TA NAME");
         applicantCol.setCellValueFactory(new PropertyValueFactory<>("applicantId"));
 
-        TableColumn<Workload, Integer> hoursCol = new TableColumn<>("Current Hours");
+        TableColumn<Workload, Integer> acceptedJobs = new TableColumn<>("ACCEPTED JOBS");
+        acceptedJobs.setCellValueFactory(cell -> new javafx.beans.property.SimpleIntegerProperty(
+                cell.getValue().getAcceptedJobIds() == null ? 0 : cell.getValue().getAcceptedJobIds().size()).asObject());
+
+        TableColumn<Workload, Integer> hoursCol = new TableColumn<>("WEEKLY HOURS");
         hoursCol.setCellValueFactory(new PropertyValueFactory<>("currentWeeklyHours"));
 
-        TableColumn<Workload, String> riskCol = new TableColumn<>("Risk");
+        TableColumn<Workload, Integer> maxCol = new TableColumn<>("MAX LIMIT");
+        maxCol.setCellValueFactory(cell -> {
+            int max = services.resumeInfoRepository().findByApplicantId(cell.getValue().getApplicantId())
+                    .map(resume -> resume.getMaxWeeklyHours())
+                    .orElse(0);
+            return new javafx.beans.property.SimpleIntegerProperty(max).asObject();
+        });
+
+        TableColumn<Workload, String> riskCol = new TableColumn<>("RISK LEVEL");
         riskCol.setCellValueFactory(new PropertyValueFactory<>("riskLevel"));
 
-        table.getColumns().setAll(applicantCol, hoursCol, riskCol);
+        table.getColumns().setAll(applicantCol, acceptedJobs, hoursCol, maxCol, riskCol);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setPrefHeight(620);
 
-        view.getChildren().addAll(heading, kpi, actions, table);
+        card.getChildren().addAll(heading, subtitle, table);
+        return card;
     }
 
     private void refresh() {
         List<Workload> workloads = services.workloadService().findAll();
-        if (!"ALL".equals(riskFilter.getValue())) {
-            RiskLevel level = RiskLevel.valueOf(riskFilter.getValue());
-            workloads = workloads.stream().filter(w -> w.getRiskLevel() == level).toList();
+        String keyword = searchField.getText() == null ? "" : searchField.getText().trim().toLowerCase();
+
+        if (!keyword.isEmpty()) {
+            workloads = workloads.stream().filter(workload -> workload.getApplicantId().toLowerCase().contains(keyword)).toList();
         }
+
         table.setItems(FXCollections.observableArrayList(workloads));
     }
 
     private void exportWorkload() {
         Path path = services.exportService().exportWorkloadReport();
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Exported: " + path.toAbsolutePath());
-        alert.setHeaderText("Workload CSV generated");
-        alert.showAndWait();
+        DialogControllerFactory.info("Workload CSV Generated", "Exported: " + path.toAbsolutePath(),
+                view.getScene() == null ? null : view.getScene().getWindow());
     }
 
     private void exportApplication() {
         Path path = services.exportService().exportApplicationReport();
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Exported: " + path.toAbsolutePath());
-        alert.setHeaderText("Application CSV generated");
-        alert.showAndWait();
-    }
-
-    private VBox card(String title, String value) {
-        VBox card = new VBox(4);
-        card.setPadding(new Insets(10));
-        card.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #E2E8F0; -fx-border-radius: 12; -fx-background-radius: 12;");
-
-        Label t = new Label(title);
-        t.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748B;");
-        Label v = new Label(value);
-        v.setStyle("-fx-font-size: 20px; -fx-font-weight: 800; -fx-text-fill: #354A5F;");
-
-        card.getChildren().addAll(t, v);
-        return card;
+        DialogControllerFactory.info("Application CSV Generated", "Exported: " + path.toAbsolutePath(),
+                view.getScene() == null ? null : view.getScene().getWindow());
     }
 }

@@ -15,6 +15,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MainShellController {
@@ -25,7 +26,8 @@ public class MainShellController {
 
     private final BorderPane view = new BorderPane();
     private final StackPane contentPane = new StackPane();
-    private final Label breadcrumb = new Label();
+    private final Label breadcrumbBase = new Label("Recruitment System");
+    private final Label breadcrumbCurrent = new Label();
     private final Map<String, Button> navButtons = new LinkedHashMap<>();
 
     public MainShellController(ServiceRegistry services, User user, Runnable onLogout) {
@@ -40,17 +42,17 @@ public class MainShellController {
     }
 
     private void initialize() {
+        view.getStyleClass().add("shell-root");
         view.setLeft(buildSidebar());
         view.setTop(buildTopBar());
 
         BorderPane center = new BorderPane();
+        center.getStyleClass().add("shell-content");
         center.setCenter(contentPane);
-        center.setPadding(new Insets(0));
-        center.setStyle("-fx-background-color: #FFFFFF;");
         view.setCenter(center);
 
         if (user.getRole() == Role.TA) {
-            navigateTo("browseJobs");
+            navigateTo("dashboard");
         } else if (user.getRole() == Role.MO) {
             navigateTo("jobManagement");
         } else {
@@ -59,131 +61,219 @@ public class MainShellController {
     }
 
     private VBox buildSidebar() {
-        VBox sidebar = new VBox(10);
-        sidebar.setPrefWidth(240);
-        sidebar.setPadding(new Insets(20));
-        sidebar.setStyle("-fx-background-color: #EEF2F5; -fx-border-color: #E2E8F0; -fx-border-width: 0 1 0 0;");
+        VBox sidebar = new VBox();
+        sidebar.getStyleClass().add("shell-sidebar");
+        sidebar.setPrefWidth(256);
+        sidebar.setMinWidth(256);
 
-        Label brand = new Label("BUPT IS RECRUITMENT");
-        brand.setStyle("-fx-font-size: 14px; -fx-font-weight: 800; -fx-text-fill: #354A5F;");
+        VBox brandSection = new VBox(2);
+        brandSection.setPadding(new Insets(24));
 
-        Label edition = new Label(user.getRole() + " EDITION");
-        edition.setStyle("-fx-font-size: 11px; -fx-font-weight: 600; -fx-text-fill: #64748B;");
+        Label brandTitle = new Label("BUPT IS RECRUITMENT");
+        brandTitle.getStyleClass().add("shell-brand-title");
 
-        VBox menuBox = new VBox(6);
-        menuBox.getChildren().addAll(buildRoleMenu());
+        Label brandSub = new Label(roleEditionText());
+        brandSub.getStyleClass().add("shell-brand-sub");
+
+        brandSection.getChildren().addAll(brandTitle, brandSub);
+
+        VBox navArea = new VBox(8);
+        navArea.setPadding(new Insets(8, 16, 8, 16));
+
+        if (user.getRole() == Role.TA) {
+            navArea.getChildren().add(buildSection("RECRUITMENT", List.of(
+                    new NavEntry("Dashboard", "dashboard"),
+                    new NavEntry("Browse Jobs", "browseJobs"),
+                    new NavEntry("My Applications", "myApplications"),
+                    new NavEntry("My CV", "myCv")
+            )));
+        } else if (user.getRole() == Role.MO) {
+            navArea.getChildren().add(buildSection("RECRUITMENT", List.of(
+                    new NavEntry("Job Management", "jobManagement"),
+                    new NavEntry("Applicant List", "applicantList"),
+                    new NavEntry("Profile", "moProfile")
+            )));
+        } else {
+            navArea.getChildren().add(buildSection("RECRUITMENT", List.of(
+                    new NavEntry("Dashboard", "adminDashboard"),
+                    new NavEntry("Jobs", "adminJobs"),
+                    new NavEntry("Applications", "adminApplications")
+            )));
+        }
+
+        navArea.getChildren().add(buildSection("SUPPORT", List.of(
+                new NavEntry("Help Center", "helpCenter"),
+                new NavEntry("Settings", "settings")
+        )));
+
+        VBox footer = new VBox(12);
+        footer.setPadding(new Insets(16));
 
         VBox profileCard = new VBox(2);
-        profileCard.setPadding(new Insets(12));
-        profileCard.setStyle("-fx-background-color: white; -fx-background-radius: 8;");
-        Label name = new Label(user.getDisplayName());
-        name.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #0F172A;");
-        Label id = new Label("ID: " + user.getUserId());
-        id.setStyle("-fx-font-size: 10px; -fx-text-fill: #64748B;");
-        profileCard.getChildren().addAll(name, id);
+        profileCard.getStyleClass().add("shell-profile-card");
+        profileCard.setPadding(new Insets(10));
+
+        Label profileName = new Label(user.getDisplayName());
+        profileName.setStyle("-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #0f172a;");
+
+        Label profileId = new Label("ID: " + user.getUserId());
+        profileId.setStyle("-fx-font-size: 10px; -fx-text-fill: #64748b;");
+
+        profileCard.getChildren().addAll(profileName, profileId);
 
         Button logout = new Button("Logout");
         logout.getStyleClass().add("secondary-button");
         logout.setMaxWidth(Double.MAX_VALUE);
         logout.setOnAction(event -> onLogout.run());
 
-        VBox.setVgrow(menuBox, Priority.ALWAYS);
-        sidebar.getChildren().addAll(brand, edition, menuBox, profileCard, logout);
+        footer.getChildren().addAll(profileCard, logout);
+
+        VBox.setVgrow(navArea, Priority.ALWAYS);
+        sidebar.getChildren().addAll(brandSection, navArea, footer);
         return sidebar;
     }
 
-    private VBox buildRoleMenu() {
-        VBox menu = new VBox(6);
-        if (user.getRole() == Role.TA) {
-            menu.getChildren().addAll(
-                    navButton("TA Dashboard", "dashboard"),
-                    navButton("Browse Jobs", "browseJobs"),
-                    navButton("My Applications", "myApplications"),
-                    navButton("My CV", "myCv")
-            );
-        } else if (user.getRole() == Role.MO) {
-            menu.getChildren().addAll(
-                    navButton("Job Management", "jobManagement"),
-                    navButton("Applicant List", "applicantList")
-            );
-        } else {
-            menu.getChildren().add(navButton("Admin Dashboard", "adminDashboard"));
+    private VBox buildSection(String title, List<NavEntry> items) {
+        VBox section = new VBox(8);
+
+        Label header = new Label(title);
+        header.getStyleClass().add("shell-nav-header");
+        header.setPadding(new Insets(12, 12, 0, 12));
+
+        VBox links = new VBox(6);
+        for (NavEntry item : items) {
+            links.getChildren().add(navButton(item.label(), item.pageId()));
         }
-        return menu;
+
+        section.getChildren().addAll(header, links);
+        return section;
     }
 
     private Button navButton(String label, String pageId) {
         Button button = new Button(label);
-        button.setAlignment(Pos.CENTER_LEFT);
+        button.getStyleClass().add("shell-nav-item");
         button.setMaxWidth(Double.MAX_VALUE);
         button.setPrefHeight(36);
-        button.setStyle("-fx-background-color: transparent; -fx-text-fill: #475569; -fx-font-size: 14px;");
         button.setOnAction(event -> navigateTo(pageId));
         navButtons.put(pageId, button);
         return button;
     }
 
     private HBox buildTopBar() {
-        HBox top = new HBox();
-        top.setAlignment(Pos.CENTER_LEFT);
-        top.setPadding(new Insets(16, 24, 16, 24));
-        top.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #E2E8F0; -fx-border-width: 0 0 1 0;");
+        HBox topBar = new HBox();
+        topBar.getStyleClass().add("shell-topbar");
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        topBar.setPadding(new Insets(16, 24, 16, 24));
 
-        breadcrumb.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #0F172A;");
+        breadcrumbBase.getStyleClass().add("shell-breadcrumb-base");
+        breadcrumbCurrent.getStyleClass().add("shell-breadcrumb-current");
 
-        Label termInfo = new Label("Spring Semester 2026");
-        termInfo.setStyle("-fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: #354A5F;");
+        Label arrow = new Label("  >  ");
+        arrow.getStyleClass().add("shell-breadcrumb-base");
+
+        HBox breadcrumb = new HBox(breadcrumbBase, arrow, breadcrumbCurrent);
+        breadcrumb.setAlignment(Pos.CENTER_LEFT);
 
         HBox spacer = new HBox();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        top.getChildren().addAll(breadcrumb, spacer, termInfo);
-        return top;
+        VBox termInfo = new VBox(1);
+        termInfo.setAlignment(Pos.CENTER_RIGHT);
+
+        Label termMain = new Label("Spring Semester 2026");
+        termMain.getStyleClass().add("shell-term-main");
+
+        Label termSub = new Label("BUPT International School");
+        termSub.getStyleClass().add("shell-term-sub");
+
+        termInfo.getChildren().addAll(termMain, termSub);
+
+        topBar.getChildren().addAll(breadcrumb, spacer, termInfo);
+        return topBar;
     }
 
     private void navigateTo(String pageId) {
-        navButtons.forEach((id, btn) -> btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #475569; -fx-font-size: 14px;"));
+        navButtons.values().forEach(this::deactivateButton);
         Button active = navButtons.get(pageId);
         if (active != null) {
-            active.setStyle("-fx-background-color: white; -fx-text-fill: #354A5F; -fx-font-size: 14px; -fx-font-weight: 700; -fx-background-radius: 8;");
+            if (!active.getStyleClass().contains("shell-nav-item-active")) {
+                active.getStyleClass().add("shell-nav-item-active");
+            }
         }
 
         Parent page;
         switch (pageId) {
-            case "browseJobs" -> {
-                breadcrumb.setText("Recruitment System  >  Browse Jobs");
-                page = new JobBrowserController(services, user).getView();
-            }
-            case "jobManagement" -> {
-                breadcrumb.setText("Recruitment System  >  Job Management");
-                page = new JobManagementController(services, user).getView();
-            }
             case "dashboard" -> {
-                breadcrumb.setText("Recruitment System  >  TA Dashboard");
+                breadcrumbCurrent.setText("Dashboard");
                 page = new TADashboardController(services, user).getView();
             }
+            case "browseJobs" -> {
+                breadcrumbCurrent.setText("Browse Jobs");
+                page = new JobBrowserController(services, user).getView();
+            }
             case "myApplications" -> {
-                breadcrumb.setText("Recruitment System  >  My Applications");
+                breadcrumbCurrent.setText("My Application");
                 page = new MyApplicationsController(services, user).getView();
             }
             case "myCv" -> {
-                breadcrumb.setText("Recruitment System  >  My CV");
+                breadcrumbCurrent.setText("My CV");
                 page = new MyCvController(services, user).getView();
             }
+            case "jobManagement" -> {
+                breadcrumbCurrent.setText("Job Management");
+                page = new JobManagementController(services, user).getView();
+            }
             case "applicantList" -> {
-                breadcrumb.setText("Recruitment System  >  Applicant List");
+                breadcrumbCurrent.setText("CS101 TA Applicants");
                 page = new ApplicantListController(services, user).getView();
             }
             case "adminDashboard" -> {
-                breadcrumb.setText("Recruitment System  >  Admin Dashboard");
+                breadcrumbCurrent.setText("Workload Monitoring");
                 page = new AdminDashboardController(services, user).getView();
             }
+            case "adminJobs" -> {
+                breadcrumbCurrent.setText("Jobs");
+                page = PlaceholderPage.simple("Admin Jobs", "Planned in next visual alignment phase.");
+            }
+            case "adminApplications" -> {
+                breadcrumbCurrent.setText("Applications");
+                page = PlaceholderPage.simple("Admin Applications", "Planned in next visual alignment phase.");
+            }
+            case "moProfile" -> {
+                breadcrumbCurrent.setText("Profile");
+                page = PlaceholderPage.simple("MO Profile", "Planned in next visual alignment phase.");
+            }
+            case "helpCenter" -> {
+                breadcrumbCurrent.setText("Help Center");
+                page = PlaceholderPage.simple("Help Center", "Support documentation panel will be added in Phase C.");
+            }
+            case "settings" -> {
+                breadcrumbCurrent.setText("Settings");
+                page = PlaceholderPage.simple("Settings", "Settings panel will be added in Phase D.");
+            }
             default -> {
-                breadcrumb.setText("Recruitment System");
-                page = PlaceholderPage.simple("Page", "Not implemented yet.");
+                breadcrumbCurrent.setText("Dashboard");
+                page = PlaceholderPage.simple("Dashboard", "Page not found.");
             }
         }
 
         contentPane.getChildren().setAll(page);
+    }
+
+    private void deactivateButton(Button button) {
+        button.getStyleClass().remove("shell-nav-item-active");
+    }
+
+    private String roleEditionText() {
+        if (user.getRole() == Role.TA) {
+            return "TA EDITION";
+        }
+        if (user.getRole() == Role.MO) {
+            return "MO EDITION";
+        }
+        return "ADMIN EDITION";
+    }
+
+    private record NavEntry(String label, String pageId) {
     }
 }

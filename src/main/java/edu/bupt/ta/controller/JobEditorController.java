@@ -3,99 +3,407 @@ package edu.bupt.ta.controller;
 import edu.bupt.ta.enums.JobStatus;
 import edu.bupt.ta.enums.JobType;
 import edu.bupt.ta.model.Job;
-import javafx.collections.FXCollections;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.ButtonType;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public class JobEditorController {
 
     public Optional<Job> show(Job source, String organiserId) {
-        Dialog<Job> dialog = new Dialog<>();
-        dialog.setTitle(source == null ? "Create Job" : "Edit Job");
+        EditorFields fields = new EditorFields();
+        populateForm(fields, source);
 
-        ButtonType saveDraft = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
-        dialog.getDialogPane().getButtonTypes().addAll(saveDraft, cancel);
+        AtomicReference<Job> result = new AtomicReference<>();
 
-        GridPane form = new GridPane();
-        form.setHgap(10);
-        form.setVgap(10);
-
-        TextField title = new TextField();
-        TextField moduleCode = new TextField();
-        TextField moduleName = new TextField();
-        ComboBox<JobType> type = new ComboBox<>(FXCollections.observableArrayList(JobType.values()));
-        TextField weeklyHours = new TextField();
-        TextField positions = new TextField();
-        DatePicker deadline = new DatePicker();
-        ComboBox<JobStatus> status = new ComboBox<>(FXCollections.observableArrayList(JobStatus.values()));
-        TextArea description = new TextArea();
-        description.setPrefRowCount(4);
-
-        form.addRow(0, new Label("Title"), title);
-        form.addRow(1, new Label("Module Code"), moduleCode);
-        form.addRow(2, new Label("Module Name"), moduleName);
-        form.addRow(3, new Label("Type"), type);
-        form.addRow(4, new Label("Weekly Hours"), weeklyHours);
-        form.addRow(5, new Label("Positions"), positions);
-        form.addRow(6, new Label("Deadline"), deadline);
-        form.addRow(7, new Label("Status"), status);
-        form.addRow(8, new Label("Description"), description);
-
-        if (source != null) {
-            title.setText(source.getTitle());
-            moduleCode.setText(source.getModuleCode());
-            moduleName.setText(source.getModuleName());
-            type.setValue(source.getType());
-            weeklyHours.setText(String.valueOf(source.getWeeklyHours()));
-            positions.setText(String.valueOf(source.getPositions()));
-            deadline.setValue(source.getDeadline());
-            status.setValue(source.getStatus());
-            description.setText(source.getDescription());
-        } else {
-            type.setValue(JobType.MODULE_TA);
-            status.setValue(JobStatus.DRAFT);
-            deadline.setValue(LocalDate.now().plusDays(7));
+        Stage stage = new Stage();
+        stage.initModality(Modality.APPLICATION_MODAL);
+        Window owner = Window.getWindows().stream().filter(Window::isFocused).findFirst().orElse(null);
+        if (owner != null) {
+            stage.initOwner(owner);
         }
+        stage.setTitle(source == null ? "Create Job Post" : "Edit Job Post");
 
-        dialog.getDialogPane().setContent(form);
+        BorderPane root = new BorderPane();
+        root.getStyleClass().add("app-surface");
 
-        dialog.setResultConverter(button -> {
-            if (button != saveDraft) {
-                return null;
-            }
-            Job job = source == null ? new Job() : source;
-            job.setTitle(title.getText());
-            job.setModuleCode(moduleCode.getText());
-            job.setModuleName(moduleName.getText());
-            job.setType(type.getValue());
-            job.setWeeklyHours(parseOrZero(weeklyHours.getText()));
-            job.setPositions(parseOrZero(positions.getText()));
-            job.setDeadline(deadline.getValue());
-            job.setStatus(status.getValue());
-            job.setDescription(description.getText());
-            job.setOrganiserId(organiserId);
-            return job;
-        });
+        VBox leftPanel = new VBox(0);
+        leftPanel.setPrefWidth(960);
+        leftPanel.setMinWidth(900);
+        leftPanel.getChildren().add(buildHeader(fields, source, organiserId, stage, result));
+        leftPanel.getChildren().add(buildFormContent(fields));
+        HBox.setHgrow(leftPanel, Priority.ALWAYS);
 
-        return dialog.showAndWait();
+        VBox previewPanel = buildPreviewPanel(fields);
+
+        HBox body = new HBox(leftPanel, previewPanel);
+        HBox.setHgrow(leftPanel, Priority.ALWAYS);
+        root.setCenter(body);
+
+        Scene scene = new Scene(root, 1280, 800);
+        if (JobEditorController.class.getResource("/styles/app.css") != null) {
+            String stylesheet = JobEditorController.class.getResource("/styles/app.css").toExternalForm();
+            scene.getStylesheets().add(stylesheet);
+        }
+        stage.setScene(scene);
+        stage.showAndWait();
+
+        return Optional.ofNullable(result.get());
     }
 
-    private int parseOrZero(String value) {
+    private Parent buildHeader(EditorFields fields,
+                               Job source,
+                               String organiserId,
+                               Stage stage,
+                               AtomicReference<Job> result) {
+        HBox header = new HBox();
+        header.setPadding(new Insets(20, 24, 20, 24));
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setStyle("-fx-background-color: white; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 1 0;");
+
+        Label title = new Label(source == null ? "Create Job Post" : "Edit Job Post");
+        title.getStyleClass().add("page-title");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button cancel = new Button("Cancel");
+        cancel.getStyleClass().add("secondary-button");
+        cancel.setOnAction(event -> stage.close());
+
+        Button saveDraft = new Button("Save Draft");
+        saveDraft.getStyleClass().add("secondary-button");
+        saveDraft.setOnAction(event -> submitWithStatus(fields, source, organiserId, JobStatus.DRAFT, stage, result));
+
+        Button update = new Button(source == null ? "Publish Job" : "Update Job");
+        update.getStyleClass().add("primary-button");
+        update.setOnAction(event -> submitWithStatus(fields, source, organiserId, fields.status.getValue(), stage, result));
+
+        header.getChildren().addAll(title, spacer, cancel, saveDraft, update);
+        return header;
+    }
+
+    private Parent buildFormContent(EditorFields fields) {
+        VBox wrapper = new VBox(24);
+        wrapper.setPadding(new Insets(24));
+        wrapper.setStyle("-fx-background-color: #ffffff;");
+
+        wrapper.getChildren().add(buildSectionTitle("Basic Job Information"));
+
+        GridPane basicGrid = new GridPane();
+        basicGrid.setHgap(16);
+        basicGrid.setVgap(14);
+        basicGrid.add(field("Job Title", fields.title), 0, 0);
+        basicGrid.add(field("Module Code", fields.moduleCode), 1, 0);
+        basicGrid.add(field("Module Name", fields.moduleName), 0, 1);
+        basicGrid.add(field("Job Type", fields.type), 1, 1);
+        basicGrid.add(field("Weekly Hours", fields.weeklyHours), 0, 2);
+        basicGrid.add(field("Positions", fields.positions), 1, 2);
+        basicGrid.add(field("Deadline", fields.deadline), 0, 3);
+        basicGrid.add(field("Publication Status", fields.status), 1, 3);
+        basicGrid.add(areaField("Job Description / Key Responsibilities", fields.description, 6), 0, 4, 2, 1);
+
+        wrapper.getChildren().add(basicGrid);
+
+        wrapper.getChildren().add(buildSectionTitle("Skills & Requirements"));
+
+        GridPane skillsGrid = new GridPane();
+        skillsGrid.setHgap(16);
+        skillsGrid.setVgap(14);
+        skillsGrid.add(field("Required Skills (comma separated)", fields.requiredSkills), 0, 0);
+        skillsGrid.add(field("Preferred Skills (comma separated)", fields.preferredSkills), 1, 0);
+
+        Label note = new Label("Tip: Include at least one required skill and clear weekly hour expectation.");
+        note.getStyleClass().add("body-muted");
+
+        wrapper.getChildren().addAll(skillsGrid, note);
+        return wrapper;
+    }
+
+    private VBox buildPreviewPanel(EditorFields fields) {
+        VBox preview = new VBox(18);
+        preview.setPadding(new Insets(24));
+        preview.setPrefWidth(320);
+        preview.setStyle("-fx-background-color: #f8fafc; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 0 1;");
+
+        Label heading = new Label("Live Preview Summary");
+        heading.setStyle("-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #0f172a;");
+
+        VBox card = new VBox(4);
+        card.setPadding(new Insets(16));
+        card.setStyle("-fx-background-color: #354a5f; -fx-background-radius: 12;");
+
+        Label cardCaption = new Label("JOB CARD PREVIEW");
+        cardCaption.setStyle("-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #cbd5e1;");
+
+        Label cardTitle = new Label();
+        cardTitle.setWrapText(true);
+        cardTitle.setStyle("-fx-font-size: 15px; -fx-font-weight: 700; -fx-text-fill: white;");
+
+        Label cardMeta = new Label();
+        cardMeta.setWrapText(true);
+        cardMeta.setStyle("-fx-font-size: 11px; -fx-text-fill: #e2e8f0;");
+
+        card.getChildren().addAll(cardCaption, cardTitle, cardMeta);
+
+        VBox metrics = new VBox(8);
+        Label metricTitle = new Label("KEY METRICS");
+        metricTitle.setStyle("-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #94a3b8;");
+
+        Label hours = metricLine("Weekly Hours", "-");
+        Label positions = metricLine("Positions", "-");
+        Label deadline = metricLine("Deadline", "-");
+        metrics.getChildren().addAll(metricTitle, hours, positions, deadline);
+
+        VBox requirementCard = new VBox(8);
+        requirementCard.setPadding(new Insets(14));
+        requirementCard.setStyle("-fx-background-color: white; -fx-border-color: #e2e8f0; -fx-border-radius: 12; -fx-background-radius: 12;");
+
+        Label requirementTitle = new Label("REQUIREMENTS CHECK");
+        requirementTitle.setStyle("-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #354a5f;");
+
+        Label requiredLine = new Label();
+        requiredLine.setWrapText(true);
+        requiredLine.setStyle("-fx-font-size: 12px; -fx-text-fill: #475569;");
+
+        Label preferredLine = new Label();
+        preferredLine.setWrapText(true);
+        preferredLine.setStyle("-fx-font-size: 12px; -fx-text-fill: #475569;");
+
+        requirementCard.getChildren().addAll(requirementTitle, requiredLine, preferredLine);
+
+        preview.getChildren().addAll(heading, card, metrics, requirementCard);
+
+        Runnable updater = () -> updatePreview(fields, cardTitle, cardMeta, hours, positions, deadline, requiredLine, preferredLine);
+        bindPreviewListeners(fields, updater);
+        updater.run();
+
+        return preview;
+    }
+
+    private VBox buildSectionTitle(String titleText) {
+        VBox box = new VBox(6);
+        box.setPadding(new Insets(0, 0, 4, 0));
+        box.setStyle("-fx-border-color: #f1f5f9; -fx-border-width: 0 0 1 0;");
+        Label title = new Label(titleText);
+        title.getStyleClass().add("section-title");
+        box.getChildren().add(title);
+        return box;
+    }
+
+    private VBox field(String labelText, Parent control) {
+        VBox box = new VBox(6);
+        Label label = new Label(labelText);
+        label.getStyleClass().add("field-label");
+        box.getChildren().addAll(label, control);
+        VBox.setVgrow(control, Priority.NEVER);
+        if (control instanceof Region region) {
+            region.setMaxWidth(Double.MAX_VALUE);
+        }
+        GridPane.setHgrow(box, Priority.ALWAYS);
+        return box;
+    }
+
+    private VBox areaField(String labelText, TextArea area, int rows) {
+        area.setPrefRowCount(rows);
+        return field(labelText, area);
+    }
+
+    private void populateForm(EditorFields fields, Job source) {
+        fields.type.getItems().setAll(JobType.values());
+        fields.status.getItems().setAll(JobStatus.values());
+        if (source == null) {
+            fields.type.setValue(JobType.MODULE_TA);
+            fields.status.setValue(JobStatus.OPEN);
+            fields.deadline.setValue(LocalDate.now().plusDays(7));
+            return;
+        }
+
+        fields.title.setText(source.getTitle());
+        fields.moduleCode.setText(source.getModuleCode());
+        fields.moduleName.setText(source.getModuleName());
+        fields.type.setValue(source.getType());
+        fields.weeklyHours.setText(source.getWeeklyHours() <= 0 ? "" : String.valueOf(source.getWeeklyHours()));
+        fields.positions.setText(source.getPositions() <= 0 ? "" : String.valueOf(source.getPositions()));
+        fields.deadline.setValue(source.getDeadline());
+        fields.status.setValue(source.getStatus());
+        fields.description.setText(source.getDescription());
+        fields.requiredSkills.setText(String.join(", ", source.getRequiredSkills()));
+        fields.preferredSkills.setText(String.join(", ", source.getPreferredSkills()));
+    }
+
+    private void submitWithStatus(EditorFields fields,
+                                  Job source,
+                                  String organiserId,
+                                  JobStatus targetStatus,
+                                  Stage stage,
+                                  AtomicReference<Job> result) {
+        List<String> errors = validate(fields, organiserId);
+        if (!errors.isEmpty()) {
+            DialogControllerFactory.validationError(String.join("\n", errors), stage.getOwner());
+            return;
+        }
+        Job job = buildJob(fields, source, organiserId, targetStatus);
+        result.set(job);
+        stage.close();
+    }
+
+    private List<String> validate(EditorFields fields, String organiserId) {
+        List<String> errors = new ArrayList<>();
+        if (fields.title.getText() == null || fields.title.getText().isBlank()) {
+            errors.add("Title is required.");
+        }
+        if (fields.moduleCode.getText() == null || fields.moduleCode.getText().isBlank()) {
+            errors.add("Module code is required.");
+        }
+        if (fields.moduleName.getText() == null || fields.moduleName.getText().isBlank()) {
+            errors.add("Module name is required.");
+        }
+        if (parseInt(fields.weeklyHours.getText()) <= 0) {
+            errors.add("Weekly hours must be greater than 0.");
+        }
+        if (parseInt(fields.positions.getText()) <= 0) {
+            errors.add("Positions must be greater than 0.");
+        }
+        if (fields.deadline.getValue() == null) {
+            errors.add("Deadline is required.");
+        }
+        if (organiserId == null || organiserId.isBlank()) {
+            errors.add("Organiser ID is required.");
+        }
+        return errors;
+    }
+
+    private Job buildJob(EditorFields fields, Job source, String organiserId, JobStatus targetStatus) {
+        Job job = new Job();
+        if (source != null) {
+            job.setJobId(source.getJobId());
+            job.setCreatedAt(source.getCreatedAt());
+        }
+        job.setTitle(trim(fields.title.getText()));
+        job.setModuleCode(trim(fields.moduleCode.getText()));
+        job.setModuleName(trim(fields.moduleName.getText()));
+        job.setType(fields.type.getValue());
+        job.setWeeklyHours(parseInt(fields.weeklyHours.getText()));
+        job.setPositions(parseInt(fields.positions.getText()));
+        job.setDeadline(fields.deadline.getValue());
+        job.setStatus(targetStatus == null ? JobStatus.OPEN : targetStatus);
+        job.setDescription(trim(fields.description.getText()));
+        job.setRequiredSkills(parseSkills(fields.requiredSkills.getText()));
+        job.setPreferredSkills(parseSkills(fields.preferredSkills.getText()));
+        job.setOrganiserId(organiserId);
+        return job;
+    }
+
+    private void bindPreviewListeners(EditorFields fields, Runnable updater) {
+        fields.title.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
+        fields.moduleCode.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
+        fields.moduleName.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
+        fields.weeklyHours.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
+        fields.positions.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
+        fields.deadline.valueProperty().addListener((obs, oldValue, newValue) -> updater.run());
+        fields.requiredSkills.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
+        fields.preferredSkills.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
+    }
+
+    private void updatePreview(EditorFields fields,
+                               Label cardTitle,
+                               Label cardMeta,
+                               Label hours,
+                               Label positions,
+                               Label deadline,
+                               Label requiredLine,
+                               Label preferredLine) {
+        cardTitle.setText(fallback(fields.title.getText(), "Untitled Job"));
+        String module = fallback(fields.moduleCode.getText(), "TBD");
+        String moduleName = fallback(fields.moduleName.getText(), "Module Name");
+        cardMeta.setText(module + " | " + moduleName);
+
+        hours.setText("Weekly Hours: " + fallback(fields.weeklyHours.getText(), "-"));
+        positions.setText("Positions: " + fallback(fields.positions.getText(), "-"));
+        deadline.setText("Deadline: " + (fields.deadline.getValue() == null ? "-" : fields.deadline.getValue().toString()));
+
+        List<String> requiredSkills = parseSkills(fields.requiredSkills.getText());
+        List<String> preferredSkills = parseSkills(fields.preferredSkills.getText());
+        requiredLine.setText(requiredSkills.isEmpty()
+                ? "Required skills missing"
+                : "Required: " + String.join(", ", capThree(requiredSkills)));
+        preferredLine.setText(preferredSkills.isEmpty()
+                ? "Preferred skills not set"
+                : "Preferred: " + String.join(", ", capThree(preferredSkills)));
+    }
+
+    private List<String> capThree(List<String> skills) {
+        return skills.stream().limit(3).toList();
+    }
+
+    private Label metricLine(String title, String value) {
+        Label line = new Label(title + ": " + value);
+        line.setStyle("-fx-font-size: 12px; -fx-text-fill: #334155;");
+        return line;
+    }
+
+    private List<String> parseSkills(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(raw.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    private String trim(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private String fallback(String value, String defaultValue) {
+        return value == null || value.isBlank() ? defaultValue : value.trim();
+    }
+
+    private int parseInt(String value) {
         try {
-            return Integer.parseInt(value);
+            return Integer.parseInt(value == null ? "" : value.trim());
         } catch (NumberFormatException e) {
             return 0;
         }
+    }
+
+    private static class EditorFields {
+        private final TextField title = new TextField();
+        private final TextField moduleCode = new TextField();
+        private final TextField moduleName = new TextField();
+        private final ComboBox<JobType> type = new ComboBox<>();
+        private final TextField weeklyHours = new TextField();
+        private final TextField positions = new TextField();
+        private final DatePicker deadline = new DatePicker();
+        private final ComboBox<JobStatus> status = new ComboBox<>();
+        private final TextArea description = new TextArea();
+        private final TextField requiredSkills = new TextField();
+        private final TextField preferredSkills = new TextField();
     }
 }

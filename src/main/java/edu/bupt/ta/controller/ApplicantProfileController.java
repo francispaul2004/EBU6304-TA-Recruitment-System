@@ -6,18 +6,20 @@ import edu.bupt.ta.service.ServiceRegistry;
 import edu.bupt.ta.util.ValidationResult;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 public class ApplicantProfileController {
 
     private final ServiceRegistry services;
     private final User user;
-    private final VBox view = new VBox(12);
+    private final BorderPane view = new BorderPane();
 
     private ApplicantProfile profile;
 
@@ -41,27 +43,78 @@ public class ApplicantProfileController {
     private void initialize() {
         profile = services.applicantProfileService().getOrCreateProfile(user.getUserId());
 
-        Label heading = new Label("Applicant Profile");
-        heading.setStyle("-fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: #0F172A;");
+        VBox root = new VBox(14);
+        root.getStyleClass().add("app-surface");
+        root.setPadding(new Insets(4, 0, 0, 0));
 
-        GridPane form = new GridPane();
-        form.setHgap(10);
-        form.setVgap(10);
-        form.addRow(0, new Label("Full Name"), fullName);
-        form.addRow(1, new Label("Student ID"), studentId);
-        form.addRow(2, new Label("Programme"), programme);
-        form.addRow(3, new Label("Year"), year);
-        form.addRow(4, new Label("Email"), email);
-        form.addRow(5, new Label("Phone"), phone);
+        HBox header = new HBox();
+        Label heading = new Label("Edit Basic Information");
+        heading.getStyleClass().add("section-title");
 
-        Button save = new Button("Save Profile");
+        Label subtitle = new Label("Update your academic background and availability for this semester.");
+        subtitle.getStyleClass().add("body-muted");
+
+        VBox titleBlock = new VBox(4, heading, subtitle);
+
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button reset = new Button("Reset");
+        reset.getStyleClass().add("secondary-button");
+        reset.setOnAction(event -> loadFromModel());
+
+        Button save = new Button("Save Changes");
         save.getStyleClass().add("primary-button");
         save.setOnAction(event -> saveProfile());
 
-        loadFromModel();
+        header.getChildren().addAll(titleBlock, spacer, reset, save);
 
-        view.setPadding(new Insets(16));
-        view.getChildren().addAll(heading, form, save);
+        VBox formCard = new VBox(14);
+        formCard.getStyleClass().add("panel-card");
+        formCard.setPadding(new Insets(16));
+
+        Label formTitle = new Label("Personal Information");
+        formTitle.setStyle("-fx-font-size: 20px; -fx-font-weight: 700; -fx-text-fill: #0f172a;");
+
+        GridPane form = new GridPane();
+        form.setHgap(16);
+        form.setVgap(14);
+
+        form.add(field("Full Name", fullName), 0, 0);
+        form.add(field("Student ID", studentId), 1, 0);
+        form.add(field("Email Address", email), 0, 1);
+        form.add(field("Academic Year", year), 1, 1);
+        form.add(field("Phone Number", phone), 0, 2);
+        form.add(field("Major", programme), 1, 2);
+
+        formCard.getChildren().addAll(formTitle, form);
+
+        VBox tipCard = new VBox(6);
+        tipCard.getStyleClass().add("soft-card");
+        tipCard.setPadding(new Insets(12));
+
+        Label tipTitle = new Label("Pro Tip");
+        tipTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #b45309;");
+
+        Label tipBody = new Label("Complete profile and resume to unlock all apply actions in the job browser.");
+        tipBody.setWrapText(true);
+        tipBody.setStyle("-fx-font-size: 12px; -fx-text-fill: #92400e;");
+
+        tipCard.getChildren().addAll(tipTitle, tipBody);
+
+        root.getChildren().addAll(header, formCard, tipCard);
+        view.setCenter(root);
+
+        loadFromModel();
+    }
+
+    private VBox field(String title, TextField input) {
+        VBox box = new VBox(6);
+        Label label = new Label(title);
+        label.getStyleClass().add("field-label");
+        input.setPrefWidth(280);
+        box.getChildren().addAll(label, input);
+        return box;
     }
 
     private void loadFromModel() {
@@ -87,15 +140,13 @@ public class ApplicantProfileController {
 
         ValidationResult result = services.applicantProfileService().saveProfile(profile);
         if (!result.isValid()) {
-            Alert err = new Alert(Alert.AlertType.ERROR, String.join("\n", result.getErrors()));
-            err.setHeaderText("Validation error");
-            err.showAndWait();
+            DialogControllerFactory.validationError(String.join("\n", result.getErrors()),
+                    view.getScene() == null ? null : view.getScene().getWindow());
             return;
         }
 
-        Alert ok = new Alert(Alert.AlertType.INFORMATION, "Profile saved successfully.");
-        ok.setHeaderText("Saved");
-        ok.showAndWait();
+        DialogControllerFactory.success("Profile Saved", "Profile saved successfully.",
+                view.getScene() == null ? null : view.getScene().getWindow());
     }
 
     private String nullToEmpty(String value) {
