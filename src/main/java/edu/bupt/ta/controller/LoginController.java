@@ -6,7 +6,6 @@ import edu.bupt.ta.service.ServiceRegistry;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
@@ -17,7 +16,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 
 import java.util.function.Consumer;
 
@@ -42,109 +40,174 @@ public class LoginController {
     }
 
     private void initialize() {
+        view.getStyleClass().add("login-root");
+
         HBox root = new HBox();
+        root.getStyleClass().add("login-shell");
 
         VBox leftPane = buildLeftPane();
         VBox rightPane = buildRightPane();
 
-        HBox.setHgrow(leftPane, Priority.ALWAYS);
-        HBox.setHgrow(rightPane, Priority.ALWAYS);
         leftPane.setPrefWidth(640);
         rightPane.setPrefWidth(640);
+        HBox.setHgrow(leftPane, Priority.ALWAYS);
+        HBox.setHgrow(rightPane, Priority.ALWAYS);
 
         root.getChildren().addAll(leftPane, rightPane);
         view.setCenter(root);
     }
 
     private VBox buildLeftPane() {
-        VBox left = new VBox(24);
-        left.setPadding(new Insets(56));
-        left.setStyle("-fx-background-color: #354A5F;");
+        VBox left = new VBox(44);
+        left.getStyleClass().add("login-left");
+        left.setPadding(new Insets(64));
 
-        Label brand = new Label("BUPT International");
-        brand.setStyle("-fx-font-size: 34px; -fx-font-weight: 800; -fx-text-fill: white;");
+        HBox brandRow = new HBox(12);
+        brandRow.setAlignment(Pos.CENTER_LEFT);
 
-        Label title = new Label("Teaching Assistant\nRecruitment System");
-        title.setStyle("-fx-font-size: 54px; -fx-font-weight: 800; -fx-text-fill: white; -fx-line-spacing: 8px;");
+        Region brandIcon = new Region();
+        brandIcon.setPrefSize(36, 36);
+        brandIcon.setStyle("-fx-background-color: rgba(255,255,255,0.15); -fx-background-radius: 8;");
 
-        Label desc = new Label("Streamlining the bridge between academic excellence and professional teaching support.\n"
-                + "Manage applications, schedules, and assignments in one professional portal.");
-        desc.setWrapText(true);
-        desc.setStyle("-fx-font-size: 22px; -fx-text-fill: #E2E8F0; -fx-line-spacing: 8px;");
+        Label brandTitle = new Label("BUPT International");
+        brandTitle.getStyleClass().add("login-brand-title");
+
+        brandRow.getChildren().addAll(brandIcon, brandTitle);
+
+        Label hero = new Label("Teaching Assistant\nRecruitment System");
+        hero.getStyleClass().add("login-hero-title");
+
+        Region bar = new Region();
+        bar.setPrefSize(96, 6);
+        bar.setStyle("-fx-background-color: rgba(255,255,255,0.35); -fx-background-radius: 999;");
+
+        Label desc = new Label(
+                "Streamlining the bridge between academic excellence\n"
+                        + "and professional teaching support. Manage\n"
+                        + "applications, schedules, and assignments in one\n"
+                        + "professional portal.");
+        desc.getStyleClass().add("login-hero-desc");
+
+        VBox heroBlock = new VBox(22, hero, bar, desc);
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        Label footer = new Label("Secure Academic Portal for Students & Faculty\n"
-                + "Test accounts password: Password123!");
-        footer.setStyle("-fx-font-size: 14px; -fx-text-fill: #CBD5E1; -fx-line-spacing: 4px;");
+        VBox footer = new VBox(12);
+        Label secure = new Label("Secure Academic Portal for Students & Faculty");
+        secure.setStyle("-fx-font-size: 14px; -fx-text-fill: #cbd5e1;");
 
-        left.getChildren().addAll(brand, title, desc, spacer, footer);
+        Label copyright = new Label("(c) 2024 Beijing University of Posts and Telecommunications. All rights reserved.");
+        copyright.getStyleClass().add("login-left-footer");
+
+        footer.getChildren().addAll(secure, copyright);
+
+        left.getChildren().addAll(brandRow, heroBlock, spacer, footer);
         return left;
     }
 
     private VBox buildRightPane() {
-        VBox right = new VBox(18);
-        right.setAlignment(Pos.CENTER_LEFT);
-        right.setPadding(new Insets(64));
-        right.setStyle("-fx-background-color: #F6F7F7;");
+        VBox right = new VBox();
+        right.getStyleClass().add("login-right");
+        right.setAlignment(Pos.CENTER);
+        right.setPadding(new Insets(48));
+
+        VBox content = new VBox(26);
+        content.setMaxWidth(448);
+        content.setPrefWidth(448);
 
         Label heading = new Label("Portal Login");
-        heading.setStyle("-fx-font-size: 36px; -fx-font-weight: 800; -fx-text-fill: #0F172A;");
+        heading.getStyleClass().add("login-heading");
 
         Label subtitle = new Label("Enter your university credentials to continue");
-        subtitle.setStyle("-fx-font-size: 16px; -fx-text-fill: #475569;");
+        subtitle.getStyleClass().add("login-subheading");
+
+        VBox titleBlock = new VBox(6, heading, subtitle);
 
         Label userLabel = new Label("University ID / Username");
-        userLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #334155;");
-        usernameField.setPromptText("e.g. ta001 / mo001 / admin");
-        usernameField.setPrefHeight(42);
+        userLabel.getStyleClass().add("field-label");
+        usernameField.setPromptText("e.g. 2023211000");
 
         Label passLabel = new Label("Password");
-        passLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #334155;");
-        passwordField.setPromptText("Password123!");
-        passwordField.setPrefHeight(42);
+        passLabel.getStyleClass().add("field-label");
+
+        Label forgotLabel = new Label("Forgot password?");
+        forgotLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #354a5f;");
+
+        HBox passwordHeader = new HBox();
+        passwordHeader.setAlignment(Pos.CENTER_LEFT);
+        passwordHeader.getChildren().addAll(passLabel);
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        passwordHeader.getChildren().addAll(spacer, forgotLabel);
+
+        passwordField.setPromptText("********");
 
         CheckBox keepLogin = new CheckBox("Keep me logged in on this device");
-        keepLogin.setTextFill(Color.web("#475569"));
+        keepLogin.setStyle("-fx-text-fill: #475569; -fx-font-size: 14px;");
 
         Button loginButton = new Button("LOGIN TO PORTAL");
         loginButton.getStyleClass().add("primary-button");
         loginButton.setPrefHeight(44);
-        loginButton.setPrefWidth(280);
+        loginButton.setMaxWidth(Double.MAX_VALUE);
         loginButton.setOnAction(event -> doLogin());
 
         Button resetButton = new Button("Reset");
         resetButton.getStyleClass().add("secondary-button");
         resetButton.setPrefHeight(44);
-        resetButton.setPrefWidth(120);
+        resetButton.setPrefWidth(96);
         resetButton.setOnAction(event -> {
             usernameField.clear();
             passwordField.clear();
         });
 
         HBox actions = new HBox(12, loginButton, resetButton);
+        HBox.setHgrow(loginButton, Priority.ALWAYS);
 
-        Label quickHint = new Label("TA: ta001  |  MO: mo001  |  ADMIN: admin");
-        quickHint.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748B;");
+        Region divider = new Region();
+        divider.setPrefHeight(1);
+        divider.setStyle("-fx-background-color: #e2e8f0;");
 
-        right.getChildren().addAll(
-                heading, subtitle,
+        HBox footerLinks = new HBox();
+        footerLinks.setAlignment(Pos.CENTER_LEFT);
+
+        Label access = new Label("EXTERNAL ACCESS");
+        access.getStyleClass().add("login-footer-links");
+
+        HBox footerSpacer = new HBox();
+        HBox.setHgrow(footerSpacer, Priority.ALWAYS);
+
+        Label support = new Label("HELP CENTER");
+        support.getStyleClass().add("login-footer-links");
+
+        Label privacy = new Label("PRIVACY");
+        privacy.getStyleClass().add("login-footer-links");
+
+        footerLinks.getChildren().addAll(access, footerSpacer, support, new Label("   "), privacy);
+
+        Label testHint = new Label("Demo password: Password123!  (ta001 / mo001 / admin)");
+        testHint.setStyle("-fx-font-size: 11px; -fx-text-fill: #94a3b8;");
+
+        content.getChildren().addAll(
+                titleBlock,
                 userLabel, usernameField,
-                passLabel, passwordField,
-                keepLogin, actions,
-                quickHint
+                passwordHeader, passwordField,
+                keepLogin,
+                actions,
+                divider,
+                footerLinks,
+                testHint
         );
 
+        right.getChildren().add(content);
         return right;
     }
 
     private void doLogin() {
         LoginResult result = services.authenticationService().login(usernameField.getText(), passwordField.getText());
         if (!result.success()) {
-            Alert alert = new Alert(Alert.AlertType.ERROR, result.message());
-            alert.setHeaderText("Login failed");
-            alert.showAndWait();
+            DialogControllerFactory.operationFailed("Login Failed", result.message(), view.getScene() == null
+                    ? null : view.getScene().getWindow());
             return;
         }
         onLoginSuccess.accept(result.user());

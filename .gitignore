@@ -24,3 +24,8 @@ hs_err_pid*
 replay_pid*
 .DS_Store
 target/
+.DS_Store
+Thumbs.db
+target/
+.idea/
+*.iml

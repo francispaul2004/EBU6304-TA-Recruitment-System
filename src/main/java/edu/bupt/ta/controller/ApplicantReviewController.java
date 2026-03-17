@@ -6,7 +6,6 @@ import edu.bupt.ta.service.ServiceRegistry;
 import edu.bupt.ta.util.ValidationResult;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -19,8 +18,9 @@ public class ApplicantReviewController {
     private final User user;
     private final String applicationId;
 
-    private final VBox view = new VBox(10);
+    private final VBox view = new VBox(14);
     private final TextArea decisionNote = new TextArea();
+    private ApplicantReviewDTO reviewData;
 
     public ApplicantReviewController(ServiceRegistry services, User user, String applicationId) {
         this.services = services;
@@ -35,62 +35,105 @@ public class ApplicantReviewController {
 
     private void initialize() {
         ApplicantReviewDTO dto = services.reviewService().getApplicantReviewData(applicationId, user.getUserId());
+        this.reviewData = dto;
 
         view.setPadding(new Insets(16));
+        view.getStyleClass().add("app-surface");
 
-        Label title = new Label("Applicant Review");
-        title.setStyle("-fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: #0F172A;");
+        Label title = new Label(dto.applicantName());
+        title.setStyle("-fx-font-size: 40px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
 
-        Label applicant = new Label("Applicant: " + dto.applicantName() + " (" + dto.applicantId() + ")");
-        Label skills = new Label("Technical Skills: " + String.join(", ", dto.technicalSkills()));
-        Label availability = new Label("Availability: " + String.join(", ", dto.availability()));
-        Label match = new Label("Match Score: " + dto.matchScore() + "%");
-        Label missing = new Label("Missing Skills: " + String.join(", ", dto.missingSkills()));
+        Label subtitle = new Label("Applicant ID: " + dto.applicantId());
+        subtitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #64748b;");
 
-        Label workload = new Label("Workload: current " + dto.currentHours() + "h, projected " + dto.projectedHours()
-                + "h / max " + dto.maxWeeklyHours() + "h  (" + dto.riskLevel() + ")");
-        workload.setStyle(dto.riskLevel().equals("HIGH")
-                ? "-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #EF4444;"
-                : "-fx-font-size: 13px; -fx-text-fill: #334155;");
+        VBox basicInfo = new VBox(8);
+        basicInfo.getStyleClass().add("panel-card");
+        basicInfo.setPadding(new Insets(14));
 
-        Label statement = new Label("Statement: " + dto.statement());
-        statement.setWrapText(true);
+        basicInfo.getChildren().addAll(
+                info("Technical Skills", String.join(", ", dto.technicalSkills())),
+                info("Availability", String.join(", ", dto.availability())),
+                info("Match Score", dto.matchScore() + "%"),
+                info("Missing Skills", dto.missingSkills().isEmpty() ? "None" : String.join(", ", dto.missingSkills())),
+                info("Workload", "Current " + dto.currentHours() + "h, Projected " + dto.projectedHours()
+                        + "h / Max " + dto.maxWeeklyHours() + "h (" + dto.riskLevel() + ")"),
+                info("Statement", dto.statement())
+        );
+
+        VBox noteCard = new VBox(8);
+        noteCard.getStyleClass().add("panel-card");
+        noteCard.setPadding(new Insets(14));
 
         Label noteLabel = new Label("Decision Note");
-        decisionNote.setPrefRowCount(3);
+        noteLabel.getStyleClass().add("field-label");
 
-        Button accept = new Button("Accept");
+        decisionNote.setPromptText("Add observation or justification for the recruitment decision...");
+        decisionNote.setPrefRowCount(4);
+
+        noteCard.getChildren().addAll(noteLabel, decisionNote);
+
+        Button accept = new Button("Accept Candidate");
         accept.getStyleClass().add("primary-button");
         accept.setOnAction(event -> doAccept());
+        accept.setMaxWidth(Double.MAX_VALUE);
 
-        Button reject = new Button("Reject");
-        reject.getStyleClass().add("secondary-button");
+        Button reject = new Button("Reject Candidate");
+        reject.getStyleClass().add("danger-outline");
         reject.setOnAction(event -> doReject());
+        reject.setMaxWidth(Double.MAX_VALUE);
 
-        HBox actions = new HBox(10, accept, reject);
-        view.getChildren().addAll(title, applicant, skills, availability, match, missing, workload, statement,
-                noteLabel, decisionNote, actions);
+        HBox actions = new HBox(12, accept, reject);
+
+        view.getChildren().addAll(title, subtitle, basicInfo, noteCard, actions);
+    }
+
+    private VBox info(String title, String value) {
+        VBox box = new VBox(2);
+        Label t = new Label(title);
+        t.setStyle("-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #94a3b8;");
+        Label v = new Label(value == null || value.isBlank() ? "-" : value);
+        v.setWrapText(true);
+        v.setStyle("-fx-font-size: 13px; -fx-text-fill: #334155;");
+        box.getChildren().addAll(t, v);
+        return box;
     }
 
     private void doAccept() {
+        if ("HIGH".equalsIgnoreCase(reviewData.riskLevel())) {
+            DialogControllerFactory.workloadWarning(
+                    "Projected hours: " + reviewData.projectedHours() + "h / Max " + reviewData.maxWeeklyHours() + "h.",
+                    view.getScene() == null ? null : view.getScene().getWindow());
+        }
+        boolean confirmed = DialogControllerFactory.confirmAction(
+                "Accept Candidate",
+                "Accept this applicant and update workload records?",
+                view.getScene() == null ? null : view.getScene().getWindow());
+        if (!confirmed) {
+            return;
+        }
         ValidationResult result = services.reviewService().acceptApplication(applicationId, user.getUserId(), decisionNote.getText());
         showResult("Accept Application", result);
     }
 
     private void doReject() {
+        boolean confirmed = DialogControllerFactory.confirmAction(
+                "Reject Candidate",
+                "Reject this applicant for the selected job?",
+                view.getScene() == null ? null : view.getScene().getWindow());
+        if (!confirmed) {
+            return;
+        }
         ValidationResult result = services.reviewService().rejectApplication(applicationId, user.getUserId(), decisionNote.getText());
         showResult("Reject Application", result);
     }
 
     private void showResult(String header, ValidationResult result) {
         if (!result.isValid()) {
-            Alert alert = new Alert(Alert.AlertType.ERROR, String.join("\n", result.getErrors()));
-            alert.setHeaderText(header + " failed");
-            alert.showAndWait();
+            DialogControllerFactory.operationFailed(header, String.join("\n", result.getErrors()),
+                    view.getScene() == null ? null : view.getScene().getWindow());
             return;
         }
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Operation completed.");
-        alert.setHeaderText(header + " success");
-        alert.showAndWait();
+        DialogControllerFactory.success(header, "Operation completed.",
+                view.getScene() == null ? null : view.getScene().getWindow());
     }
 }

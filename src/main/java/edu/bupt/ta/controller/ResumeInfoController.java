@@ -6,12 +6,14 @@ import edu.bupt.ta.service.ServiceRegistry;
 import edu.bupt.ta.util.ValidationResult;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 import java.util.Arrays;
@@ -22,7 +24,7 @@ public class ResumeInfoController {
 
     private final ServiceRegistry services;
     private final User user;
-    private final VBox view = new VBox(12);
+    private final BorderPane view = new BorderPane();
 
     private ResumeInfo resume;
 
@@ -48,31 +50,85 @@ public class ResumeInfoController {
         String applicantId = services.applicantProfileService().getOrCreateProfile(user.getUserId()).getApplicantId();
         resume = services.resumeService().getOrCreateResume(applicantId);
 
+        VBox root = new VBox(14);
+        root.getStyleClass().add("app-surface");
+
+        HBox header = new HBox();
+
         Label heading = new Label("Resume Information");
-        heading.setStyle("-fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: #0F172A;");
+        heading.getStyleClass().add("section-title");
 
-        experience.setPrefRowCount(3);
-        personalStatement.setPrefRowCount(4);
+        Label subtitle = new Label("Maintain structured CV data for matching and workload analysis.");
+        subtitle.getStyleClass().add("body-muted");
 
-        GridPane form = new GridPane();
-        form.setHgap(10);
-        form.setVgap(10);
-        form.addRow(0, new Label("Relevant Modules (comma separated)"), relevantModules);
-        form.addRow(1, new Label("Technical Skills"), technicalSkills);
-        form.addRow(2, new Label("Language Skills"), languageSkills);
-        form.addRow(3, new Label("Availability"), availability);
-        form.addRow(4, new Label("Max Weekly Hours"), maxWeeklyHours);
-        form.addRow(5, new Label("Experience"), experience);
-        form.addRow(6, new Label("Personal Statement"), personalStatement);
+        VBox titleBlock = new VBox(4, heading, subtitle);
+
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button reset = new Button("Reset");
+        reset.getStyleClass().add("secondary-button");
+        reset.setOnAction(event -> loadFromModel());
 
         Button save = new Button("Save Resume");
         save.getStyleClass().add("primary-button");
         save.setOnAction(event -> saveResume());
 
-        loadFromModel();
+        header.getChildren().addAll(titleBlock, spacer, reset, save);
 
-        view.setPadding(new Insets(16));
-        view.getChildren().addAll(heading, form, save);
+        VBox formCard = new VBox(12);
+        formCard.getStyleClass().add("panel-card");
+        formCard.setPadding(new Insets(16));
+
+        GridPane form = new GridPane();
+        form.setHgap(16);
+        form.setVgap(14);
+
+        form.add(field("Relevant Modules (comma separated)", relevantModules), 0, 0, 2, 1);
+        form.add(field("Technical Skills (comma separated)", technicalSkills), 0, 1);
+        form.add(field("Language Skills (comma separated)", languageSkills), 1, 1);
+        form.add(field("Availability (comma separated)", availability), 0, 2);
+        form.add(field("Max Weekly Hours", maxWeeklyHours), 1, 2);
+        form.add(areaField("Experience", experience, 4), 0, 3, 2, 1);
+        form.add(areaField("Personal Statement", personalStatement, 5), 0, 4, 2, 1);
+
+        formCard.getChildren().add(form);
+
+        VBox hintCard = new VBox(6);
+        hintCard.getStyleClass().add("soft-card");
+        hintCard.setPadding(new Insets(12));
+
+        Label hintTitle = new Label("Matching Quality Hint");
+        hintTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #0f766e;");
+
+        Label hintText = new Label("Include required skills and availability windows to improve explainable match score.");
+        hintText.setWrapText(true);
+        hintText.setStyle("-fx-font-size: 12px; -fx-text-fill: #0f766e;");
+
+        hintCard.getChildren().addAll(hintTitle, hintText);
+
+        root.getChildren().addAll(header, formCard, hintCard);
+        view.setCenter(root);
+
+        loadFromModel();
+    }
+
+    private VBox field(String title, TextField input) {
+        VBox box = new VBox(6);
+        Label label = new Label(title);
+        label.getStyleClass().add("field-label");
+        input.setPrefWidth(320);
+        box.getChildren().addAll(label, input);
+        return box;
+    }
+
+    private VBox areaField(String title, TextArea input, int rows) {
+        VBox box = new VBox(6);
+        Label label = new Label(title);
+        label.getStyleClass().add("field-label");
+        input.setPrefRowCount(rows);
+        box.getChildren().addAll(label, input);
+        return box;
     }
 
     private void loadFromModel() {
@@ -101,15 +157,13 @@ public class ResumeInfoController {
 
         ValidationResult result = services.resumeService().saveResume(resume);
         if (!result.isValid()) {
-            Alert err = new Alert(Alert.AlertType.ERROR, String.join("\n", result.getErrors()));
-            err.setHeaderText("Validation error");
-            err.showAndWait();
+            DialogControllerFactory.validationError(String.join("\n", result.getErrors()),
+                    view.getScene() == null ? null : view.getScene().getWindow());
             return;
         }
 
-        Alert ok = new Alert(Alert.AlertType.INFORMATION, "Resume saved successfully.");
-        ok.setHeaderText("Saved");
-        ok.showAndWait();
+        DialogControllerFactory.success("Resume Saved", "Resume saved successfully.",
+                view.getScene() == null ? null : view.getScene().getWindow());
     }
 
     private List<String> split(String text) {
@@ -118,7 +172,7 @@ public class ResumeInfoController {
         }
         return Arrays.stream(text.split(","))
                 .map(String::trim)
-                .filter(s -> !s.isEmpty())
+                .filter(value -> !value.isEmpty())
                 .collect(Collectors.toList());
     }
 }

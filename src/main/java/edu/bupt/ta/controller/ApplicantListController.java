@@ -6,16 +6,21 @@ import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +32,11 @@ public class ApplicantListController {
     private final BorderPane view = new BorderPane();
 
     private final ComboBox<Job> jobSelector = new ComboBox<>();
-    private final TableView<Row> table = new TableView<>();
+    private final ListView<Row> listView = new ListView<>();
+
+    private final Label detailSkills = new Label("-");
+    private final Label detailAcademic = new Label("-");
+    private Row selectedRow;
 
     public ApplicantListController(ServiceRegistry services, User user) {
         this.services = services;
@@ -41,50 +50,104 @@ public class ApplicantListController {
     }
 
     private void initialize() {
-        Label heading = new Label("Applicant List");
-        heading.setStyle("-fx-font-size: 30px; -fx-font-weight: 800; -fx-text-fill: #0F172A;");
+        view.getStyleClass().add("app-surface");
 
+        VBox page = new VBox(16);
+        page.setPadding(new Insets(24));
+
+        page.getChildren().add(buildHeader());
+        page.getChildren().add(buildBody());
+
+        view.setCenter(page);
+    }
+
+    private HBox buildHeader() {
+        Label title = new Label("Applicant List");
+        title.getStyleClass().add("page-title");
+
+        jobSelector.setPrefWidth(320);
         jobSelector.setPromptText("Select your job");
         jobSelector.setCellFactory(param -> new javafx.scene.control.ListCell<>() {
             @Override
             protected void updateItem(Job item, boolean empty) {
                 super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getJobId() + " - " + item.getTitle());
+                setText(empty || item == null ? null : item.getTitle());
             }
         });
         jobSelector.setButtonCell(new javafx.scene.control.ListCell<>() {
             @Override
             protected void updateItem(Job item, boolean empty) {
                 super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getJobId() + " - " + item.getTitle());
+                setText(empty || item == null ? null : item.getTitle());
             }
         });
         jobSelector.valueProperty().addListener((obs, oldV, newV) -> refreshApplications());
 
-        Button review = new Button("Review Selected");
-        review.getStyleClass().add("primary-button");
-        review.setOnAction(event -> openReview());
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        HBox top = new HBox(12, heading, jobSelector, review);
-        top.setPadding(new Insets(20));
+        Button filter = new Button("Filter");
+        filter.getStyleClass().add("secondary-button");
 
-        TableColumn<Row, String> appCol = new TableColumn<>("Application");
-        appCol.setCellValueFactory(new PropertyValueFactory<>("applicationId"));
+        Button export = new Button("Export Report");
+        export.getStyleClass().add("secondary-button");
 
-        TableColumn<Row, String> applicantCol = new TableColumn<>("Applicant");
-        applicantCol.setCellValueFactory(new PropertyValueFactory<>("applicantName"));
+        HBox row = new HBox(10, title, jobSelector, spacer, filter, export);
+        row.setAlignment(Pos.CENTER_LEFT);
+        return row;
+    }
 
-        TableColumn<Row, String> statusCol = new TableColumn<>("Status");
-        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+    private HBox buildBody() {
+        VBox left = new VBox(10);
+        left.getStyleClass().add("panel-card");
+        left.setPadding(new Insets(12));
 
-        TableColumn<Row, Integer> scoreCol = new TableColumn<>("Match Score");
-        scoreCol.setCellValueFactory(new PropertyValueFactory<>("matchScore"));
+        listView.setCellFactory(param -> new ApplicantRowCell());
+        listView.setPrefHeight(700);
+        listView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> updateDetail(newV));
+        VBox.setVgrow(listView, Priority.ALWAYS);
 
-        table.getColumns().setAll(appCol, applicantCol, statusCol, scoreCol);
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        left.getChildren().add(listView);
 
-        VBox container = new VBox(top, table);
-        view.setCenter(container);
+        VBox right = new VBox(12);
+        right.getStyleClass().add("panel-card");
+        right.setPadding(new Insets(16));
+        right.setPrefWidth(360);
+
+        Label title = new Label("Applicant Details");
+        title.setStyle("-fx-font-size: 34px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+
+        Button accept = new Button("Accept");
+        accept.getStyleClass().add("primary-button");
+        accept.setMaxWidth(Double.MAX_VALUE);
+        accept.setOnAction(event -> openReview());
+
+        Button viewFull = new Button("View Full Application");
+        viewFull.getStyleClass().add("secondary-button");
+        viewFull.setMaxWidth(Double.MAX_VALUE);
+        viewFull.setOnAction(event -> openReview());
+
+        right.getChildren().addAll(
+                title,
+                detailField("Skills Overlap", detailSkills),
+                detailField("Academic Record", detailAcademic),
+                accept,
+                viewFull
+        );
+
+        HBox body = new HBox(16, left, right);
+        HBox.setHgrow(left, Priority.ALWAYS);
+        return body;
+    }
+
+    private VBox detailField(String title, Label value) {
+        VBox box = new VBox(4);
+        Label label = new Label(title);
+        label.setStyle("-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #94a3b8;");
+        value.setWrapText(true);
+        value.setStyle("-fx-font-size: 13px; -fx-text-fill: #334155;");
+        box.getChildren().addAll(label, value);
+        return box;
     }
 
     private void refreshJobs() {
@@ -98,7 +161,8 @@ public class ApplicantListController {
     private void refreshApplications() {
         Job selectedJob = jobSelector.getValue();
         if (selectedJob == null) {
-            table.setItems(FXCollections.observableArrayList());
+            listView.setItems(FXCollections.observableArrayList());
+            updateDetail(null);
             return;
         }
 
@@ -110,21 +174,84 @@ public class ApplicantListController {
                     .orElse(app.getApplicantId());
             rows.add(new Row(app.getApplicationId(), applicantName, app.getStatus().name(), app.getMatchScore()));
         }
-        table.setItems(FXCollections.observableArrayList(rows));
+
+        listView.setItems(FXCollections.observableArrayList(rows));
+        if (!rows.isEmpty()) {
+            listView.getSelectionModel().selectFirst();
+        } else {
+            updateDetail(null);
+        }
     }
 
-    private void openReview() {
-        Row row = table.getSelectionModel().getSelectedItem();
+    private void updateDetail(Row row) {
+        selectedRow = row;
         if (row == null) {
+            detailSkills.setText("-");
+            detailAcademic.setText("-");
             return;
         }
 
-        javafx.scene.control.Dialog<Void> dialog = new javafx.scene.control.Dialog<>();
-        dialog.setTitle("Applicant Review");
-        dialog.getDialogPane().getButtonTypes().add(javafx.scene.control.ButtonType.CLOSE);
-        dialog.getDialogPane().setContent(new ApplicantReviewController(services, user, row.getApplicationId()).getView());
-        dialog.showAndWait();
+        detailSkills.setText("Match score " + row.matchScore + "% based on skills and availability.");
+        detailAcademic.setText("Applicant: " + row.applicantName + "\nCurrent status: " + row.status);
+    }
+
+    private void openReview() {
+        if (selectedRow == null) {
+            DialogControllerFactory.validationError("Please select one applicant first.",
+                    view.getScene() == null ? null : view.getScene().getWindow());
+            return;
+        }
+
+        Stage stage = new Stage();
+        stage.initModality(Modality.APPLICATION_MODAL);
+        if (view.getScene() != null) {
+            stage.initOwner(view.getScene().getWindow());
+        }
+        stage.setTitle("Applicant Review");
+
+        Parent reviewView = new ApplicantReviewController(services, user, selectedRow.applicationId).getView();
+        Scene scene = new Scene(reviewView, 920, 760);
+        if (ApplicantListController.class.getResource("/styles/app.css") != null) {
+            String stylesheet = ApplicantListController.class.getResource("/styles/app.css").toExternalForm();
+            scene.getStylesheets().add(stylesheet);
+        }
+        stage.setScene(scene);
+        stage.showAndWait();
         refreshApplications();
+    }
+
+    private static class ApplicantRowCell extends ListCell<Row> {
+        @Override
+        protected void updateItem(Row item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty || item == null) {
+                setText(null);
+                setGraphic(null);
+                return;
+            }
+
+            VBox row = new VBox(6);
+            row.setPadding(new Insets(12));
+            row.setStyle("-fx-background-color: white; -fx-border-color: #e2e8f0; -fx-border-radius: 10; -fx-background-radius: 10;");
+
+            HBox top = new HBox();
+            Label name = new Label(item.applicantName);
+            name.setStyle("-fx-font-size: 18px; -fx-font-weight: 700; -fx-text-fill: #0f172a;");
+
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+
+            Label status = new Label(item.status.replace('_', ' '));
+            status.setStyle("-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #1d4ed8; -fx-background-color: #eff6ff; -fx-background-radius: 999; -fx-padding: 2 8 2 8;");
+
+            top.getChildren().addAll(name, spacer, status);
+
+            Label meta = new Label("Application " + item.applicationId + "   |   Score " + item.matchScore + "%");
+            meta.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748b;");
+
+            row.getChildren().addAll(top, meta);
+            setGraphic(row);
+        }
     }
 
     public static class Row {
