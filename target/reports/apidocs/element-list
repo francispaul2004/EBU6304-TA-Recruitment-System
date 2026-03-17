@@ -1,0 +1,10 @@
+edu.bupt.ta
+edu.bupt.ta.config
+edu.bupt.ta.controller
+edu.bupt.ta.dto
+edu.bupt.ta.enums
+edu.bupt.ta.model
+edu.bupt.ta.repository
+edu.bupt.ta.service
+edu.bupt.ta.ui
+edu.bupt.ta.util

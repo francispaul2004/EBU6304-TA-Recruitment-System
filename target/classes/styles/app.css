@@ -1,0 +1,32 @@
+.root {
+    -fx-font-family: "Inter", "Noto Sans SC", sans-serif;
+    -fx-background-color: #F6F7F7;
+}
+
+.primary-button {
+    -fx-background-color: #00C29F;
+    -fx-text-fill: white;
+    -fx-font-weight: 700;
+    -fx-background-radius: 8;
+}
+
+.secondary-button {
+    -fx-background-color: white;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-text-fill: #334155;
+}
+
+.card {
+    -fx-background-color: white;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+}
+
+.heading-xl {
+    -fx-font-size: 30px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #0F172A;
+}

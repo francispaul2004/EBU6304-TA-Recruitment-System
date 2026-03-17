@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html","k":"18"},{"l":"edu.bupt.ta"},{"l":"edu.bupt.ta.config"},{"l":"edu.bupt.ta.controller"},{"l":"edu.bupt.ta.dto"},{"l":"edu.bupt.ta.enums"},{"l":"edu.bupt.ta.model"},{"l":"edu.bupt.ta.repository"},{"l":"edu.bupt.ta.service"},{"l":"edu.bupt.ta.ui"},{"l":"edu.bupt.ta.util"}];updateSearchResults();

@@ -1,0 +1,7 @@
+[
+  {"applicantId":"A001","userId":"U001","fullName":"Alice Chen","studentId":"2023211001","programme":"Telecommunication Engineering and Management","year":2,"email":"alice.chen@qmul.ac.uk","phone":"13800000001","lastUpdated":"2026-03-17T15:00:00"},
+  {"applicantId":"A002","userId":"U002","fullName":"Brian Li","studentId":"2023211002","programme":"Computer Science","year":3,"email":"brian.li@qmul.ac.uk","phone":"13800000002","lastUpdated":"2026-03-17T15:05:00"},
+  {"applicantId":"A003","userId":"U003","fullName":"Cathy Wang","studentId":"2023211003","programme":"Data Science","year":2,"email":"cathy.wang@qmul.ac.uk","phone":"13800000003","lastUpdated":"2026-03-17T15:10:00"},
+  {"applicantId":"A004","userId":"U004","fullName":"David Zhao","studentId":"2023211004","programme":"Electronic Engineering","year":1,"email":"david.zhao@qmul.ac.uk","phone":"13800000004","lastUpdated":"2026-03-17T15:12:00"},
+  {"applicantId":"A005","userId":"U005","fullName":"Eva Liu","studentId":"2023211005","programme":"Mathematics","year":2,"email":"eva.liu@qmul.ac.uk","phone":"13800000005","lastUpdated":"2026-03-17T15:15:00"}
+]
