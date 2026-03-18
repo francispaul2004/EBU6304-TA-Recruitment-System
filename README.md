@@ -215,3 +215,9 @@ See:
 - `docs/User-Manual.md`
 
 This includes page-by-page operation guidance and screenshot placeholders for each main frame.
+
+## 11. AI Implementation Guide
+
+For reusable AI-assisted implementation rules, scope, and workflow, see:
+
+- `docs/codex-implementation-guide.md`

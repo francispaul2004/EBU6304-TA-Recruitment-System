@@ -4,7 +4,7 @@
   "applicantId" : "A001",
   "applyDate" : "2026-03-18T09:00:00",
   "statement" : "I have completed Java modules.",
-  "status" : "SUBMITTED",
+  "status" : "ACCEPTED",
   "decisionNote" : "",
   "matchScore" : 82,
   "missingSkills" : [ "JavaFX" ]

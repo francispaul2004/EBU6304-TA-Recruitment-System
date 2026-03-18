@@ -45,6 +45,7 @@ public class ApplicantProfileController {
 
         VBox root = new VBox(14);
         root.getStyleClass().add("app-surface");
+        root.setFillWidth(true);
         root.setPadding(new Insets(4, 0, 0, 0));
 
         HBox header = new HBox();
@@ -72,6 +73,7 @@ public class ApplicantProfileController {
         VBox formCard = new VBox(14);
         formCard.getStyleClass().add("panel-card");
         formCard.setPadding(new Insets(16));
+        formCard.setFillWidth(true);
 
         Label formTitle = new Label("Personal Information");
         formTitle.setStyle("-fx-font-size: 20px; -fx-font-weight: 700; -fx-text-fill: #0f172a;");
@@ -110,9 +112,11 @@ public class ApplicantProfileController {
 
     private VBox field(String title, TextField input) {
         VBox box = new VBox(6);
+        box.setMaxWidth(Double.MAX_VALUE);
+        GridPane.setHgrow(box, Priority.ALWAYS);
         Label label = new Label(title);
         label.getStyleClass().add("field-label");
-        input.setPrefWidth(280);
+        input.setMaxWidth(Double.MAX_VALUE);
         box.getChildren().addAll(label, input);
         return box;
     }

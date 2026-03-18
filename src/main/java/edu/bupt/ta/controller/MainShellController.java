@@ -217,7 +217,7 @@ public class MainShellController {
             }
             case "myCv" -> {
                 breadcrumbCurrent.setText("My CV");
-                page = new MyCvController(services, user).getView();
+                page = new MyCvController(services, user, () -> navigateTo("browseJobs")).getView();
             }
             case "jobManagement" -> {
                 breadcrumbCurrent.setText("Job Management");

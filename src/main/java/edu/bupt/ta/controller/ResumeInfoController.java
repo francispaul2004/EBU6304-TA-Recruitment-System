@@ -52,6 +52,7 @@ public class ResumeInfoController {
 
         VBox root = new VBox(14);
         root.getStyleClass().add("app-surface");
+        root.setFillWidth(true);
 
         HBox header = new HBox();
 
@@ -79,6 +80,7 @@ public class ResumeInfoController {
         VBox formCard = new VBox(12);
         formCard.getStyleClass().add("panel-card");
         formCard.setPadding(new Insets(16));
+        formCard.setFillWidth(true);
 
         GridPane form = new GridPane();
         form.setHgap(16);
@@ -115,18 +117,24 @@ public class ResumeInfoController {
 
     private VBox field(String title, TextField input) {
         VBox box = new VBox(6);
+        box.setMaxWidth(Double.MAX_VALUE);
+        GridPane.setHgrow(box, Priority.ALWAYS);
         Label label = new Label(title);
         label.getStyleClass().add("field-label");
-        input.setPrefWidth(320);
+        input.setMaxWidth(Double.MAX_VALUE);
         box.getChildren().addAll(label, input);
         return box;
     }
 
     private VBox areaField(String title, TextArea input, int rows) {
         VBox box = new VBox(6);
+        box.setMaxWidth(Double.MAX_VALUE);
+        GridPane.setHgrow(box, Priority.ALWAYS);
         Label label = new Label(title);
         label.getStyleClass().add("field-label");
         input.setPrefRowCount(rows);
+        input.setWrapText(true);
+        input.setMaxWidth(Double.MAX_VALUE);
         box.getChildren().addAll(label, input);
         return box;
     }

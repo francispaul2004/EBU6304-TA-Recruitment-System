@@ -343,3 +343,240 @@
     -fx-border-color: #cbd5e1;
     -fx-text-fill: #334155;
 }
+
+/* CV Page */
+.cv-page {
+    -fx-background-color: transparent;
+}
+
+.cv-card {
+    -fx-background-color: white;
+    -fx-border-color: #ebedef;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+}
+
+.cv-basic-card-header {
+    -fx-background-color: white;
+    -fx-border-color: #ebedef;
+    -fx-border-width: 0 0 1 0;
+}
+
+.cv-card-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #121417;
+}
+
+.cv-card-menu {
+    -fx-font-size: 20px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #94a3b8;
+}
+
+.cv-card-heading {
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #1e293b;
+}
+
+.cv-card-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: #64748b;
+}
+
+.cv-meta-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #66737f;
+    -fx-letter-spacing: 0.6px;
+}
+
+.cv-meta-value {
+    -fx-font-size: 14px;
+    -fx-font-weight: 500;
+    -fx-text-fill: #121417;
+}
+
+.cv-upload-card {
+    -fx-border-color: rgba(53,74,95,0.05);
+}
+
+.cv-upload-zone {
+    -fx-background-color: rgba(53,74,95,0.05);
+    -fx-border-color: rgba(53,74,95,0.2);
+    -fx-border-style: dashed;
+    -fx-border-width: 2;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+}
+
+.cv-drop-icon {
+    -fx-background-color: white;
+    -fx-background-radius: 9999;
+    -fx-border-radius: 9999;
+}
+
+.cv-drop-icon-label {
+    -fx-font-size: 22px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #354a5f;
+}
+
+.cv-upload-copy {
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #334155;
+    -fx-alignment: center;
+}
+
+.cv-upload-hint {
+    -fx-font-size: 12px;
+    -fx-text-fill: #94a3b8;
+    -fx-alignment: center;
+}
+
+.button.cv-primary-button {
+    -fx-background-color: #354a5f;
+    -fx-text-fill: white;
+    -fx-font-weight: 700;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 8 24 8 24;
+}
+
+.button.cv-primary-button:hover {
+    -fx-background-color: #2d3e50;
+}
+
+.cv-status-card {
+    -fx-border-color: rgba(53,74,95,0.1);
+}
+
+.cv-status-badge {
+    -fx-background-color: rgba(0,194,159,0.1);
+    -fx-background-radius: 9999;
+    -fx-border-radius: 9999;
+}
+
+.cv-status-badge-label {
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #00c29f;
+}
+
+.cv-status-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #1e293b;
+}
+
+.cv-status-subtitle {
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #00c29f;
+}
+
+.cv-file-row {
+    -fx-background-color: #f6f7f7;
+    -fx-background-radius: 8;
+    -fx-border-color: rgba(53,74,95,0.05);
+    -fx-border-radius: 8;
+}
+
+.cv-file-icon {
+    -fx-background-color: #fef2f2;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+}
+
+.cv-file-icon-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #ef4444;
+}
+
+.cv-file-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #334155;
+}
+
+.cv-file-meta {
+    -fx-font-size: 12px;
+    -fx-text-fill: #94a3b8;
+}
+
+.cv-step-section-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #94a3b8;
+    -fx-letter-spacing: 1.2px;
+}
+
+.button.cv-step-button {
+    -fx-background-color: white;
+    -fx-border-color: rgba(53,74,95,0.1);
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 13;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.button.cv-step-button:hover {
+    -fx-background-color: #f8fafc;
+}
+
+.cv-step-icon {
+    -fx-background-color: rgba(53,74,95,0.08);
+    -fx-background-radius: 9999;
+    -fx-border-radius: 9999;
+}
+
+.cv-step-icon-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #354a5f;
+}
+
+.cv-step-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #0f172a;
+}
+
+.cv-step-arrow {
+    -fx-font-size: 18px;
+    -fx-text-fill: #cbd5e1;
+}
+
+.cv-guideline-card {
+    -fx-background-color: rgba(53,74,95,0.05);
+    -fx-border-color: rgba(53,74,95,0.1);
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+}
+
+.cv-guideline-icon {
+    -fx-background-color: rgba(53,74,95,0.12);
+    -fx-background-radius: 9999;
+    -fx-border-radius: 9999;
+}
+
+.cv-guideline-icon-label {
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #354a5f;
+}
+
+.cv-guideline-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #354a5f;
+}
+
+.cv-guideline-line {
+    -fx-font-size: 14px;
+    -fx-text-fill: #475569;
+    -fx-wrap-text: true;
+}
