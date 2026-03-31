@@ -261,7 +261,7 @@ public class JobEditorController {
                                   JobStatus targetStatus,
                                   Stage stage,
                                   AtomicReference<Job> result) {
-        List<String> errors = validate(fields, organiserId);
+        List<String> errors = validate(fields, organiserId, targetStatus);
         if (!errors.isEmpty()) {
             DialogControllerFactory.validationError(String.join("\n", errors), stage.getOwner());
             return;
@@ -271,7 +271,7 @@ public class JobEditorController {
         stage.close();
     }
 
-    private List<String> validate(EditorFields fields, String organiserId) {
+    private List<String> validate(EditorFields fields, String organiserId, JobStatus targetStatus) {
         List<String> errors = new ArrayList<>();
         if (fields.title.getText() == null || fields.title.getText().isBlank()) {
             errors.add("Title is required.");
@@ -290,6 +290,11 @@ public class JobEditorController {
         }
         if (fields.deadline.getValue() == null) {
             errors.add("Deadline is required.");
+        }
+        if (targetStatus == JobStatus.OPEN
+                && fields.deadline.getValue() != null
+                && fields.deadline.getValue().isBefore(LocalDate.now())) {
+            errors.add("An OPEN job must have a deadline of today or later.");
         }
         if (organiserId == null || organiserId.isBlank()) {
             errors.add("Organiser ID is required.");
