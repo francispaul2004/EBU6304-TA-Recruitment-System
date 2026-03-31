@@ -100,22 +100,101 @@
 .text-field,
 .password-field,
 .combo-box,
+.combo-box-base,
 .date-picker,
 .text-area {
     -fx-background-color: white;
     -fx-border-color: #cbd5e1;
     -fx-border-radius: 8;
     -fx-background-radius: 8;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
 }
 
 .text-field,
 .password-field,
 .combo-box,
+.combo-box-base,
 .date-picker {
     -fx-pref-height: 42;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
 }
 
 .text-area .content {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+}
+
+.text-field:focused,
+.password-field:focused,
+.combo-box:focused,
+.combo-box-base:focused,
+.date-picker:focused,
+.text-area:focused {
+    -fx-background-color: white;
+    -fx-border-color: #00c29f;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.combo-box:focused,
+.combo-box-base:focused,
+.date-picker:focused {
+    -fx-background-insets: 0;
+}
+
+.combo-box-base > .list-cell,
+.combo-box > .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 0 12 0 12;
+    -fx-text-fill: #334155;
+}
+
+.combo-box-base:focused > .list-cell,
+.combo-box:focused > .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 0 12 0 12;
+}
+
+.combo-box-base > .arrow-button,
+.combo-box > .arrow-button,
+.date-picker > .arrow-button {
+    -fx-background-color: #f8fafc;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0 8 8 0;
+    -fx-border-width: 0 0 0 1;
+    -fx-border-color: #cbd5e1;
+    -fx-padding: 0 12 0 12;
+}
+
+.date-picker:focused > .arrow-button,
+.combo-box:focused > .arrow-button,
+.combo-box-base:focused > .arrow-button {
+    -fx-background-color: #f8fafc;
+    -fx-background-radius: 0 8 8 0;
+    -fx-border-width: 0 0 0 1;
+    -fx-border-color: #00c29f;
+    -fx-padding: 0 12 0 12;
+}
+
+.date-picker > .text-field {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
+    -fx-padding: 0 12 0 12;
+}
+
+.date-picker:focused > .text-field {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
+    -fx-padding: 0 12 0 12;
+}
+
+.text-area:focused .content {
     -fx-background-color: white;
     -fx-background-radius: 8;
 }

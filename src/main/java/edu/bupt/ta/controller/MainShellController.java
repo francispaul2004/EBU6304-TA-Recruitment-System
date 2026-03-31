@@ -1,6 +1,7 @@
 package edu.bupt.ta.controller;
 
 import edu.bupt.ta.enums.Role;
+import edu.bupt.ta.model.Job;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
 import javafx.geometry.Insets;
@@ -29,6 +30,7 @@ public class MainShellController {
     private final Label breadcrumbBase = new Label("Recruitment System");
     private final Label breadcrumbCurrent = new Label();
     private final Map<String, Button> navButtons = new LinkedHashMap<>();
+    private String preferredApplicantJobId;
 
     public MainShellController(ServiceRegistry services, User user, Runnable onLogout) {
         this.services = services;
@@ -221,11 +223,11 @@ public class MainShellController {
             }
             case "jobManagement" -> {
                 breadcrumbCurrent.setText("Job Management");
-                page = new JobManagementController(services, user).getView();
+                page = new JobManagementController(services, user, this::openApplicantListForJob).getView();
             }
             case "applicantList" -> {
                 breadcrumbCurrent.setText("CS101 TA Applicants");
-                page = new ApplicantListController(services, user).getView();
+                page = new ApplicantListController(services, user, preferredApplicantJobId).getView();
             }
             case "adminDashboard" -> {
                 breadcrumbCurrent.setText("Workload Monitoring");
@@ -258,6 +260,11 @@ public class MainShellController {
         }
 
         contentPane.getChildren().setAll(page);
+    }
+
+    private void openApplicantListForJob(Job job) {
+        preferredApplicantJobId = job == null ? null : job.getJobId();
+        navigateTo("applicantList");
     }
 
     private void deactivateButton(Button button) {

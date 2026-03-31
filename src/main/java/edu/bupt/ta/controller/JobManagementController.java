@@ -9,7 +9,9 @@ import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -20,22 +22,41 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
 
 public class JobManagementController {
 
     private final ServiceRegistry services;
     private final User user;
+    private final Consumer<Job> onViewApplicants;
     private final BorderPane view = new BorderPane();
+    private final VBox page = new VBox(16);
     private final TableView<Job> table = new TableView<>();
+    private HBox kpiRow;
+    private JobStatus currentFilterStatus;
 
-    private final Label detailTitle = new Label("Job Details");
+    private final Label detailTitle = new Label("No Job Selected");
+    private final Label detailSubtitle = new Label("-");
+    private final Label detailJobId = new Label("-");
+    private final Label detailModuleCode = new Label("-");
+    private final Label detailModuleName = new Label("-");
+    private final Label detailType = new Label("-");
     private final Label detailStatus = new Label("-");
+    private final Label detailWeeklyHours = new Label("-");
+    private final Label detailPositions = new Label("-");
     private final Label detailApplicants = new Label("-");
+    private final Label detailDeadline = new Label("-");
     private final Label detailCreated = new Label("-");
+    private final Label detailOrganiserId = new Label("-");
+    private final Label detailRequiredSkills = new Label("-");
+    private final Label detailPreferredSkills = new Label("-");
+    private final Label detailDescription = new Label("-");
 
-    public JobManagementController(ServiceRegistry services, User user) {
+    public JobManagementController(ServiceRegistry services, User user, Consumer<Job> onViewApplicants) {
         this.services = services;
         this.user = user;
+        this.onViewApplicants = onViewApplicants;
         initialize();
         refresh();
     }
@@ -47,11 +68,11 @@ public class JobManagementController {
     private void initialize() {
         view.getStyleClass().add("app-surface");
 
-        VBox page = new VBox(16);
         page.setPadding(new Insets(24));
 
+        kpiRow = buildKpiRow();
         page.getChildren().add(buildHeader());
-        page.getChildren().add(buildKpiRow());
+        page.getChildren().add(kpiRow);
         page.getChildren().add(buildMainArea());
 
         view.setCenter(page);
@@ -66,6 +87,7 @@ public class JobManagementController {
 
         Button filter = new Button("Filter");
         filter.getStyleClass().add("secondary-button");
+        filter.setOnAction(event -> onFilter());
 
         Button create = new Button("+ Create New Job");
         create.getStyleClass().add("primary-button");
@@ -82,7 +104,7 @@ public class JobManagementController {
         long draft = jobs.stream().filter(job -> job.getStatus() == JobStatus.DRAFT).count();
 
         HBox row = new HBox(16,
-                kpiCard("Total Openings", String.valueOf(jobs.stream().mapToInt(Job::getPositions).sum())),
+                kpiCard("Total Jobs", String.valueOf(jobs.size())),
                 kpiCard("Active Jobs", String.valueOf(open)),
                 kpiCard("Completed", String.valueOf(closed)),
                 kpiCard("Draft", String.valueOf(draft))
@@ -127,8 +149,11 @@ public class JobManagementController {
 
         actions.getChildren().addAll(edit, close, reload);
 
-        TableColumn<Job, String> titleCol = new TableColumn<>("JOB TITLE & ID");
+        TableColumn<Job, String> titleCol = new TableColumn<>("JOB TITLE");
         titleCol.setCellValueFactory(new PropertyValueFactory<>("title"));
+
+        TableColumn<Job, String> idCol = new TableColumn<>("JOB ID");
+        idCol.setCellValueFactory(new PropertyValueFactory<>("jobId"));
 
         TableColumn<Job, String> moduleCol = new TableColumn<>("MODULE");
         moduleCol.setCellValueFactory(new PropertyValueFactory<>("moduleCode"));
@@ -142,7 +167,7 @@ public class JobManagementController {
         TableColumn<Job, String> createdCol = new TableColumn<>("CREATED");
         createdCol.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
 
-        table.getColumns().setAll(titleCol, moduleCol, positionsCol, statusCol, createdCol);
+        table.getColumns().setAll(titleCol, idCol, moduleCol, positionsCol, statusCol, createdCol);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         table.setPrefHeight(620);
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldJob, newJob) -> updateDetail(newJob));
@@ -155,10 +180,14 @@ public class JobManagementController {
         detail.setPrefWidth(340);
 
         detailTitle.setStyle("-fx-font-size: 34px; -fx-font-weight: 800; -fx-text-fill: #1e293b;");
+        detailTitle.setWrapText(true);
+        detailSubtitle.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #64748b;");
+        detailSubtitle.setWrapText(true);
 
         Button viewApplicants = new Button("View All Applicants");
         viewApplicants.getStyleClass().add("primary-button");
         viewApplicants.setMaxWidth(Double.MAX_VALUE);
+        viewApplicants.setOnAction(event -> onViewApplicants());
 
         Button editJob = new Button("Edit Job Details");
         editJob.getStyleClass().add("secondary-button");
@@ -167,14 +196,32 @@ public class JobManagementController {
 
         detail.getChildren().addAll(
                 detailTitle,
+                detailSubtitle,
+                detailField("Job ID", detailJobId),
+                detailField("Module Code", detailModuleCode),
+                detailField("Module Name", detailModuleName),
+                detailField("Job Type", detailType),
                 detailField("Status", detailStatus),
+                detailField("Weekly Hours", detailWeeklyHours),
+                detailField("Positions", detailPositions),
                 detailField("Applicants", detailApplicants),
+                detailField("Deadline", detailDeadline),
                 detailField("Created", detailCreated),
+                detailField("Organiser ID", detailOrganiserId),
+                detailField("Required Skills", detailRequiredSkills),
+                detailField("Preferred Skills", detailPreferredSkills),
+                detailField("Description", detailDescription),
                 viewApplicants,
                 editJob
         );
 
-        HBox body = new HBox(16, listPanel, detail);
+        ScrollPane detailScroll = new ScrollPane(detail);
+        detailScroll.setFitToWidth(true);
+        detailScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        detailScroll.setPrefWidth(340);
+        detailScroll.getStyleClass().add("panel-card");
+
+        HBox body = new HBox(16, listPanel, detailScroll);
         HBox.setHgrow(listPanel, Priority.ALWAYS);
         return body;
     }
@@ -238,28 +285,116 @@ public class JobManagementController {
         refresh();
     }
 
-    private void refresh() {
-        List<Job> jobs = services.jobService().getJobsByOrganiser(user.getUserId());
-        table.setItems(FXCollections.observableArrayList(jobs));
-        if (!jobs.isEmpty()) {
-            table.getSelectionModel().selectFirst();
-        } else {
-            updateDetail(null);
+    private void onFilter() {
+        List<String> options = List.of("All Statuses", "OPEN", "DRAFT", "CLOSED", "EXPIRED");
+        String currentSelection = currentFilterStatus == null ? "All Statuses" : currentFilterStatus.name();
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(currentSelection, options);
+        dialog.setTitle("Filter Jobs");
+        dialog.setHeaderText("Filter jobs by status");
+        dialog.setContentText("Status:");
+        if (view.getScene() != null && view.getScene().getWindow() != null) {
+            dialog.initOwner(view.getScene().getWindow());
         }
+
+        Optional<String> selected = dialog.showAndWait();
+        if (selected.isEmpty()) {
+            return;
+        }
+
+        currentFilterStatus = "All Statuses".equals(selected.get()) ? null : JobStatus.valueOf(selected.get());
+        refresh();
+    }
+
+    private void onViewApplicants() {
+        Job selected = table.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showError("Please select one job first.");
+            return;
+        }
+        if (onViewApplicants != null) {
+            onViewApplicants.accept(selected);
+        }
+    }
+
+    private void refresh() {
+        Job previouslySelected = table.getSelectionModel().getSelectedItem();
+        String selectedJobId = previouslySelected == null ? null : previouslySelected.getJobId();
+
+        kpiRow = buildKpiRow();
+        page.getChildren().set(1, kpiRow);
+        List<Job> jobs = services.jobService().getJobsByOrganiser(user.getUserId());
+        if (currentFilterStatus != null) {
+            jobs = jobs.stream().filter(job -> job.getStatus() == currentFilterStatus).toList();
+        }
+        table.setItems(FXCollections.observableArrayList(jobs));
+        if (jobs.isEmpty()) {
+            updateDetail(null);
+            return;
+        }
+
+        if (selectedJobId != null) {
+            for (Job job : jobs) {
+                if (selectedJobId.equals(job.getJobId())) {
+                    table.getSelectionModel().select(job);
+                    return;
+                }
+            }
+        }
+
+        table.getSelectionModel().selectFirst();
     }
 
     private void updateDetail(Job job) {
         if (job == null) {
+            detailTitle.setText("No Job Selected");
+            detailSubtitle.setText("-");
+            detailJobId.setText("-");
+            detailModuleCode.setText("-");
+            detailModuleName.setText("-");
+            detailType.setText("-");
             detailStatus.setText("-");
+            detailWeeklyHours.setText("-");
+            detailPositions.setText("-");
             detailApplicants.setText("-");
+            detailDeadline.setText("-");
             detailCreated.setText("-");
+            detailOrganiserId.setText("-");
+            detailRequiredSkills.setText("-");
+            detailPreferredSkills.setText("-");
+            detailDescription.setText("-");
             return;
         }
 
         int applicantCount = services.applicationService().getApplicationsByJob(job.getJobId()).size();
+        detailTitle.setText(job.getTitle() == null || job.getTitle().isBlank() ? "Untitled Job" : job.getTitle());
+        detailSubtitle.setText(buildDetailSubtitle(job));
+        detailJobId.setText(job.getJobId() == null || job.getJobId().isBlank() ? "-" : job.getJobId());
+        detailModuleCode.setText(job.getModuleCode() == null || job.getModuleCode().isBlank() ? "-" : job.getModuleCode());
+        detailModuleName.setText(job.getModuleName() == null || job.getModuleName().isBlank() ? "-" : job.getModuleName());
+        detailType.setText(job.getType() == null ? "-" : job.getType().name());
         detailStatus.setText(job.getStatus().name());
+        detailWeeklyHours.setText(String.valueOf(job.getWeeklyHours()));
+        detailPositions.setText(String.valueOf(job.getPositions()));
         detailApplicants.setText(String.valueOf(applicantCount));
+        detailDeadline.setText(job.getDeadline() == null ? "-" : job.getDeadline().toString());
         detailCreated.setText(job.getCreatedAt() == null ? "-" : job.getCreatedAt().toString());
+        detailOrganiserId.setText(job.getOrganiserId() == null || job.getOrganiserId().isBlank() ? "-" : job.getOrganiserId());
+        detailRequiredSkills.setText(formatList(job.getRequiredSkills()));
+        detailPreferredSkills.setText(formatList(job.getPreferredSkills()));
+        detailDescription.setText(job.getDescription() == null || job.getDescription().isBlank() ? "-" : job.getDescription());
+    }
+
+    private String buildDetailSubtitle(Job job) {
+        String moduleCode = job.getModuleCode() == null || job.getModuleCode().isBlank() ? "No Module Code" : job.getModuleCode();
+        String status = job.getStatus() == null ? "UNKNOWN" : job.getStatus().name();
+        return moduleCode + " | " + status;
+    }
+
+    private String formatList(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return "-";
+        }
+        return String.join(", ", values);
     }
 
     private void showError(String message) {

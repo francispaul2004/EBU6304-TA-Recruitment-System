@@ -29,6 +29,7 @@ public class ApplicantListController {
 
     private final ServiceRegistry services;
     private final User user;
+    private final String preferredJobId;
     private final BorderPane view = new BorderPane();
 
     private final ComboBox<Job> jobSelector = new ComboBox<>();
@@ -39,8 +40,13 @@ public class ApplicantListController {
     private Row selectedRow;
 
     public ApplicantListController(ServiceRegistry services, User user) {
+        this(services, user, null);
+    }
+
+    public ApplicantListController(ServiceRegistry services, User user, String preferredJobId) {
         this.services = services;
         this.user = user;
+        this.preferredJobId = preferredJobId;
         initialize();
         refreshJobs();
     }
@@ -153,9 +159,20 @@ public class ApplicantListController {
     private void refreshJobs() {
         List<Job> jobs = services.jobService().getJobsByOrganiser(user.getUserId());
         jobSelector.setItems(FXCollections.observableArrayList(jobs));
-        if (!jobs.isEmpty()) {
-            jobSelector.setValue(jobs.get(0));
+        if (jobs.isEmpty()) {
+            return;
         }
+
+        if (preferredJobId != null) {
+            for (Job job : jobs) {
+                if (preferredJobId.equals(job.getJobId())) {
+                    jobSelector.setValue(job);
+                    return;
+                }
+            }
+        }
+
+        jobSelector.setValue(jobs.get(0));
     }
 
     private void refreshApplications() {
