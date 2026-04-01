@@ -55,6 +55,7 @@ public class JobManagementController {
     private final Label detailJobId = new Label("-");
     private final Label detailModuleCode = new Label("-");
     private final Label detailModuleName = new Label("-");
+    private final Label detailSemester = new Label("-");
     private final Label detailType = new Label("-");
     private final Label detailStatus = new Label("-");
     private final Label detailWeeklyHours = new Label("-");
@@ -172,6 +173,9 @@ public class JobManagementController {
         TableColumn<Job, String> moduleCol = new TableColumn<>("MODULE");
         moduleCol.setCellValueFactory(new PropertyValueFactory<>("moduleCode"));
 
+        TableColumn<Job, String> semesterCol = new TableColumn<>("SEMESTER");
+        semesterCol.setCellValueFactory(new PropertyValueFactory<>("semester"));
+
         TableColumn<Job, Integer> positionsCol = new TableColumn<>("POSITIONS");
         positionsCol.setCellValueFactory(new PropertyValueFactory<>("positions"));
 
@@ -181,7 +185,7 @@ public class JobManagementController {
         TableColumn<Job, String> createdCol = new TableColumn<>("CREATED");
         createdCol.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
 
-        table.getColumns().setAll(titleCol, idCol, moduleCol, positionsCol, statusCol, createdCol);
+        table.getColumns().setAll(titleCol, idCol, moduleCol, semesterCol, positionsCol, statusCol, createdCol);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         table.setPrefHeight(620);
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldJob, newJob) -> {
@@ -227,6 +231,7 @@ public class JobManagementController {
                 detailField("Job ID", detailJobId),
                 detailField("Module Code", detailModuleCode),
                 detailField("Module Name", detailModuleName),
+                detailField("Semester", detailSemester),
                 detailField("Job Type", detailType),
                 detailField("Status", detailStatus),
                 detailGroupTitle("Recruitment"),
@@ -413,6 +418,7 @@ public class JobManagementController {
             detailJobId.setText("-");
             detailModuleCode.setText("-");
             detailModuleName.setText("-");
+            detailSemester.setText("-");
             detailType.setText("-");
             detailStatus.setText("-");
             detailStatus.setStyle(DETAIL_VALUE_STYLE);
@@ -434,6 +440,7 @@ public class JobManagementController {
         detailJobId.setText(job.getJobId() == null || job.getJobId().isBlank() ? "-" : job.getJobId());
         detailModuleCode.setText(job.getModuleCode() == null || job.getModuleCode().isBlank() ? "-" : job.getModuleCode());
         detailModuleName.setText(job.getModuleName() == null || job.getModuleName().isBlank() ? "-" : job.getModuleName());
+        detailSemester.setText(job.getSemester() == null || job.getSemester().isBlank() ? "-" : job.getSemester());
         detailType.setText(job.getType() == null ? "-" : job.getType().name());
         detailStatus.setText(job.getStatus().name());
         detailStatus.setStyle(statusStyle(job.getStatus()));

@@ -365,6 +365,7 @@ public class JobEditorController {
         if (source != null) {
             job.setJobId(source.getJobId());
             job.setCreatedAt(source.getCreatedAt());
+            job.setSemester(source.getSemester());
         }
         job.setTitle(trim(fields.title.getText()));
         job.setModuleCode(trim(fields.moduleCode.getText()));
