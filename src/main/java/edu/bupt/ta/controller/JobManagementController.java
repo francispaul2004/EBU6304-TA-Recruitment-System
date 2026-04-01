@@ -21,11 +21,20 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 public class JobManagementController {
+
+    private static final DateTimeFormatter DETAIL_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final String DETAIL_VALUE_STYLE = "-fx-font-size: 13px; -fx-text-fill: #334155;";
+    private static final String STATUS_OPEN_STYLE = "-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #047857; -fx-background-color: #dcfce7; -fx-background-radius: 999; -fx-padding: 3 8 3 8;";
+    private static final String STATUS_CLOSED_STYLE = "-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #475569; -fx-background-color: #e2e8f0; -fx-background-radius: 999; -fx-padding: 3 8 3 8;";
+    private static final String STATUS_EXPIRED_STYLE = "-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #b45309; -fx-background-color: #fef3c7; -fx-background-radius: 999; -fx-padding: 3 8 3 8;";
+    private static final String STATUS_DRAFT_STYLE = "-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #1d4ed8; -fx-background-color: #dbeafe; -fx-background-radius: 999; -fx-padding: 3 8 3 8;";
 
     private final ServiceRegistry services;
     private final User user;
@@ -33,6 +42,11 @@ public class JobManagementController {
     private final BorderPane view = new BorderPane();
     private final VBox page = new VBox(16);
     private final TableView<Job> table = new TableView<>();
+    private final VBox emptyState = new VBox(10);
+    private final Button editButton = new Button("Edit");
+    private final Button closeButton = new Button("Close Job");
+    private final Button viewApplicantsButton = new Button("View All Applicants");
+    private final Button editJobDetailsButton = new Button("Edit Job Details");
     private HBox kpiRow;
     private JobStatus currentFilterStatus;
 
@@ -100,13 +114,15 @@ public class JobManagementController {
     private HBox buildKpiRow() {
         List<Job> jobs = services.jobService().getJobsByOrganiser(user.getUserId());
         long open = jobs.stream().filter(job -> job.getStatus() == JobStatus.OPEN).count();
-        long closed = jobs.stream().filter(job -> job.getStatus() == JobStatus.CLOSED).count();
+        long closedOrExpired = jobs.stream()
+                .filter(job -> job.getStatus() == JobStatus.CLOSED || job.getStatus() == JobStatus.EXPIRED)
+                .count();
         long draft = jobs.stream().filter(job -> job.getStatus() == JobStatus.DRAFT).count();
 
         HBox row = new HBox(16,
                 kpiCard("Total Jobs", String.valueOf(jobs.size())),
                 kpiCard("Active Jobs", String.valueOf(open)),
-                kpiCard("Completed", String.valueOf(closed)),
+                kpiCard("Closed / Expired", String.valueOf(closedOrExpired)),
                 kpiCard("Draft", String.valueOf(draft))
         );
         return row;
@@ -135,19 +151,17 @@ public class JobManagementController {
         listPanel.setPadding(new Insets(14));
 
         HBox actions = new HBox(8);
-        Button edit = new Button("Edit");
-        edit.getStyleClass().add("secondary-button");
-        edit.setOnAction(event -> onEdit());
+        editButton.getStyleClass().add("secondary-button");
+        editButton.setOnAction(event -> onEdit());
 
-        Button close = new Button("Close Job");
-        close.getStyleClass().add("secondary-button");
-        close.setOnAction(event -> onClose());
+        closeButton.getStyleClass().add("secondary-button");
+        closeButton.setOnAction(event -> onClose());
 
         Button reload = new Button("Refresh");
         reload.getStyleClass().add("secondary-button");
         reload.setOnAction(event -> refresh());
 
-        actions.getChildren().addAll(edit, close, reload);
+        actions.getChildren().addAll(editButton, closeButton, reload);
 
         TableColumn<Job, String> titleCol = new TableColumn<>("JOB TITLE");
         titleCol.setCellValueFactory(new PropertyValueFactory<>("title"));
@@ -170,58 +184,77 @@ public class JobManagementController {
         table.getColumns().setAll(titleCol, idCol, moduleCol, positionsCol, statusCol, createdCol);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         table.setPrefHeight(620);
-        table.getSelectionModel().selectedItemProperty().addListener((obs, oldJob, newJob) -> updateDetail(newJob));
+        table.getSelectionModel().selectedItemProperty().addListener((obs, oldJob, newJob) -> {
+            updateActionButtons(newJob);
+            updateDetail(newJob);
+        });
 
-        listPanel.getChildren().addAll(actions, table);
+        emptyState.setPadding(new Insets(40, 20, 40, 20));
+        emptyState.setStyle("-fx-alignment: center;");
+        Label emptyTitle = new Label("No jobs yet");
+        emptyTitle.setStyle("-fx-font-size: 20px; -fx-font-weight: 700; -fx-text-fill: #1e293b;");
+        Label emptyHint = new Label("Create your first job post to start managing applications.");
+        emptyHint.setStyle("-fx-font-size: 13px; -fx-text-fill: #64748b;");
+        Button emptyCreate = new Button("+ Create New Job");
+        emptyCreate.getStyleClass().add("primary-button");
+        emptyCreate.setOnAction(event -> onCreate());
+        emptyState.getChildren().addAll(emptyTitle, emptyHint, emptyCreate);
+        emptyState.setVisible(false);
+        emptyState.setManaged(false);
 
-        VBox detail = new VBox(12);
-        detail.getStyleClass().add("panel-card");
-        detail.setPadding(new Insets(16));
-        detail.setPrefWidth(340);
+        listPanel.getChildren().addAll(actions, table, emptyState);
+
+        VBox detailContent = new VBox(12);
+        detailContent.setPadding(new Insets(16));
 
         detailTitle.setStyle("-fx-font-size: 34px; -fx-font-weight: 800; -fx-text-fill: #1e293b;");
         detailTitle.setWrapText(true);
         detailSubtitle.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #64748b;");
         detailSubtitle.setWrapText(true);
 
-        Button viewApplicants = new Button("View All Applicants");
-        viewApplicants.getStyleClass().add("primary-button");
-        viewApplicants.setMaxWidth(Double.MAX_VALUE);
-        viewApplicants.setOnAction(event -> onViewApplicants());
+        viewApplicantsButton.getStyleClass().add("primary-button");
+        viewApplicantsButton.setMaxWidth(Double.MAX_VALUE);
+        viewApplicantsButton.setOnAction(event -> onViewApplicants());
 
-        Button editJob = new Button("Edit Job Details");
-        editJob.getStyleClass().add("secondary-button");
-        editJob.setMaxWidth(Double.MAX_VALUE);
-        editJob.setOnAction(event -> onEdit());
+        editJobDetailsButton.getStyleClass().add("secondary-button");
+        editJobDetailsButton.setMaxWidth(Double.MAX_VALUE);
+        editJobDetailsButton.setOnAction(event -> onEdit());
 
-        detail.getChildren().addAll(
+        detailContent.getChildren().addAll(
                 detailTitle,
                 detailSubtitle,
+                detailGroupTitle("Basic"),
                 detailField("Job ID", detailJobId),
                 detailField("Module Code", detailModuleCode),
                 detailField("Module Name", detailModuleName),
                 detailField("Job Type", detailType),
                 detailField("Status", detailStatus),
+                detailGroupTitle("Recruitment"),
                 detailField("Weekly Hours", detailWeeklyHours),
                 detailField("Positions", detailPositions),
                 detailField("Applicants", detailApplicants),
                 detailField("Deadline", detailDeadline),
                 detailField("Created", detailCreated),
                 detailField("Organiser ID", detailOrganiserId),
+                detailGroupTitle("Requirements"),
                 detailField("Required Skills", detailRequiredSkills),
                 detailField("Preferred Skills", detailPreferredSkills),
-                detailField("Description", detailDescription),
-                viewApplicants,
-                editJob
+                detailField("Description", detailDescription)
         );
 
-        ScrollPane detailScroll = new ScrollPane(detail);
+        ScrollPane detailScroll = new ScrollPane(detailContent);
         detailScroll.setFitToWidth(true);
         detailScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         detailScroll.setPrefWidth(340);
-        detailScroll.getStyleClass().add("panel-card");
+        detailScroll.getStyleClass().add("detail-scroll");
+        VBox.setVgrow(detailScroll, Priority.ALWAYS);
 
-        HBox body = new HBox(16, listPanel, detailScroll);
+        VBox detailPanel = new VBox(12, detailScroll, viewApplicantsButton, editJobDetailsButton);
+        detailPanel.getStyleClass().add("panel-card");
+        detailPanel.setPadding(new Insets(16));
+        detailPanel.setPrefWidth(340);
+
+        HBox body = new HBox(16, listPanel, detailPanel);
         HBox.setHgrow(listPanel, Priority.ALWAYS);
         return body;
     }
@@ -230,10 +263,16 @@ public class JobManagementController {
         VBox box = new VBox(4);
         Label t = new Label(title);
         t.setStyle("-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #94a3b8;");
-        value.setStyle("-fx-font-size: 13px; -fx-text-fill: #334155;");
+        value.setStyle(DETAIL_VALUE_STYLE);
         value.setWrapText(true);
         box.getChildren().addAll(t, value);
         return box;
+    }
+
+    private Label detailGroupTitle(String text) {
+        Label label = new Label(text);
+        label.setStyle("-fx-font-size: 10px; -fx-font-weight: 800; -fx-text-fill: #64748b; -fx-letter-spacing: 0.8px;");
+        return label;
     }
 
     private void onCreate() {
@@ -279,7 +318,12 @@ public class JobManagementController {
         if (!confirmed) {
             return;
         }
-        services.jobService().closeJob(selected.getJobId(), user.getUserId());
+        ValidationResult result = services.jobService().closeJobWithValidation(selected.getJobId(), user.getUserId());
+        if (!result.isValid()) {
+            showError(String.join("\n", result.getErrors()));
+            refresh();
+            return;
+        }
         DialogControllerFactory.success("Job Closed", "The job was set to CLOSED successfully.",
                 view.getScene() == null ? null : view.getScene().getWindow());
         refresh();
@@ -328,9 +372,19 @@ public class JobManagementController {
         }
         table.setItems(FXCollections.observableArrayList(jobs));
         if (jobs.isEmpty()) {
+            table.setVisible(false);
+            table.setManaged(false);
+            emptyState.setVisible(true);
+            emptyState.setManaged(true);
+            updateActionButtons(null);
             updateDetail(null);
             return;
         }
+
+        table.setVisible(true);
+        table.setManaged(true);
+        emptyState.setVisible(false);
+        emptyState.setManaged(false);
 
         if (selectedJobId != null) {
             for (Job job : jobs) {
@@ -344,6 +398,14 @@ public class JobManagementController {
         table.getSelectionModel().selectFirst();
     }
 
+    private void updateActionButtons(Job selectedJob) {
+        boolean hasSelection = selectedJob != null;
+        editButton.setDisable(!hasSelection);
+        closeButton.setDisable(!hasSelection || selectedJob.getStatus() != JobStatus.OPEN);
+        viewApplicantsButton.setDisable(!hasSelection);
+        editJobDetailsButton.setDisable(!hasSelection);
+    }
+
     private void updateDetail(Job job) {
         if (job == null) {
             detailTitle.setText("No Job Selected");
@@ -353,6 +415,7 @@ public class JobManagementController {
             detailModuleName.setText("-");
             detailType.setText("-");
             detailStatus.setText("-");
+            detailStatus.setStyle(DETAIL_VALUE_STYLE);
             detailWeeklyHours.setText("-");
             detailPositions.setText("-");
             detailApplicants.setText("-");
@@ -373,11 +436,12 @@ public class JobManagementController {
         detailModuleName.setText(job.getModuleName() == null || job.getModuleName().isBlank() ? "-" : job.getModuleName());
         detailType.setText(job.getType() == null ? "-" : job.getType().name());
         detailStatus.setText(job.getStatus().name());
+        detailStatus.setStyle(statusStyle(job.getStatus()));
         detailWeeklyHours.setText(String.valueOf(job.getWeeklyHours()));
         detailPositions.setText(String.valueOf(job.getPositions()));
         detailApplicants.setText(String.valueOf(applicantCount));
         detailDeadline.setText(job.getDeadline() == null ? "-" : job.getDeadline().toString());
-        detailCreated.setText(job.getCreatedAt() == null ? "-" : job.getCreatedAt().toString());
+        detailCreated.setText(formatDateTime(job.getCreatedAt()));
         detailOrganiserId.setText(job.getOrganiserId() == null || job.getOrganiserId().isBlank() ? "-" : job.getOrganiserId());
         detailRequiredSkills.setText(formatList(job.getRequiredSkills()));
         detailPreferredSkills.setText(formatList(job.getPreferredSkills()));
@@ -395,6 +459,22 @@ public class JobManagementController {
             return "-";
         }
         return String.join(", ", values);
+    }
+
+    private String formatDateTime(LocalDateTime value) {
+        return value == null ? "-" : value.format(DETAIL_TIME_FORMAT);
+    }
+
+    private String statusStyle(JobStatus status) {
+        if (status == null) {
+            return DETAIL_VALUE_STYLE;
+        }
+        return switch (status) {
+            case OPEN -> STATUS_OPEN_STYLE;
+            case CLOSED -> STATUS_CLOSED_STYLE;
+            case EXPIRED -> STATUS_EXPIRED_STYLE;
+            case DRAFT -> STATUS_DRAFT_STYLE;
+        };
     }
 
     private void showError(String message) {
