@@ -7,6 +7,7 @@ import edu.bupt.ta.util.ValidationResult;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
@@ -26,7 +27,7 @@ public class ApplicantProfileController {
     private final TextField fullName = new TextField();
     private final TextField studentId = new TextField();
     private final TextField programme = new TextField();
-    private final TextField year = new TextField();
+    private final ComboBox<Integer> year = new ComboBox<>();
     private final TextField email = new TextField();
     private final TextField phone = new TextField();
 
@@ -49,6 +50,7 @@ public class ApplicantProfileController {
         root.setPadding(new Insets(4, 0, 0, 0));
 
         HBox header = new HBox();
+        header.setSpacing(14);
         Label heading = new Label("Edit Basic Information");
         heading.getStyleClass().add("section-title");
 
@@ -85,7 +87,7 @@ public class ApplicantProfileController {
         form.add(field("Full Name", fullName), 0, 0);
         form.add(field("Student ID", studentId), 1, 0);
         form.add(field("Email Address", email), 0, 1);
-        form.add(field("Academic Year", year), 1, 1);
+        form.add(yearField("Academic Year"), 1, 1);
         form.add(field("Phone Number", phone), 0, 2);
         form.add(field("Major", programme), 1, 2);
 
@@ -121,11 +123,24 @@ public class ApplicantProfileController {
         return box;
     }
 
+    private VBox yearField(String title) {
+        VBox box = new VBox(6);
+        box.setMaxWidth(Double.MAX_VALUE);
+        GridPane.setHgrow(box, Priority.ALWAYS);
+        Label label = new Label(title);
+        label.getStyleClass().add("field-label");
+        year.getItems().setAll(1, 2, 3, 4, 5, 6, 7, 8);
+        year.setPromptText("Select Year");
+        year.setMaxWidth(Double.MAX_VALUE);
+        box.getChildren().addAll(label, year);
+        return box;
+    }
+
     private void loadFromModel() {
         fullName.setText(nullToEmpty(profile.getFullName()));
         studentId.setText(nullToEmpty(profile.getStudentId()));
         programme.setText(nullToEmpty(profile.getProgramme()));
-        year.setText(profile.getYear() > 0 ? String.valueOf(profile.getYear()) : "");
+        year.setValue(profile.getYear() > 0 ? profile.getYear() : null);
         email.setText(nullToEmpty(profile.getEmail()));
         phone.setText(nullToEmpty(profile.getPhone()));
     }
@@ -136,11 +151,8 @@ public class ApplicantProfileController {
         profile.setProgramme(programme.getText());
         profile.setEmail(email.getText());
         profile.setPhone(phone.getText());
-        try {
-            profile.setYear(Integer.parseInt(year.getText()));
-        } catch (NumberFormatException e) {
-            profile.setYear(0);
-        }
+        Integer selectedYear = year.getValue();
+        profile.setYear(selectedYear == null ? 0 : selectedYear);
 
         ValidationResult result = services.applicantProfileService().saveProfile(profile);
         if (!result.isValid()) {

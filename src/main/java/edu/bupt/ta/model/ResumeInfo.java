@@ -15,6 +15,10 @@ public class ResumeInfo implements Identifiable<String> {
     private String personalStatement;
     private List<String> availability = new ArrayList<>();
     private int maxWeeklyHours;
+    private String cvFileName;
+    private String cvStoredPath;
+    private long cvFileSizeBytes;
+    private LocalDateTime cvUploadedAt;
     private LocalDateTime lastUpdated;
 
     public ResumeInfo() {
@@ -101,6 +105,38 @@ public class ResumeInfo implements Identifiable<String> {
 
     public void setMaxWeeklyHours(int maxWeeklyHours) {
         this.maxWeeklyHours = maxWeeklyHours;
+    }
+
+    public String getCvFileName() {
+        return cvFileName;
+    }
+
+    public void setCvFileName(String cvFileName) {
+        this.cvFileName = cvFileName;
+    }
+
+    public String getCvStoredPath() {
+        return cvStoredPath;
+    }
+
+    public void setCvStoredPath(String cvStoredPath) {
+        this.cvStoredPath = cvStoredPath;
+    }
+
+    public long getCvFileSizeBytes() {
+        return cvFileSizeBytes;
+    }
+
+    public void setCvFileSizeBytes(long cvFileSizeBytes) {
+        this.cvFileSizeBytes = cvFileSizeBytes;
+    }
+
+    public LocalDateTime getCvUploadedAt() {
+        return cvUploadedAt;
+    }
+
+    public void setCvUploadedAt(LocalDateTime cvUploadedAt) {
+        this.cvUploadedAt = cvUploadedAt;
     }
 
     public LocalDateTime getLastUpdated() {
