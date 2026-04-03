@@ -1,6 +1,7 @@
 package edu.bupt.ta.service;
 
 import edu.bupt.ta.dto.ApplicantReviewDTO;
+import edu.bupt.ta.dto.MatchExplanationDTO;
 import edu.bupt.ta.dto.WorkloadSummaryDTO;
 import edu.bupt.ta.enums.ApplicationStatus;
 import edu.bupt.ta.model.Application;
@@ -26,6 +27,7 @@ public class ReviewService {
     private final ResumeInfoRepository resumeInfoRepository;
     private final WorkloadService workloadService;
     private final AuditLogRepository auditLogRepository;
+    private final MatchingService matchingService;
 
     public ReviewService(ApplicationRepository applicationRepository,
                          JobRepository jobRepository,
@@ -33,12 +35,24 @@ public class ReviewService {
                          ResumeInfoRepository resumeInfoRepository,
                          WorkloadService workloadService,
                          AuditLogRepository auditLogRepository) {
+        this(applicationRepository, jobRepository, profileRepository, resumeInfoRepository,
+                workloadService, auditLogRepository, null);
+    }
+
+    public ReviewService(ApplicationRepository applicationRepository,
+                         JobRepository jobRepository,
+                         ApplicantProfileRepository profileRepository,
+                         ResumeInfoRepository resumeInfoRepository,
+                         WorkloadService workloadService,
+                         AuditLogRepository auditLogRepository,
+                         MatchingService matchingService) {
         this.applicationRepository = applicationRepository;
         this.jobRepository = jobRepository;
         this.profileRepository = profileRepository;
         this.resumeInfoRepository = resumeInfoRepository;
         this.workloadService = workloadService;
         this.auditLogRepository = auditLogRepository;
+        this.matchingService = matchingService;
     }
 
     public ValidationResult acceptApplication(String applicationId, String organiserId, String decisionNote) {
@@ -56,6 +70,11 @@ public class ReviewService {
         Job job = jobOpt.get();
         if (!organiserId.equals(job.getOrganiserId())) {
             return ValidationResult.fail("Permission denied: not your job.");
+        }
+
+        ValidationResult statusCheck = validateStatusTransition(application.getStatus(), ApplicationStatus.ACCEPTED);
+        if (!statusCheck.isValid()) {
+            return statusCheck;
         }
 
         application.setStatus(ApplicationStatus.ACCEPTED);
@@ -85,6 +104,11 @@ public class ReviewService {
             return ValidationResult.fail("Permission denied: not your job.");
         }
 
+        ValidationResult statusCheck = validateStatusTransition(application.getStatus(), ApplicationStatus.REJECTED);
+        if (!statusCheck.isValid()) {
+            return statusCheck;
+        }
+
         application.setStatus(ApplicationStatus.REJECTED);
         application.setDecisionNote(decisionNote == null ? "" : decisionNote.trim());
         applicationRepository.save(application);
@@ -103,6 +127,13 @@ public class ReviewService {
             throw new IllegalArgumentException("Permission denied.");
         }
 
+        if (application.getStatus() == ApplicationStatus.SUBMITTED) {
+            application.setStatus(ApplicationStatus.UNDER_REVIEW);
+            applicationRepository.save(application);
+            auditLogRepository.append(new AuditLogEntry(DateTimeUtils.now(), organiserId,
+                "MARK_UNDER_REVIEW", applicationId + " moved to UNDER_REVIEW"));
+        }
+
         String applicantId = application.getApplicantId();
         String applicantName = profileRepository.findById(applicantId)
                 .map(profile -> profile.getFullName())
@@ -110,6 +141,10 @@ public class ReviewService {
         ResumeInfo resume = resumeInfoRepository.findByApplicantId(applicantId).orElse(new ResumeInfo());
         WorkloadSummaryDTO workload = workloadService.getWorkload(applicantId);
         int projected = workloadService.calculateProjectedHours(applicantId, job.getJobId());
+
+        // Prepare match explanation retrieval without changing DTO/controller in this step.
+        // This will be used once the UI/DTO chain is extended.
+        getMatchExplanationIfAvailable(applicantId, job.getJobId());
 
         return new ApplicantReviewDTO(
                 applicationId,
@@ -125,5 +160,26 @@ public class ReviewService {
                 application.getMatchScore(),
                 application.getMissingSkills() == null ? List.of() : application.getMissingSkills()
         );
+    }
+
+    private ValidationResult validateStatusTransition(ApplicationStatus current, ApplicationStatus target) {
+        if (current == ApplicationStatus.ACCEPTED) {
+            return ValidationResult.fail("Application is already ACCEPTED.");
+        }
+        if (current == ApplicationStatus.REJECTED) {
+            return ValidationResult.fail("Application is already REJECTED.");
+        }
+        if (current != ApplicationStatus.SUBMITTED && current != ApplicationStatus.UNDER_REVIEW) {
+            return ValidationResult.fail("Invalid status transition from " + (current == null ? "null" : current.name())
+                    + " to " + target.name() + ".");
+        }
+        return ValidationResult.ok();
+    }
+
+    private Optional<MatchExplanationDTO> getMatchExplanationIfAvailable(String applicantId, String jobId) {
+        if (matchingService == null) {
+            return Optional.empty();
+        }
+        return Optional.of(matchingService.evaluateMatch(applicantId, jobId));
     }
 }
