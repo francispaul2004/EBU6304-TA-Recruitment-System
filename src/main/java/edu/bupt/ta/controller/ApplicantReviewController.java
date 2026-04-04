@@ -54,7 +54,9 @@ public class ApplicantReviewController {
                 info("Technical Skills", String.join(", ", dto.technicalSkills())),
                 info("Availability", String.join(", ", dto.availability())),
                 info("Match Score", dto.matchScore() + "%"),
+            info("Matched Skills", safeJoin(dto.matchedSkills())),
                 info("Missing Skills", dto.missingSkills().isEmpty() ? "None" : String.join(", ", dto.missingSkills())),
+            info("Match Explanation", blankToDash(dto.matchExplanation())),
                 info("Workload", "Current " + dto.currentHours() + "h, Projected " + dto.projectedHours()
                         + "h / Max " + dto.maxWeeklyHours() + "h (" + dto.riskLevel() + ")"),
                 info("Statement", dto.statement())
@@ -69,6 +71,7 @@ public class ApplicantReviewController {
 
         decisionNote.setPromptText("Add observation or justification for the recruitment decision...");
         decisionNote.setPrefRowCount(4);
+        decisionNote.setText(dto.decisionNote() == null ? "" : dto.decisionNote());
 
         noteCard.getChildren().addAll(noteLabel, decisionNote);
 
@@ -96,6 +99,17 @@ public class ApplicantReviewController {
         v.setStyle("-fx-font-size: 13px; -fx-text-fill: #334155;");
         box.getChildren().addAll(t, v);
         return box;
+    }
+
+    private String safeJoin(java.util.List<String> items) {
+        if (items == null || items.isEmpty()) {
+            return "None";
+        }
+        return String.join(", ", items);
+    }
+
+    private String blankToDash(String value) {
+        return value == null || value.isBlank() ? "-" : value;
     }
 
     private void doAccept() {
