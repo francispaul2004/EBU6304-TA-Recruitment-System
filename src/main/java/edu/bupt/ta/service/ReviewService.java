@@ -17,6 +17,8 @@ import edu.bupt.ta.util.DateTimeUtils;
 import edu.bupt.ta.util.ValidationResult;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Optional;
 
 public class ReviewService {
@@ -142,9 +144,15 @@ public class ReviewService {
         WorkloadSummaryDTO workload = workloadService.getWorkload(applicantId);
         int projected = workloadService.calculateProjectedHours(applicantId, job.getJobId());
 
-        // Prepare match explanation retrieval without changing DTO/controller in this step.
-        // This will be used once the UI/DTO chain is extended.
-        getMatchExplanationIfAvailable(applicantId, job.getJobId());
+        String decisionNote = application.getDecisionNote() == null ? "" : application.getDecisionNote();
+
+        MatchExplanationDTO match = getMatchExplanationIfAvailable(applicantId, job.getJobId()).orElse(null);
+        List<String> matchedSkills = (match == null)
+            ? deriveMatchedSkills(job.getRequiredSkills(), application.getMissingSkills())
+            : safeList(match.matchedSkills());
+        String matchExplanation = (match == null)
+            ? fallbackMatchExplanation(matchedSkills, application.getMissingSkills(), projected)
+            : (match.explanation() == null ? "" : match.explanation());
 
         return new ApplicantReviewDTO(
                 applicationId,
@@ -158,7 +166,10 @@ public class ReviewService {
                 workloadService.calculateRiskLevel(projected, workload.maxWeeklyHours()).name(),
                 application.getStatement(),
                 application.getMatchScore(),
-                application.getMissingSkills() == null ? List.of() : application.getMissingSkills()
+            application.getMissingSkills() == null ? List.of() : application.getMissingSkills(),
+            matchedSkills,
+            matchExplanation,
+            decisionNote
         );
     }
 
@@ -181,5 +192,40 @@ public class ReviewService {
             return Optional.empty();
         }
         return Optional.of(matchingService.evaluateMatch(applicantId, jobId));
+    }
+
+    private List<String> deriveMatchedSkills(List<String> requiredSkills, List<String> missingSkills) {
+        List<String> required = safeList(requiredSkills);
+        List<String> missing = safeList(missingSkills);
+
+        List<String> matched = new ArrayList<>();
+        for (String req : required) {
+            if (req == null || req.isBlank()) {
+                continue;
+            }
+            boolean isMissing = missing.stream().anyMatch(m -> equalsIgnoreCaseTrimmed(m, req));
+            if (!isMissing) {
+                matched.add(req);
+            }
+        }
+        return matched;
+    }
+
+    private String fallbackMatchExplanation(List<String> matchedSkills, List<String> missingSkills, int projectedHours) {
+        int matchedCount = safeList(matchedSkills).size();
+        int missingCount = safeList(missingSkills).size();
+        return "Required skills matched " + matchedCount + ", missing " + missingCount
+                + "; projected workload " + projectedHours + "h/week.";
+    }
+
+    private boolean equalsIgnoreCaseTrimmed(String left, String right) {
+        if (left == null || right == null) {
+            return false;
+        }
+        return left.trim().equalsIgnoreCase(right.trim());
+    }
+
+    private <T> List<T> safeList(List<T> values) {
+        return values == null ? List.of() : values;
     }
 }
