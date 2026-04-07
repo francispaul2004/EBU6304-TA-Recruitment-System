@@ -10,6 +10,7 @@ import org.junit.jupiter.api.io.TempDir;
 import support.TestDataSupport;
 
 import java.nio.file.Path;
+import java.nio.file.Files;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,5 +46,23 @@ class ResumeServiceTest {
         resume.setMaxWeeklyHours(0);
         var result = service.saveResume(resume);
         assertFalse(result.isValid());
+    }
+
+    @Test
+    void shouldUploadAndDeleteCvFile() throws Exception {
+        Path source = tempDir.resolve("demo-cv.pdf");
+        Files.writeString(source, "demo-cv-content");
+
+        var uploadResult = service.uploadCvFile("A001", source);
+        assertTrue(uploadResult.isValid());
+
+        ResumeInfo resume = service.getOrCreateResume("A001");
+        assertEquals("demo-cv.pdf", resume.getCvFileName());
+        assertNotNull(resume.getCvStoredPath());
+        assertTrue(Files.exists(Path.of(resume.getCvStoredPath())));
+
+        var deleteResult = service.deleteCvFile("A001");
+        assertTrue(deleteResult.isValid());
+        assertNull(service.getOrCreateResume("A001").getCvStoredPath());
     }
 }

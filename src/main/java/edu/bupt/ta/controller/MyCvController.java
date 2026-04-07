@@ -12,6 +12,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
@@ -24,7 +25,12 @@ import javafx.scene.layout.VBox;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.awt.Desktop;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
+import javafx.stage.FileChooser;
 
 public class MyCvController {
 
@@ -35,6 +41,7 @@ public class MyCvController {
     private final Runnable browseJobsAction;
     private final BorderPane view = new BorderPane();
     private final ScrollPane scrollPane = new ScrollPane();
+    private final String applicantId;
     private VBox pageRoot;
     private final VBox editorSection = new VBox(16);
 
@@ -46,6 +53,7 @@ public class MyCvController {
     public MyCvController(ServiceRegistry services, User user, Runnable browseJobsAction) {
         this.services = services;
         this.user = user;
+        this.applicantId = services.applicantProfileService().getOrCreateProfile(user.getUserId()).getApplicantId();
         this.browseJobsAction = browseJobsAction == null ? () -> {
         } : browseJobsAction;
         initialize();
@@ -62,8 +70,8 @@ public class MyCvController {
         editorSection.setMaxWidth(Double.MAX_VALUE);
 
         ApplicantProfile profile = services.applicantProfileService().getOrCreateProfile(user.getUserId());
-        ResumeInfo resume = services.resumeService().getOrCreateResume(profile.getApplicantId());
-        int resumeCompletion = services.resumeService().calculateResumeCompletion(profile.getApplicantId());
+        ResumeInfo resume = services.resumeService().getOrCreateResume(applicantId);
+        int resumeCompletion = services.resumeService().calculateResumeCompletion(applicantId);
 
         pageRoot = new VBox(24);
         pageRoot.getStyleClass().add("cv-page");
@@ -157,8 +165,8 @@ public class MyCvController {
         VBox card = new VBox(20);
         card.getStyleClass().add("cv-card");
         card.getStyleClass().add("cv-upload-card");
-        card.setPadding(new Insets(32));
-        card.setPrefHeight(414);
+        card.setPadding(new Insets(24));
+        card.setPrefHeight(470);
         card.setMaxWidth(Double.MAX_VALUE);
 
         VBox header = new VBox(4);
@@ -172,13 +180,13 @@ public class MyCvController {
 
         StackPane dropZone = new StackPane();
         dropZone.getStyleClass().add("cv-upload-zone");
-        dropZone.setMinHeight(286);
-        dropZone.setPrefHeight(286);
+        dropZone.setMinHeight(340);
+        dropZone.setPrefHeight(340);
         dropZone.setMaxWidth(Double.MAX_VALUE);
 
         VBox dropContent = new VBox(12);
         dropContent.setAlignment(Pos.CENTER);
-        dropContent.setMaxWidth(255);
+        dropContent.setMaxWidth(300);
 
         StackPane uploadIcon = iconBubble("↑", "cv-drop-icon", "cv-drop-icon-label");
         uploadIcon.setPrefSize(64, 64);
@@ -188,16 +196,16 @@ public class MyCvController {
         Label prompt = new Label("Click to upload or drag and drop");
         prompt.getStyleClass().add("cv-upload-copy");
         prompt.setWrapText(true);
-        prompt.setMaxWidth(255);
+        prompt.setMaxWidth(320);
 
         Label helper = new Label("Your file will be automatically parsed for your profile");
         helper.getStyleClass().add("cv-upload-hint");
         helper.setWrapText(true);
-        helper.setMaxWidth(255);
+        helper.setMaxWidth(320);
 
         Button selectFile = new Button("Select File");
         selectFile.getStyleClass().add("cv-primary-button");
-        selectFile.setOnAction(event -> showResumeEditor());
+        selectFile.setOnAction(event -> handleUploadCv());
 
         dropContent.getChildren().addAll(uploadIcon, prompt, helper, selectFile);
         dropZone.getChildren().add(dropContent);
@@ -223,10 +231,11 @@ public class MyCvController {
         badge.setMaxSize(48, 48);
 
         VBox headerCopy = new VBox(2);
-        Label statusTitle = new Label(resumeCompletion >= 80 ? "CV Uploaded Successfully" : "CV In Progress");
+        boolean hasUploadedCv = hasUploadedCv(resume);
+        Label statusTitle = new Label(hasUploadedCv ? "CV Uploaded Successfully" : "CV In Progress");
         statusTitle.getStyleClass().add("cv-status-title");
 
-        Label statusSubtitle = new Label(resumeCompletion >= 80 ? "Verification Complete" : "Awaiting Completion");
+        Label statusSubtitle = new Label(hasUploadedCv ? "Verification Complete" : "Awaiting Completion");
         statusSubtitle.getStyleClass().add("cv-status-subtitle");
 
         headerCopy.getChildren().addAll(statusTitle, statusSubtitle);
@@ -245,15 +254,26 @@ public class MyCvController {
         VBox fileCopy = new VBox(2);
         fileCopy.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(fileCopy, Priority.ALWAYS);
-        Label fileTitle = new Label(buildResumeLabel(profile));
+        Label fileTitle = new Label(buildResumeLabel(profile, resume));
         fileTitle.getStyleClass().add("cv-file-title");
 
         Label fileMeta = new Label(buildResumeMeta(resume, resumeCompletion));
         fileMeta.getStyleClass().add("cv-file-meta");
 
         fileCopy.getChildren().addAll(fileTitle, fileMeta);
+        Button openFile = new Button("👁");
+        openFile.getStyleClass().add("secondary-button");
+        openFile.setTooltip(new Tooltip("Open CV file"));
+        openFile.setOnAction(event -> openCvFile());
+        openFile.setDisable(!hasUploadedCv);
 
-        fileRow.getChildren().addAll(fileIcon, fileCopy);
+        Button deleteFile = new Button("🗑");
+        deleteFile.getStyleClass().add("danger-outline");
+        deleteFile.setTooltip(new Tooltip("Delete CV file"));
+        deleteFile.setOnAction(event -> deleteCvFile());
+        deleteFile.setDisable(!hasUploadedCv);
+
+        fileRow.getChildren().addAll(fileIcon, fileCopy, openFile, deleteFile);
 
         VBox nextSteps = new VBox(16);
 
@@ -374,10 +394,6 @@ public class MyCvController {
         return bubble;
     }
 
-    private void showResumeEditor() {
-        showEditor("Resume Information", new ResumeInfoController(services, user).getView());
-    }
-
     private void showProfileEditor() {
         showEditor("Edit Basic Information", new ApplicantProfileController(services, user).getView());
     }
@@ -426,17 +442,12 @@ public class MyCvController {
         });
     }
 
-    private String buildResumeLabel(ApplicantProfile profile) {
-        String name = safe(profile.getFullName()).replaceAll("\\s+", "_");
-        if (name.equals("-")) {
-            return "Structured_CV.pdf";
-        }
-        return name + "_CV.pdf";
-    }
-
     private String buildResumeMeta(ResumeInfo resume, int resumeCompletion) {
-        LocalDateTime updated = resume.getLastUpdated();
+        LocalDateTime updated = resume.getCvUploadedAt() == null ? resume.getLastUpdated() : resume.getCvUploadedAt();
         String updatedText = updated == null ? "Not updated yet" : formatUpdated(updated);
+        if (hasUploadedCv(resume)) {
+            return readableSize(resume.getCvFileSizeBytes()) + " • " + updatedText;
+        }
         return resumeCompletion + "% complete • " + updatedText;
     }
 
@@ -460,5 +471,103 @@ public class MyCvController {
 
     private String safe(String value) {
         return value == null || value.isBlank() ? "-" : value;
+    }
+
+    private void handleUploadCv() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Select CV File");
+        chooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("CV files", "*.pdf", "*.docx"),
+                new FileChooser.ExtensionFilter("PDF files", "*.pdf"),
+                new FileChooser.ExtensionFilter("DOCX files", "*.docx")
+        );
+        Path selected = Optional.ofNullable(chooser.showOpenDialog(
+                        view.getScene() == null ? null : view.getScene().getWindow()))
+                .map(java.io.File::toPath)
+                .orElse(null);
+        if (selected == null) {
+            return;
+        }
+        var result = services.resumeService().uploadCvFile(applicantId, selected);
+        if (!result.isValid()) {
+            DialogControllerFactory.validationError(String.join("\n", result.getErrors()),
+                    view.getScene() == null ? null : view.getScene().getWindow());
+            return;
+        }
+        DialogControllerFactory.success("CV Uploaded", "CV uploaded successfully.",
+                view.getScene() == null ? null : view.getScene().getWindow());
+        reloadPage();
+    }
+
+    private void openCvFile() {
+        Optional<Path> filePath = services.resumeService().getCvFilePath(applicantId);
+        if (filePath.isEmpty()) {
+            DialogControllerFactory.info("CV Not Found", "No uploaded CV file exists for this account.",
+                    view.getScene() == null ? null : view.getScene().getWindow());
+            reloadPage();
+            return;
+        }
+        try {
+            if (!Desktop.isDesktopSupported()) {
+                DialogControllerFactory.operationFailed("Open CV Failed",
+                        "Desktop open action is not supported in this environment.",
+                        view.getScene() == null ? null : view.getScene().getWindow());
+                return;
+            }
+            Desktop.getDesktop().open(filePath.get().toFile());
+        } catch (IOException e) {
+            DialogControllerFactory.operationFailed("Open CV Failed",
+                    "Unable to open file: " + e.getMessage(),
+                    view.getScene() == null ? null : view.getScene().getWindow());
+        }
+    }
+
+    private void deleteCvFile() {
+        boolean confirmed = DialogControllerFactory.confirmAction("Delete CV",
+                "Are you sure you want to remove the uploaded CV file?",
+                view.getScene() == null ? null : view.getScene().getWindow());
+        if (!confirmed) {
+            return;
+        }
+        var result = services.resumeService().deleteCvFile(applicantId);
+        if (!result.isValid()) {
+            DialogControllerFactory.operationFailed("Delete CV Failed", String.join("\n", result.getErrors()),
+                    view.getScene() == null ? null : view.getScene().getWindow());
+            return;
+        }
+        DialogControllerFactory.success("CV Deleted", "The uploaded CV file has been removed.",
+                view.getScene() == null ? null : view.getScene().getWindow());
+        reloadPage();
+    }
+
+    private void reloadPage() {
+        hideEditor();
+        initialize();
+    }
+
+    private boolean hasUploadedCv(ResumeInfo resume) {
+        return resume.getCvStoredPath() != null && !resume.getCvStoredPath().isBlank()
+                && resume.getCvFileName() != null && !resume.getCvFileName().isBlank();
+    }
+
+    private String buildResumeLabel(ApplicantProfile profile, ResumeInfo resume) {
+        if (hasUploadedCv(resume)) {
+            return resume.getCvFileName();
+        }
+        String name = safe(profile.getFullName()).replaceAll("\\s+", "_");
+        if (name.equals("-")) {
+            return "Structured_CV.pdf";
+        }
+        return name + "_CV.pdf";
+    }
+
+    private String readableSize(long bytes) {
+        if (bytes <= 0) {
+            return "0 KB";
+        }
+        if (bytes < 1024 * 1024) {
+            return Math.max(1, bytes / 1024) + " KB";
+        }
+        return String.format("%.1f MB", bytes / 1024.0 / 1024.0);
     }
 }
