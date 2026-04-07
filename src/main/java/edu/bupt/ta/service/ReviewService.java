@@ -174,17 +174,50 @@ public class ReviewService {
     }
 
     private ValidationResult validateStatusTransition(ApplicationStatus current, ApplicationStatus target) {
-        if (current == ApplicationStatus.ACCEPTED) {
-            return ValidationResult.fail("Application is already ACCEPTED.");
+        if (target == null) {
+            return ValidationResult.fail("Target status is required.");
         }
-        if (current == ApplicationStatus.REJECTED) {
-            return ValidationResult.fail("Application is already REJECTED.");
+
+        if (current == null) {
+            return ValidationResult.fail("Current status is missing.");
         }
-        if (current != ApplicationStatus.SUBMITTED && current != ApplicationStatus.UNDER_REVIEW) {
-            return ValidationResult.fail("Invalid status transition from " + (current == null ? "null" : current.name())
-                    + " to " + target.name() + ".");
+
+        if (current == target) {
+            return ValidationResult.fail("No status change: application is already " + target.name() + ".");
         }
-        return ValidationResult.ok();
+
+        // Business rules:
+        // - SUBMITTED -> UNDER_REVIEW (handled elsewhere)
+        // - UNDER_REVIEW -> ACCEPTED / REJECTED
+        // - REJECTED -> ACCEPTED allowed
+        // - ACCEPTED -> REJECTED not allowed
+        return switch (target) {
+            case ACCEPTED -> {
+                if (current == ApplicationStatus.ACCEPTED) {
+                    yield ValidationResult.fail("Application is already ACCEPTED.");
+                }
+                if (current == ApplicationStatus.SUBMITTED
+                        || current == ApplicationStatus.UNDER_REVIEW
+                        || current == ApplicationStatus.REJECTED) {
+                    yield ValidationResult.ok();
+                }
+                yield ValidationResult.fail("Invalid status transition from " + current.name() + " to ACCEPTED.");
+            }
+            case REJECTED -> {
+                if (current == ApplicationStatus.ACCEPTED) {
+                    yield ValidationResult.fail("Cannot reject an ACCEPTED application.");
+                }
+                if (current == ApplicationStatus.REJECTED) {
+                    yield ValidationResult.fail("Application is already REJECTED.");
+                }
+                if (current == ApplicationStatus.SUBMITTED || current == ApplicationStatus.UNDER_REVIEW) {
+                    yield ValidationResult.ok();
+                }
+                yield ValidationResult.fail("Invalid status transition from " + current.name() + " to REJECTED.");
+            }
+            case SUBMITTED, UNDER_REVIEW -> ValidationResult.fail(
+                    "Direct transition to " + target.name() + " is not supported here.");
+        };
     }
 
     private Optional<MatchExplanationDTO> getMatchExplanationIfAvailable(String applicantId, String jobId) {
