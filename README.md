@@ -7,11 +7,50 @@ Software Engineering Group Project for EBU6304 – Teaching Assistant Recruitmen
 | Name | GitHub ID | BUPT ID | QM ID | Email |
 |---|---|---|---|---|
 | Haocheng Gao | francispaul2004 | 2023213304 | 231220873 | jp2023213304@qmul.ac.uk |
-| Xinshuang Liu | Jhon0213 | 2023213305 | 213221283 | jp2023213305@qmul.ac.uk |
+| Xinshuang Liu | Jhon0213 | 2023213305 | 231221283 | jp2023213305@qmul.ac.uk |
 | Chuan Yu | chuan123123456 | 2023213272 | 231221700 | jp2023213272@qmul.ac.uk |
 | Ziqi Gao | Max | 2023213316 | 231221250 | jp2023213316@qmul.ac.uk |
 | Xianggan Xu | Gnaixux | 2023213306 | 231221412 | jp2023213306@qmul.ac.uk |
 | Zhibo Zhang | iapetuszzb | 2023213278 | 231221777 | jp2023213278@qmul.ac.uk |
+
+## Group Task Allocation
+
+To improve development efficiency, Group40 assigned each member to take primary responsibility for a core module. These responsibilities reflect the main implementation focus of each member, while all members were still expected to contribute across the project lifecycle through discussion, integration, testing, and refinement.
+
+Haocheng Gao – User and Identity Module & Style Framework
+- System styling and UI framework
+- Login functionality
+- Role management
+- Account information management
+
+Zhibo Zhang – Applicant Profile and CV Module
+- Profile editing
+- CV file upload
+- CV management
+
+Chuan Yu – Job Browsing and Application Module
+- Job list
+- Job details
+- Application submission
+- My applications
+
+Xinshuang Liu – MO Job Management Module
+- Create job postings
+- Edit job postings
+- Close job postings
+- Job status management
+
+Xianggan Xu – Review and Offer Module
+- View applicants
+- Review decisions
+- Matching explanations
+- Offer result flow management
+
+Ziqi Gao – Administrator Monitoring and Reporting Module
+- Dashboard
+- Workload statistics
+- Export reports
+- Audit logs
 
 ## Project Overview
 

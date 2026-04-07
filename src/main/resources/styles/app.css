@@ -100,22 +100,140 @@
 .text-field,
 .password-field,
 .combo-box,
+.combo-box-base,
+.choice-box,
 .date-picker,
 .text-area {
     -fx-background-color: white;
     -fx-border-color: #cbd5e1;
     -fx-border-radius: 8;
     -fx-background-radius: 8;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
 }
 
 .text-field,
 .password-field,
 .combo-box,
+.combo-box-base,
+.choice-box,
 .date-picker {
     -fx-pref-height: 42;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
 }
 
 .text-area .content {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+}
+
+.text-field:focused,
+.password-field:focused,
+.combo-box:focused,
+.combo-box-base:focused,
+.choice-box:focused,
+.date-picker:focused,
+.text-area:focused {
+    -fx-background-color: white;
+    -fx-border-color: #00c29f;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.combo-box:focused,
+.combo-box-base:focused,
+.date-picker:focused {
+    -fx-background-insets: 0;
+}
+
+.combo-box-base > .list-cell,
+.combo-box > .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 0 12 0 12;
+    -fx-text-fill: #334155;
+}
+
+.combo-box-base:focused > .list-cell,
+.combo-box:focused > .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 0 12 0 12;
+}
+
+.combo-box-base > .arrow-button,
+.combo-box > .arrow-button,
+.date-picker > .arrow-button {
+    -fx-background-color: #f8fafc;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0 8 8 0;
+    -fx-border-width: 0 0 0 1;
+    -fx-border-color: #cbd5e1;
+    -fx-padding: 0 12 0 12;
+}
+
+.date-picker:focused > .arrow-button,
+.combo-box:focused > .arrow-button,
+.combo-box-base:focused > .arrow-button {
+    -fx-background-color: #f8fafc;
+    -fx-background-radius: 0 8 8 0;
+    -fx-border-width: 0 0 0 1;
+    -fx-border-color: #00c29f;
+    -fx-padding: 0 12 0 12;
+}
+
+.date-picker > .text-field {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
+    -fx-padding: 0 12 0 12;
+}
+
+.date-picker:focused > .text-field {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
+    -fx-padding: 0 12 0 12;
+}
+
+.status-selector > .list-cell,
+.status-selector:focused > .list-cell {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0 12 0 12;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.status-selector {
+    -fx-background-color: white;
+    -fx-border-color: #cbd5e1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 0 12 0 12;
+}
+
+.status-selector:focused {
+    -fx-border-color: #00c29f;
+}
+
+.status-selector > .label {
+    -fx-text-fill: #334155;
+    -fx-padding: 0;
+}
+
+.status-selector > .open-button {
+    -fx-background-color: #f8fafc;
+    -fx-background-radius: 0 8 8 0;
+    -fx-border-color: #cbd5e1;
+    -fx-border-width: 0 0 0 1;
+}
+
+.combo-box-popup .list-view .list-cell {
+    -fx-alignment: CENTER_LEFT;
+}
+
+.text-area:focused .content {
     -fx-background-color: white;
     -fx-background-radius: 8;
 }
@@ -176,6 +294,12 @@
     -fx-font-size: 14px;
     -fx-font-weight: 600;
     -fx-text-fill: #334155;
+}
+
+.required-asterisk {
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #dc2626;
 }
 
 .login-footer-links {
@@ -300,6 +424,36 @@
 .table-view .column-header-background {
     -fx-background-color: #f8fafc;
     -fx-background-radius: 12 12 0 0;
+}
+
+.detail-scroll {
+    -fx-background-color: white;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 0;
+}
+
+.detail-scroll > .viewport {
+    -fx-background-color: white;
+}
+
+.detail-scroll > .corner {
+    -fx-background-color: white;
+}
+
+.detail-scroll .scroll-bar:vertical {
+    -fx-background-color: white;
+}
+
+.detail-scroll .scroll-bar:vertical .track {
+    -fx-background-color: #f8fafc;
+    -fx-background-radius: 999;
+}
+
+.detail-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: #cbd5e1;
+    -fx-background-radius: 999;
 }
 
 /* Dialogs */

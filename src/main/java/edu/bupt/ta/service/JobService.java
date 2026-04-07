@@ -68,19 +68,27 @@ public class JobService {
     }
 
     public void closeJob(String jobId, String organiserId) {
+        closeJobWithValidation(jobId, organiserId);
+    }
+
+    public ValidationResult closeJobWithValidation(String jobId, String organiserId) {
         Optional<Job> jobOpt = jobRepository.findById(jobId);
         if (jobOpt.isEmpty()) {
-            return;
+            return ValidationResult.fail("Job not found.");
         }
         Job job = jobOpt.get();
         if (!job.getOrganiserId().equals(organiserId)) {
-            return;
+            return ValidationResult.fail("You can only close your own jobs.");
+        }
+        if (job.getStatus() != JobStatus.OPEN) {
+            return ValidationResult.fail("Only OPEN jobs can be closed.");
         }
 
         job.setStatus(JobStatus.CLOSED);
         jobRepository.save(job);
         auditLogRepository.append(new AuditLogEntry(DateTimeUtils.now(), organiserId, "CLOSE_JOB",
                 jobId + " set to CLOSED"));
+        return ValidationResult.ok();
     }
 
     public List<Job> searchJobs(JobSearchCriteria criteria) {
