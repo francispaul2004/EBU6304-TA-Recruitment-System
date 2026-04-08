@@ -185,6 +185,7 @@ public class ReviewService {
                 workload.maxWeeklyHours(),
                 workloadService.calculateRiskLevel(projected, workload.maxWeeklyHours()).name(),
                 application.getStatement(),
+                application.getDecisionNote(),
                 application.getMatchScore(),
             application.getMissingSkills() == null ? List.of() : application.getMissingSkills(),
             matchedSkills,
