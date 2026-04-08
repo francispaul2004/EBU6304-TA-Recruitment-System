@@ -164,8 +164,6 @@ public class ReviewService {
         WorkloadSummaryDTO workload = workloadService.getWorkload(applicantId);
         int projected = workloadService.calculateProjectedHours(applicantId, job.getJobId());
 
-        String decisionNote = application.getDecisionNote() == null ? "" : application.getDecisionNote();
-
         MatchExplanationDTO match = getMatchExplanationIfAvailable(applicantId, job.getJobId()).orElse(null);
         List<String> matchedSkills = (match == null)
             ? deriveMatchedSkills(job.getRequiredSkills(), application.getMissingSkills())
@@ -185,12 +183,10 @@ public class ReviewService {
                 workload.maxWeeklyHours(),
                 workloadService.calculateRiskLevel(projected, workload.maxWeeklyHours()).name(),
                 application.getStatement(),
-                application.getDecisionNote(),
                 application.getMatchScore(),
-            application.getMissingSkills() == null ? List.of() : application.getMissingSkills(),
-            matchedSkills,
-            matchExplanation,
-            decisionNote
+                application.getMissingSkills() == null ? List.of() : application.getMissingSkills(),
+                matchedSkills,
+                matchExplanation
         );
     }
 
@@ -240,7 +236,7 @@ public class ReviewService {
                 }
                 yield ValidationResult.fail("Invalid status transition from " + current.name() + " to REJECTED.");
             }
-            case SUBMITTED, UNDER_REVIEW -> ValidationResult.fail(
+            case SUBMITTED, UNDER_REVIEW, CANCELLED -> ValidationResult.fail(
                     "Direct transition to " + target.name() + " is not supported here.");
         };
     }

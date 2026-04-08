@@ -2,8 +2,10 @@ package edu.bupt.ta.controller;
 
 import edu.bupt.ta.dto.JobSearchCriteria;
 import edu.bupt.ta.dto.MatchExplanationDTO;
+import edu.bupt.ta.enums.ApplicationStatus;
 import edu.bupt.ta.enums.JobStatus;
 import edu.bupt.ta.enums.Role;
+import edu.bupt.ta.model.ApplicantProfile;
 import edu.bupt.ta.model.Job;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
@@ -21,8 +23,11 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,7 +39,7 @@ public class JobBrowserController {
 
     private final TextField keywordField = new TextField();
     private final ComboBox<String> statusFilter = new ComboBox<>();
-    private final ListView<Job> jobList = new ListView<>();
+    private final ListView<JobWithApplication> jobList = new ListView<>();
     private final JobDetailController jobDetailController = new JobDetailController();
 
     public JobBrowserController(ServiceRegistry services, User user) {
@@ -64,6 +69,7 @@ public class JobBrowserController {
 
         jobList.setCellFactory(param -> new JobCardCell());
         jobList.setPrefHeight(760);
+        jobList.setStyle("-fx-padding: 0 10 0 0;");
         VBox.setVgrow(jobList, Priority.ALWAYS);
 
         listPanel.getChildren().addAll(listTitle, jobList);
@@ -73,22 +79,71 @@ public class JobBrowserController {
         view.setCenter(content);
 
         jobList.getSelectionModel().selectedItemProperty().addListener((obs, oldValue, newValue) -> {
-            jobDetailController.setJob(newValue);
-            updateMatchExplanation(newValue);
+            if (newValue != null) {
+                jobDetailController.setJobWithApplicationStatus(newValue.job, getCurrentApplicantId(), newValue.appStatus);
+                updateMatchExplanation(newValue.job);
+            } else {
+                jobDetailController.setJob(null);
+                updateMatchExplanation(null);
+            }
         });
 
-        jobDetailController.setOnApply(statement -> {
-            Job selected = jobList.getSelectionModel().getSelectedItem();
+        jobDetailController.setOnApply(() -> {
+            JobWithApplication selected = jobList.getSelectionModel().getSelectedItem();
+            if (selected == null) {
+                return;
+            }
+            Optional<String> applicantIdOpt = services.applicantProfileRepository()
+                    .findByUserId(user.getUserId())
+                    .map(profile -> profile.getApplicantId());
+            if (applicantIdOpt.isEmpty()) {
+                DialogControllerFactory.permissionDenied(
+                        "Profile not found for current TA account. Please complete your profile first.",
+                        view.getScene() == null ? null : view.getScene().getWindow());
+                return;
+            }
+            Optional<ApplicantProfile> profileOpt = services.applicantProfileRepository()
+                    .findById(applicantIdOpt.get());
+            if (profileOpt.isEmpty()) {
+                DialogControllerFactory.permissionDenied(
+                        "Profile not found for current TA account. Please complete your profile first.",
+                        view.getScene() == null ? null : view.getScene().getWindow());
+                return;
+            }
+            Optional<String> statementOpt = JobApplyDialog.showAndWait(
+                    selected.job,
+                    profileOpt.get(),
+                    services.resumeService(),
+                    applicantIdOpt.get(),
+                    view.getScene() == null ? null : view.getScene().getWindow());
+            statementOpt.ifPresent(statement -> applyToJob(selected.job, statement));
+        });
+
+        jobDetailController.setOnCancel(applicantId -> {
+            JobWithApplication selected = jobList.getSelectionModel().getSelectedItem();
             if (selected != null) {
-                applyToJob(selected, statement);
+                cancelApplication(selected.job);
             }
         });
 
         if (user.getRole() != Role.TA) {
-            jobDetailController.setOnApply(statement -> {
+            jobDetailController.setOnApply(() -> {
+            });
+            jobDetailController.setOnCancel(applicantId -> {
             });
             jobDetailController.setMatchExplanation(null);
         }
+    }
+
+    // 获取当前申请者ID
+    private String getCurrentApplicantId() {
+        if (user.getRole() != Role.TA) return null;
+
+        Optional<String> applicantIdOpt = services.applicantProfileRepository()
+                .findByUserId(user.getUserId())
+                .map(profile -> profile.getApplicantId());
+
+        return applicantIdOpt.orElse(null);
     }
 
     private Parent buildFilters() {
@@ -154,7 +209,24 @@ public class JobBrowserController {
             jobs = jobs.stream().filter(job -> user.getUserId().equals(job.getOrganiserId())).toList();
         }
 
-        jobList.setItems(FXCollections.observableArrayList(jobs));
+        // 过滤掉 DRAFT 状态的岗位
+        jobs = jobs.stream()
+                .filter(job -> job.getStatus() != JobStatus.DRAFT)
+                .collect(java.util.stream.Collectors.toList());
+
+        // 获取申请状态进行排序
+        List<JobWithApplication> jobsWithApp = new ArrayList<>();
+        for (Job job : jobs) {
+            ApplicationStatus appStatus = getApplicationStatusForJob(job);
+            jobsWithApp.add(new JobWithApplication(job, appStatus));
+        }
+
+        // 按优先级排序：Accepted > Apply > Rejected > Expired > Closed，同档内按标题
+        jobsWithApp.sort(
+                Comparator.comparingInt((JobWithApplication jwa) -> getSortOrder(jwa.job(), jwa.appStatus()))
+                        .thenComparing(jwa -> jwa.job().getTitle(), String.CASE_INSENSITIVE_ORDER));
+
+        jobList.setItems(FXCollections.observableArrayList(jobsWithApp));
 
         if (!jobs.isEmpty()) {
             jobList.getSelectionModel().selectFirst();
@@ -162,6 +234,48 @@ public class JobBrowserController {
             jobDetailController.setJob(null);
             jobDetailController.setMatchExplanation(null);
         }
+    }
+
+    // 辅助类：包含岗位和申请状态
+    private record JobWithApplication(Job job, ApplicationStatus appStatus) {}
+
+    // 获取岗位的申请状态
+    private ApplicationStatus getApplicationStatusForJob(Job job) {
+        if (user.getRole() != Role.TA) return null;
+
+        Optional<String> applicantIdOpt = services.applicantProfileRepository()
+                .findByUserId(user.getUserId())
+                .map(profile -> profile.getApplicantId());
+
+        if (applicantIdOpt.isEmpty()) return null;
+
+        return services.applicationService().getApplicationStatus(applicantIdOpt.get(), job.getJobId())
+                .orElse(null);
+    }
+
+    /**
+     * 列表排序档位：Accepted → Apply → Rejected → Expired → Closed（数字 0–4）。
+     * Apply：已投递、审核中、已取消申请，或可申请（无申请且岗位为 OPEN）。
+     */
+    private int getSortOrder(Job job, ApplicationStatus appStatus) {
+        if (appStatus == ApplicationStatus.ACCEPTED) {
+            return 0;
+        }
+        if (appStatus == ApplicationStatus.REJECTED) {
+            return 2;
+        }
+        if (appStatus == ApplicationStatus.SUBMITTED
+                || appStatus == ApplicationStatus.UNDER_REVIEW
+                || appStatus == ApplicationStatus.CANCELLED) {
+            return 1;
+        }
+        // 无申请记录：按岗位状态分档
+        return switch (job.getStatus()) {
+            case OPEN -> 1;
+            case EXPIRED -> 3;
+            case CLOSED -> 4;
+            case DRAFT -> 5;
+        };
     }
 
     private void applyToJob(Job job, String statement) {
@@ -188,6 +302,27 @@ public class JobBrowserController {
         loadJobs();
     }
 
+    private void cancelApplication(Job job) {
+        Optional<String> applicantIdOpt = services.applicantProfileRepository()
+                .findByUserId(user.getUserId())
+                .map(profile -> profile.getApplicantId());
+
+        if (applicantIdOpt.isEmpty()) {
+            return;
+        }
+
+        ValidationResult result = services.applicationService().cancelApplication(applicantIdOpt.get(), job.getJobId());
+        if (!result.isValid()) {
+            DialogControllerFactory.operationFailed("Cancel Failed", String.join("\n", result.getErrors()),
+                    view.getScene() == null ? null : view.getScene().getWindow());
+            return;
+        }
+
+        DialogControllerFactory.success("Cancel Success", "Application cancelled successfully.",
+                view.getScene() == null ? null : view.getScene().getWindow());
+        loadJobs();
+    }
+
     private void updateMatchExplanation(Job selectedJob) {
         if (selectedJob == null || user.getRole() != Role.TA) {
             jobDetailController.setMatchExplanation(null);
@@ -206,9 +341,9 @@ public class JobBrowserController {
         jobDetailController.setMatchExplanation(explanation);
     }
 
-    private static class JobCardCell extends ListCell<Job> {
+    private static class JobCardCell extends ListCell<JobWithApplication> {
         @Override
-        protected void updateItem(Job item, boolean empty) {
+        protected void updateItem(JobWithApplication item, boolean empty) {
             super.updateItem(item, empty);
             if (empty || item == null) {
                 setText(null);
@@ -216,31 +351,75 @@ public class JobBrowserController {
                 return;
             }
 
+            Job job = item.job();
+            ApplicationStatus appStatus = item.appStatus();
+
             VBox card = new VBox(6);
             card.setPadding(new Insets(14));
+            card.setMaxWidth(Double.MAX_VALUE);
             card.setStyle("-fx-background-color: white; -fx-border-color: #e2e8f0; -fx-border-radius: 12; -fx-background-radius: 12;");
 
-            HBox header = new HBox();
-
-            Label title = new Label(item.getTitle());
+            Label title = new Label(job.getTitle());
             title.setStyle("-fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #0f172a;");
             title.setWrapText(true);
 
-            Label status = new Label(item.getStatus().name());
-            status.setStyle("-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #047857; -fx-background-color: #ecfdf5; -fx-background-radius: 999; -fx-padding: 2 8 2 8;");
+            String statusText = getDynamicStatusText(job, appStatus);
+            String statusStyle = getDynamicStatusStyle(statusText);
 
-            HBox spacer = new HBox();
-            HBox.setHgrow(spacer, Priority.ALWAYS);
-            header.getChildren().addAll(title, spacer, status);
+            Label status = new Label(statusText);
+            status.setStyle(statusStyle);
+            status.setMinWidth(Region.USE_PREF_SIZE);
+            status.setMaxWidth(Region.USE_PREF_SIZE);
 
-            Label module = new Label(item.getModuleCode() + " | " + item.getModuleName());
+            BorderPane header = new BorderPane();
+            header.setMaxWidth(Double.MAX_VALUE);
+            header.setCenter(title);
+            header.setRight(status);
+            BorderPane.setAlignment(title, Pos.TOP_LEFT);
+            BorderPane.setAlignment(status, Pos.TOP_RIGHT);
+            BorderPane.setMargin(status, new Insets(0, 0, 0, 10));
+
+            Label module = new Label(job.getModuleCode() + " | " + job.getModuleName());
             module.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #00a58a;");
 
-            Label meta = new Label(item.getWeeklyHours() + "h/week   |   Deadline: " + item.getDeadline());
+            Label meta = new Label(job.getWeeklyHours() + "h/week   |   Deadline: " + job.getDeadline());
             meta.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748b;");
 
             card.getChildren().addAll(header, module, meta);
             setGraphic(card);
+        }
+
+        private String getDynamicStatusText(Job job, ApplicationStatus appStatus) {
+            if (appStatus != null) {
+                return switch (appStatus) {
+                    case ACCEPTED -> "Accepted";
+                    case SUBMITTED -> "Applied";
+                    case CANCELLED -> "Cancelled";
+                    case UNDER_REVIEW -> "Under Review";
+                    case REJECTED -> "Rejected";
+                };
+            }
+            // 无申请时显示岗位状态
+            return switch (job.getStatus()) {
+                case OPEN -> "Open";
+                case CLOSED -> "Closed";
+                case EXPIRED -> "Expired";
+                case DRAFT -> "Draft";
+            };
+        }
+
+        private String getDynamicStatusStyle(String statusText) {
+            String color = switch (statusText) {
+                case "Accepted" -> "#047857;#ecfdf5";
+                case "Applied", "Under Review" -> "#1d4ed8;#eff6ff";
+                case "Rejected" -> "#b91c1c;#fef2f2";
+                case "Cancelled" -> "#b45309;#fffbeb";
+                case "Open" -> "#047857;#ecfdf5";
+                case "Closed", "Expired" -> "#64748b;#f1f5f9";
+                default -> "#64748b;#f1f5f9";
+            };
+            String[] parts = color.split(";");
+            return String.format("-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: %s; -fx-background-color: %s; -fx-background-radius: 999; -fx-padding: 2 8 2 8;", parts[0], parts[1]);
         }
     }
 }

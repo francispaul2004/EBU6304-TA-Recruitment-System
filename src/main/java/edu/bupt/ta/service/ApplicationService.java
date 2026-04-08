@@ -107,4 +107,38 @@ public class ApplicationService {
             applicationRepository.save(application);
         });
     }
+
+    /**
+     * 取消申请 - 删除申请记录
+     */
+    public ValidationResult cancelApplication(String applicantId, String jobId) {
+        if (applicantId == null || applicantId.isBlank()) {
+            return ValidationResult.fail("Applicant ID is required.");
+        }
+        if (jobId == null || jobId.isBlank()) {
+            return ValidationResult.fail("Job ID is required.");
+        }
+        Optional<edu.bupt.ta.model.Application> appOpt = applicationRepository.findByJobIdAndApplicantId(jobId, applicantId);
+        if (appOpt.isEmpty()) {
+            return ValidationResult.fail("No application found for this job.");
+        }
+        edu.bupt.ta.model.Application application = appOpt.get();
+
+        // 只有 SUBMITTED 状态的申请可以取消
+        if (application.getStatus() != ApplicationStatus.SUBMITTED) {
+            return ValidationResult.fail("Only submitted applications can be cancelled.");
+        }
+        applicationRepository.deleteById(application.getApplicationId());
+        auditLogRepository.append(new AuditLogEntry(DateTimeUtils.now(), applicantId, "CANCEL_APPLICATION",
+                "Cancelled application for job " + jobId));
+        return ValidationResult.ok();
+    }
+
+    /**
+     * 获取申请状态（用于判断用户与岗位的关系）
+     */
+    public Optional<ApplicationStatus> getApplicationStatus(String applicantId, String jobId) {
+        return applicationRepository.findByJobIdAndApplicantId(jobId, applicantId)
+                .map(edu.bupt.ta.model.Application::getStatus);
+    }
 }

@@ -13,12 +13,10 @@ public record ApplicantReviewDTO(
         int maxWeeklyHours,
         String riskLevel,
         String statement,
-        String decisionNote,
         int matchScore,
         List<String> missingSkills,
         List<String> matchedSkills,
-        String matchExplanation,
-        String decisionNote
+        String matchExplanation
 ) {
 
     public ApplicantReviewDTO(
@@ -36,7 +34,7 @@ public record ApplicantReviewDTO(
             List<String> missingSkills
     ) {
         this(applicationId, applicantId, applicantName, technicalSkills, availability,
-                currentHours, projectedHours, maxWeeklyHours, riskLevel, statement, matchScore, missingSkills,
-                List.of(), "", "");
+                currentHours, projectedHours, maxWeeklyHours, riskLevel, statement, matchScore,
+                missingSkills, List.of(), "");
     }
 }

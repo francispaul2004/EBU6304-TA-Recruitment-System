@@ -97,6 +97,19 @@
     -fx-padding: 10 16 10 16;
 }
 
+.button.danger-button {
+    -fx-background-color: #ef4444;
+    -fx-text-fill: white;
+    -fx-font-weight: 700;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 10 16 10 16;
+}
+
+.button.danger-button:hover {
+    -fx-background-color: #dc2626;
+}
+
 /* Inputs */
 .text-field,
 .password-field,

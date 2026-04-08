@@ -1,13 +1,14 @@
 package edu.bupt.ta.controller;
 
 import edu.bupt.ta.dto.MatchExplanationDTO;
+import edu.bupt.ta.enums.ApplicationStatus;
 import edu.bupt.ta.enums.JobStatus;
 import edu.bupt.ta.model.Job;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -26,11 +27,13 @@ public class JobDetailController {
     private final Label matchLabel = new Label("AI Match: -");
     private final Label missingLabel = new Label("Missing Skills: -");
     private final Label workloadLabel = new Label("Projected Workload: -");
-    private final TextArea statementArea = new TextArea();
     private final Button applyButton = new Button("APPLY NOW");
 
     private Job currentJob;
-    private Consumer<String> onApply;
+    private String currentApplicantId;
+    private ApplicationStatus currentApplicationStatus;
+    private Runnable onApplyAction;
+    private Consumer<String> onCancel;
 
     public JobDetailController() {
         initialize();
@@ -40,12 +43,23 @@ public class JobDetailController {
         return view;
     }
 
-    public void setOnApply(Consumer<String> onApply) {
-        this.onApply = onApply;
+    public void setOnApply(Runnable onApplyAction) {
+        this.onApplyAction = onApplyAction;
+    }
+
+    public void setOnCancel(Consumer<String> onCancel) {
+        this.onCancel = onCancel;
     }
 
     public void setJob(Job job) {
+        setJobWithApplicationStatus(job, null, null);
+    }
+
+    public void setJobWithApplicationStatus(Job job, String applicantId, ApplicationStatus appStatus) {
         this.currentJob = job;
+        this.currentApplicantId = applicantId;
+        this.currentApplicationStatus = appStatus;
+
         if (job == null) {
             titleLabel.setText("Select a job");
             moduleLabel.setText("-");
@@ -55,6 +69,8 @@ public class JobDetailController {
             descLabel.setText("Choose a job card on the left to preview details.");
             setMatchExplanation(null);
             applyButton.setDisable(true);
+            applyButton.setText("APPLY NOW");
+            applyButton.getStyleClass().setAll("button", "primary-button");
             return;
         }
 
@@ -64,7 +80,51 @@ public class JobDetailController {
         metaPositions.setText("Seats: " + job.getPositions());
         metaDeadline.setText("Deadline: " + job.getDeadline());
         descLabel.setText(job.getDescription());
-        applyButton.setDisable(job.getStatus() != JobStatus.OPEN);
+
+        updateApplyButton();
+    }
+
+    private void updateApplyButton() {
+        if (currentApplicationStatus == ApplicationStatus.ACCEPTED) {
+            applyButton.setText("ACCEPTED");
+            applyButton.setDisable(true);
+            applyButton.getStyleClass().setAll("button", "secondary-button");
+            applyButton.setStyle("-fx-background-color: #e2e8f0; -fx-text-fill: #64748b; -fx-font-weight: 700;");
+            applyButton.setOnAction(null);
+            return;
+        }
+
+        if (currentApplicationStatus == ApplicationStatus.SUBMITTED) {
+            applyButton.setText("CANCEL APPLICATION");
+            applyButton.setDisable(false);
+            applyButton.getStyleClass().setAll("button", "danger-button");
+            applyButton.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white; -fx-font-weight: 700;");
+            applyButton.setOnAction(event -> {
+                if (onCancel != null && currentJob != null) {
+                    onCancel.accept(currentApplicantId);
+                }
+            });
+            return;
+        }
+
+        if (currentJob.getStatus() != JobStatus.OPEN) {
+            applyButton.setText(currentJob.getStatus().name());
+            applyButton.setDisable(true);
+            applyButton.getStyleClass().setAll("button", "secondary-button");
+            applyButton.setStyle("-fx-background-color: #e2e8f0; -fx-text-fill: #64748b; -fx-font-weight: 700;");
+            applyButton.setOnAction(null);
+            return;
+        }
+
+        applyButton.setText("APPLY NOW");
+        applyButton.setDisable(false);
+        applyButton.getStyleClass().setAll("button", "primary-button");
+        applyButton.setStyle("");
+        applyButton.setOnAction(event -> {
+            if (onApplyAction != null && currentJob != null) {
+                onApplyAction.run();
+            }
+        });
     }
 
     public void setMatchExplanation(MatchExplanationDTO dto) {
@@ -108,19 +168,13 @@ public class JobDetailController {
         matchPanel.setPadding(new Insets(14));
         matchPanel.getStyleClass().add("soft-card");
 
-        Label statementLabel = new Label("Application Statement");
-        statementLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: 800; -fx-text-fill: #334155; -fx-letter-spacing: 0.5px;");
-
-        statementArea.setPromptText("Why are you suitable for this role?");
-        statementArea.setWrapText(true);
-        statementArea.setPrefRowCount(5);
-
         applyButton.getStyleClass().add("primary-button");
         applyButton.setPrefHeight(44);
         applyButton.setMaxWidth(Double.MAX_VALUE);
+        applyButton.setAlignment(Pos.CENTER);
         applyButton.setOnAction(event -> {
-            if (onApply != null && currentJob != null) {
-                onApply.accept(statementArea.getText());
+            if (onApplyAction != null && currentJob != null) {
+                onApplyAction.run();
             }
         });
 
@@ -132,8 +186,6 @@ public class JobDetailController {
                 sectionDesc,
                 descLabel,
                 matchPanel,
-                statementLabel,
-                statementArea,
                 applyButton
         );
     }

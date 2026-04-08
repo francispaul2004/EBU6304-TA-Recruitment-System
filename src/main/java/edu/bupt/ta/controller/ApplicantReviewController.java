@@ -72,7 +72,7 @@ public class ApplicantReviewController {
 
         decisionNote.setPromptText("Add observation or justification for the recruitment decision...");
         decisionNote.setPrefRowCount(4);
-        decisionNote.setText(dto.decisionNote() == null ? "" : dto.decisionNote());
+        decisionNote.setText("");
 
         noteCard.getChildren().addAll(noteLabel, decisionNote);
 

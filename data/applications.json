@@ -98,34 +98,4 @@
   "decisionNote" : "TEST",
   "matchScore" : 74,
   "missingSkills" : [ "JavaScript" ]
-}, {
-  "applicationId" : "APP011",
-  "jobId" : "J003",
-  "applicantId" : "A001",
-  "applyDate" : "2026-03-17T23:44:09.817874",
-  "statement" : "",
-  "status" : "SUBMITTED",
-  "decisionNote" : "",
-  "matchScore" : 20,
-  "missingSkills" : [ "Mathematics" ]
-}, {
-  "applicationId" : "APP012",
-  "jobId" : "J002",
-  "applicantId" : "A001",
-  "applyDate" : "2026-03-18T02:31:48.504704",
-  "statement" : "",
-  "status" : "SUBMITTED",
-  "decisionNote" : "",
-  "matchScore" : 20,
-  "missingSkills" : [ "Electronics" ]
-}, {
-  "applicationId" : "APP013",
-  "jobId" : "J104",
-  "applicantId" : "A001",
-  "applyDate" : "2026-04-08T12:43:52.164265",
-  "statement" : "",
-  "status" : "SUBMITTED",
-  "decisionNote" : "",
-  "matchScore" : 20,
-  "missingSkills" : [ "Python" ]
 } ]

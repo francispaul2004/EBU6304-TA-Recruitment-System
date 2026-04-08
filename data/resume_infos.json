@@ -7,11 +7,11 @@
   "personalStatement" : "Interested in helping first-year programming students.",
   "availability" : [ "Mon PM", "Wed AM", "Fri PM" ],
   "maxWeeklyHours" : 8,
-  "cvFileName" : null,
-  "cvStoredPath" : null,
-  "cvFileSizeBytes" : 0,
-  "cvUploadedAt" : null,
-  "lastUpdated" : "2026-04-08T12:46:15.204294"
+  "cvFileName" : "Official EVUS Enrollment Website, U.S. Customs and Border Protection.pdf",
+  "cvStoredPath" : "data\\cv\\A001\\cv.pdf",
+  "cvFileSizeBytes" : 530329,
+  "cvUploadedAt" : "2026-04-08T15:17:39.4118321",
+  "lastUpdated" : "2026-04-08T15:17:39.4118321"
 }, {
   "applicantId" : "A002",
   "relevantModules" : [ "Algorithms", "Databases" ],
