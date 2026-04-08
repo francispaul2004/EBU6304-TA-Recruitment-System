@@ -186,7 +186,8 @@ public class ReviewService {
                 application.getMatchScore(),
                 application.getMissingSkills() == null ? List.of() : application.getMissingSkills(),
                 matchedSkills,
-                matchExplanation
+            matchExplanation,
+            application.getDecisionNote() == null ? "" : application.getDecisionNote()
         );
     }
 
