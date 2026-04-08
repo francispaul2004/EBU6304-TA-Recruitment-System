@@ -235,11 +235,11 @@ public class MainShellController {
             }
             case "adminJobs" -> {
                 breadcrumbCurrent.setText("Jobs");
-                page = PlaceholderPage.simple("Admin Jobs", "Planned in next visual alignment phase.");
+                page = new AdminJobsController(services, user).getView();
             }
             case "adminApplications" -> {
                 breadcrumbCurrent.setText("Applications");
-                page = PlaceholderPage.simple("Admin Applications", "Planned in next visual alignment phase.");
+                page = new AdminApplicationsController(services, user).getView();
             }
             case "moProfile" -> {
                 breadcrumbCurrent.setText("Profile");

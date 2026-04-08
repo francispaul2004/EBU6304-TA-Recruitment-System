@@ -25,6 +25,10 @@ public class JobService {
     }
 
     public ValidationResult createJob(Job job) {
+        return createJob(job, job.getOrganiserId());
+    }
+
+    public ValidationResult createJob(Job job, String actorUserId) {
         ValidationResult validation = validate(job);
         if (!validation.isValid()) {
             return validation;
@@ -42,28 +46,56 @@ public class JobService {
         }
 
         jobRepository.save(job);
-        auditLogRepository.append(new AuditLogEntry(DateTimeUtils.now(), job.getOrganiserId(), "CREATE_JOB",
-                job.getJobId() + " created with status " + job.getStatus()));
+        String actor = resolveActorUserId(actorUserId, job.getOrganiserId());
+        String detail = job.getJobId() + " created with status " + job.getStatus();
+        if (!actor.equals(job.getOrganiserId())) {
+            detail += " for organiser " + job.getOrganiserId();
+        }
+        auditLogRepository.append(new AuditLogEntry(DateTimeUtils.now(), actor, "CREATE_JOB", detail));
         return ValidationResult.ok();
     }
 
     public ValidationResult updateJob(Job job) {
-        ValidationResult validation = validate(job);
-        if (!validation.isValid()) {
-            return validation;
+        return updateJob(job, job.getOrganiserId(), false);
+    }
+
+    public ValidationResult updateJob(Job job, String actorUserId, boolean adminOverride) {
+        if (job == null || job.getJobId() == null || job.getJobId().isBlank()) {
+            return ValidationResult.fail("Job not found.");
         }
 
         Optional<Job> existing = jobRepository.findById(job.getJobId());
         if (existing.isEmpty()) {
             return ValidationResult.fail("Job not found.");
         }
-        if (!existing.get().getOrganiserId().equals(job.getOrganiserId())) {
+
+        Job existingJob = existing.get();
+        if (!adminOverride && !existingJob.getOrganiserId().equals(actorUserId)) {
             return ValidationResult.fail("You can only edit your own jobs.");
         }
 
+        if (!adminOverride) {
+            job.setOrganiserId(existingJob.getOrganiserId());
+        }
+        if (job.getCreatedAt() == null) {
+            job.setCreatedAt(existingJob.getCreatedAt());
+        }
+        if (job.getSemester() == null || job.getSemester().isBlank()) {
+            job.setSemester(existingJob.getSemester());
+        }
+
+        ValidationResult validation = validate(job);
+        if (!validation.isValid()) {
+            return validation;
+        }
+
         jobRepository.save(job);
-        auditLogRepository.append(new AuditLogEntry(DateTimeUtils.now(), job.getOrganiserId(), "UPDATE_JOB",
-                job.getJobId() + " updated"));
+        String actor = resolveActorUserId(actorUserId, job.getOrganiserId());
+        String detail = job.getJobId() + " updated";
+        if (adminOverride && !existingJob.getOrganiserId().equals(job.getOrganiserId())) {
+            detail += " and reassigned to organiser " + job.getOrganiserId();
+        }
+        auditLogRepository.append(new AuditLogEntry(DateTimeUtils.now(), actor, "UPDATE_JOB", detail));
         return ValidationResult.ok();
     }
 
@@ -72,12 +104,16 @@ public class JobService {
     }
 
     public ValidationResult closeJobWithValidation(String jobId, String organiserId) {
+        return closeJobWithValidation(jobId, organiserId, false);
+    }
+
+    public ValidationResult closeJobWithValidation(String jobId, String actorUserId, boolean adminOverride) {
         Optional<Job> jobOpt = jobRepository.findById(jobId);
         if (jobOpt.isEmpty()) {
             return ValidationResult.fail("Job not found.");
         }
         Job job = jobOpt.get();
-        if (!job.getOrganiserId().equals(organiserId)) {
+        if (!adminOverride && !job.getOrganiserId().equals(actorUserId)) {
             return ValidationResult.fail("You can only close your own jobs.");
         }
         if (job.getStatus() != JobStatus.OPEN) {
@@ -86,7 +122,8 @@ public class JobService {
 
         job.setStatus(JobStatus.CLOSED);
         jobRepository.save(job);
-        auditLogRepository.append(new AuditLogEntry(DateTimeUtils.now(), organiserId, "CLOSE_JOB",
+        auditLogRepository.append(new AuditLogEntry(DateTimeUtils.now(),
+                resolveActorUserId(actorUserId, job.getOrganiserId()), "CLOSE_JOB",
                 jobId + " set to CLOSED"));
         return ValidationResult.ok();
     }
@@ -145,5 +182,12 @@ public class JobService {
             errors.add("Organiser ID is required.");
         }
         return errors.isEmpty() ? ValidationResult.ok() : ValidationResult.fail(errors);
+    }
+
+    private String resolveActorUserId(String actorUserId, String fallbackUserId) {
+        if (actorUserId != null && !actorUserId.isBlank()) {
+            return actorUserId;
+        }
+        return fallbackUserId == null || fallbackUserId.isBlank() ? "SYSTEM" : fallbackUserId;
     }
 }

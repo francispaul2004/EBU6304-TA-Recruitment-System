@@ -9,7 +9,7 @@ Software Engineering Group Project for EBU6304 – Teaching Assistant Recruitmen
 | Haocheng Gao | francispaul2004 | 2023213304 | 231220873 | jp2023213304@qmul.ac.uk |
 | Xinshuang Liu | Jhon0213 | 2023213305 | 231221283 | jp2023213305@qmul.ac.uk |
 | Chuan Yu | chuan123123456 | 2023213272 | 231221700 | jp2023213272@qmul.ac.uk |
-| Ziqi Gao | Max | 2023213316 | 231221250 | jp2023213316@qmul.ac.uk |
+| Ziqi Gao | Coder-Maxxx | 2023213316 | 231221250 | jp2023213316@qmul.ac.uk |
 | Xianggan Xu | Gnaixux | 2023213306 | 231221412 | jp2023213306@qmul.ac.uk |
 | Zhibo Zhang | iapetuszzb | 2023213278 | 231221777 | jp2023213278@qmul.ac.uk |
 

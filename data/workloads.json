@@ -20,7 +20,7 @@
   "riskLevel" : "HIGH"
 }, {
   "applicantId" : "A005",
-  "acceptedJobIds" : [ "J003" ],
-  "currentWeeklyHours" : 7,
-  "riskLevel" : "MEDIUM"
+  "acceptedJobIds" : [ "J008" ],
+  "currentWeeklyHours" : 5,
+  "riskLevel" : "LOW"
 } ]

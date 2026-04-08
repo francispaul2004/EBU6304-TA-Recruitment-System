@@ -8,6 +8,9 @@ import java.util.List;
 
 public final class TestDataSupport {
 
+    private static final String FIXED_TODAY = "2026-03-18";
+    private static final String FIXED_NOW = "2026-03-18T09:00:00";
+
     private TestDataSupport() {
     }
 
@@ -36,9 +39,13 @@ public final class TestDataSupport {
             }
         }
         System.setProperty("ta.data.dir", tempDir.toString());
+        System.setProperty("ta.fixed.today", FIXED_TODAY);
+        System.setProperty("ta.fixed.now", FIXED_NOW);
     }
 
     public static void clearDataDirOverride() {
         System.clearProperty("ta.data.dir");
+        System.clearProperty("ta.fixed.today");
+        System.clearProperty("ta.fixed.now");
     }
 }
