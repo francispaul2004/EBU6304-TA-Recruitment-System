@@ -41,6 +41,10 @@ public class ServiceRegistry {
     private final ExportService exportService = new ExportService(
             workloadRepository, applicationRepository, jobRepository
     );
+    private final AdminMonitoringService adminMonitoringService = new AdminMonitoringService(
+            userRepository, applicantProfileRepository, resumeInfoRepository, jobRepository,
+            applicationRepository, workloadRepository, auditLogRepository, jobService, workloadService
+    );
 
     public UserRepository userRepository() {
         return userRepository;
@@ -104,5 +108,9 @@ public class ServiceRegistry {
 
     public MatchingService matchingService() {
         return matchingService;
+    }
+
+    public AdminMonitoringService adminMonitoringService() {
+        return adminMonitoringService;
     }
 }

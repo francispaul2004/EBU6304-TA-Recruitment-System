@@ -13,6 +13,7 @@ public record ApplicantReviewDTO(
         int maxWeeklyHours,
         String riskLevel,
         String statement,
+        String decisionNote,
         int matchScore,
         List<String> missingSkills
 ) {

@@ -1,6 +1,7 @@
 package edu.bupt.ta.controller;
 
 import edu.bupt.ta.dto.ApplicantReviewDTO;
+import edu.bupt.ta.enums.Role;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
 import edu.bupt.ta.util.ValidationResult;
@@ -34,7 +35,7 @@ public class ApplicantReviewController {
     }
 
     private void initialize() {
-        ApplicantReviewDTO dto = services.reviewService().getApplicantReviewData(applicationId, user.getUserId());
+        ApplicantReviewDTO dto = services.reviewService().getApplicantReviewData(applicationId, user.getUserId(), isAdmin());
         this.reviewData = dto;
 
         view.setPadding(new Insets(16));
@@ -69,6 +70,7 @@ public class ApplicantReviewController {
 
         decisionNote.setPromptText("Add observation or justification for the recruitment decision...");
         decisionNote.setPrefRowCount(4);
+        decisionNote.setText(dto.decisionNote() == null ? "" : dto.decisionNote());
 
         noteCard.getChildren().addAll(noteLabel, decisionNote);
 
@@ -111,7 +113,8 @@ public class ApplicantReviewController {
         if (!confirmed) {
             return;
         }
-        ValidationResult result = services.reviewService().acceptApplication(applicationId, user.getUserId(), decisionNote.getText());
+        ValidationResult result = services.reviewService()
+                .acceptApplication(applicationId, user.getUserId(), decisionNote.getText(), isAdmin());
         showResult("Accept Application", result);
     }
 
@@ -123,7 +126,8 @@ public class ApplicantReviewController {
         if (!confirmed) {
             return;
         }
-        ValidationResult result = services.reviewService().rejectApplication(applicationId, user.getUserId(), decisionNote.getText());
+        ValidationResult result = services.reviewService()
+                .rejectApplication(applicationId, user.getUserId(), decisionNote.getText(), isAdmin());
         showResult("Reject Application", result);
     }
 
@@ -135,5 +139,12 @@ public class ApplicantReviewController {
         }
         DialogControllerFactory.success(header, "Operation completed.",
                 view.getScene() == null ? null : view.getScene().getWindow());
+        if (view.getScene() != null && view.getScene().getWindow() != null) {
+            view.getScene().getWindow().hide();
+        }
+    }
+
+    private boolean isAdmin() {
+        return user.getRole() == Role.ADMIN;
     }
 }

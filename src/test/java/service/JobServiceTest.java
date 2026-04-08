@@ -56,4 +56,19 @@ class JobServiceTest {
         Job job = new Job();
         assertFalse(service.createJob(job).isValid());
     }
+
+    @Test
+    void shouldAllowAdminToUpdateAndReassignAnotherOrganisersJob() {
+        JobRepository repository = new JobRepository();
+        Job job = repository.findById("J001").orElseThrow();
+
+        job.setTitle("Admin Updated Job");
+        job.setOrganiserId("U102");
+
+        assertTrue(service.updateJob(job, "U900", true).isValid());
+
+        Job saved = repository.findById("J001").orElseThrow();
+        assertEquals("Admin Updated Job", saved.getTitle());
+        assertEquals("U102", saved.getOrganiserId());
+    }
 }

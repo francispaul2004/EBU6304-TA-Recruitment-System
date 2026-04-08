@@ -3,14 +3,18 @@ package edu.bupt.ta.controller;
 import edu.bupt.ta.enums.JobStatus;
 import edu.bupt.ta.enums.JobType;
 import edu.bupt.ta.model.Job;
+import edu.bupt.ta.model.User;
+import edu.bupt.ta.util.DateTimeUtils;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
@@ -34,8 +38,13 @@ import java.util.stream.Collectors;
 public class JobEditorController {
 
     public Optional<Job> show(Job source, String organiserId) {
+        return show(source, organiserId, List.of());
+    }
+
+    public Optional<Job> show(Job source, String organiserId, List<User> organisers) {
         EditorFields fields = new EditorFields();
-        populateForm(fields, source);
+        fields.defaultOrganiserId = organiserId;
+        populateForm(fields, source, organiserId, organisers);
 
         AtomicReference<Job> result = new AtomicReference<>();
 
@@ -53,8 +62,8 @@ public class JobEditorController {
         VBox leftPanel = new VBox(0);
         leftPanel.setPrefWidth(960);
         leftPanel.setMinWidth(900);
-        leftPanel.getChildren().add(buildHeader(fields, source, organiserId, stage, result));
-        leftPanel.getChildren().add(buildFormContent(fields));
+        leftPanel.getChildren().add(buildHeader(fields, source, stage, result));
+        leftPanel.getChildren().add(buildFormContent(fields, !organisers.isEmpty()));
         HBox.setHgrow(leftPanel, Priority.ALWAYS);
 
         VBox previewPanel = buildPreviewPanel(fields);
@@ -74,11 +83,7 @@ public class JobEditorController {
         return Optional.ofNullable(result.get());
     }
 
-    private Parent buildHeader(EditorFields fields,
-                               Job source,
-                               String organiserId,
-                               Stage stage,
-                               AtomicReference<Job> result) {
+    private Parent buildHeader(EditorFields fields, Job source, Stage stage, AtomicReference<Job> result) {
         HBox header = new HBox();
         header.setPadding(new Insets(20, 24, 20, 24));
         header.setAlignment(Pos.CENTER_LEFT);
@@ -96,35 +101,44 @@ public class JobEditorController {
 
         Button saveDraft = new Button("Save Draft");
         saveDraft.getStyleClass().add("secondary-button");
-        saveDraft.setOnAction(event -> submitWithStatus(fields, source, organiserId, JobStatus.DRAFT, stage, result));
+        saveDraft.setOnAction(event -> submitWithStatus(fields, source, JobStatus.DRAFT, stage, result));
 
         Button update = new Button(source == null ? "Publish Job" : "Update Job");
         update.getStyleClass().add("primary-button");
-        update.setOnAction(event -> submitWithStatus(fields, source, organiserId, fields.status.getValue(), stage, result));
+        update.setOnAction(event -> submitWithStatus(fields, source, fields.status.getValue(), stage, result));
 
         header.getChildren().addAll(title, spacer, cancel, saveDraft, update);
         return header;
     }
 
-    private Parent buildFormContent(EditorFields fields) {
+    private Parent buildFormContent(EditorFields fields, boolean showOrganiserField) {
         VBox wrapper = new VBox(24);
         wrapper.setPadding(new Insets(24));
         wrapper.setStyle("-fx-background-color: #ffffff;");
 
         wrapper.getChildren().add(buildSectionTitle("Basic Job Information"));
 
+        Label requiredHint = new Label("* indicates required fields.");
+        requiredHint.getStyleClass().add("body-muted");
+        wrapper.getChildren().add(requiredHint);
+
         GridPane basicGrid = new GridPane();
         basicGrid.setHgap(16);
         basicGrid.setVgap(14);
-        basicGrid.add(field("Job Title", fields.title), 0, 0);
-        basicGrid.add(field("Module Code", fields.moduleCode), 1, 0);
-        basicGrid.add(field("Module Name", fields.moduleName), 0, 1);
+        basicGrid.add(field("Job Title", fields.title, true), 0, 0);
+        basicGrid.add(field("Module Code", fields.moduleCode, true), 1, 0);
+        basicGrid.add(field("Module Name", fields.moduleName, true), 0, 1);
         basicGrid.add(field("Job Type", fields.type), 1, 1);
-        basicGrid.add(field("Weekly Hours", fields.weeklyHours), 0, 2);
-        basicGrid.add(field("Positions", fields.positions), 1, 2);
-        basicGrid.add(field("Deadline", fields.deadline), 0, 3);
+        basicGrid.add(field("Weekly Hours", fields.weeklyHours, true), 0, 2);
+        basicGrid.add(field("Positions", fields.positions, true), 1, 2);
+        basicGrid.add(field("Deadline", fields.deadline, true), 0, 3);
         basicGrid.add(field("Publication Status", fields.status), 1, 3);
-        basicGrid.add(areaField("Job Description / Key Responsibilities", fields.description, 6), 0, 4, 2, 1);
+        int descriptionRow = 4;
+        if (showOrganiserField) {
+            basicGrid.add(field("Organiser", fields.organiser, true), 0, 4, 2, 1);
+            descriptionRow = 5;
+        }
+        basicGrid.add(areaField("Job Description / Key Responsibilities", fields.description, 6), 0, descriptionRow, 2, 1);
 
         wrapper.getChildren().add(basicGrid);
 
@@ -133,8 +147,8 @@ public class JobEditorController {
         GridPane skillsGrid = new GridPane();
         skillsGrid.setHgap(16);
         skillsGrid.setVgap(14);
-        skillsGrid.add(field("Required Skills (comma separated)", fields.requiredSkills), 0, 0);
-        skillsGrid.add(field("Preferred Skills (comma separated)", fields.preferredSkills), 1, 0);
+        skillsGrid.add(areaField("Required Skills (comma separated)", fields.requiredSkills, 2), 0, 0);
+        skillsGrid.add(areaField("Preferred Skills (comma separated)", fields.preferredSkills, 2), 1, 0);
 
         Label note = new Label("Tip: Include at least one required skill and clear weekly hour expectation.");
         note.getStyleClass().add("body-muted");
@@ -176,7 +190,8 @@ public class JobEditorController {
         Label hours = metricLine("Weekly Hours", "-");
         Label positions = metricLine("Positions", "-");
         Label deadline = metricLine("Deadline", "-");
-        metrics.getChildren().addAll(metricTitle, hours, positions, deadline);
+        Label organiser = metricLine("Organiser", "-");
+        metrics.getChildren().addAll(metricTitle, hours, positions, deadline, organiser);
 
         VBox requirementCard = new VBox(8);
         requirementCard.setPadding(new Insets(14));
@@ -197,7 +212,7 @@ public class JobEditorController {
 
         preview.getChildren().addAll(heading, card, metrics, requirementCard);
 
-        Runnable updater = () -> updatePreview(fields, cardTitle, cardMeta, hours, positions, deadline, requiredLine, preferredLine);
+        Runnable updater = () -> updatePreview(fields, cardTitle, cardMeta, hours, positions, deadline, organiser, requiredLine, preferredLine);
         bindPreviewListeners(fields, updater);
         updater.run();
 
@@ -215,10 +230,25 @@ public class JobEditorController {
     }
 
     private VBox field(String labelText, Parent control) {
+        return field(labelText, control, false);
+    }
+
+    private VBox field(String labelText, Parent control, boolean required) {
         VBox box = new VBox(6);
+        HBox labelRow = new HBox(4);
+        labelRow.setAlignment(Pos.CENTER_LEFT);
+
         Label label = new Label(labelText);
         label.getStyleClass().add("field-label");
-        box.getChildren().addAll(label, control);
+
+        labelRow.getChildren().add(label);
+        if (required) {
+            Label requiredMark = new Label("*");
+            requiredMark.getStyleClass().add("required-asterisk");
+            labelRow.getChildren().add(requiredMark);
+        }
+
+        box.getChildren().addAll(labelRow, control);
         VBox.setVgrow(control, Priority.NEVER);
         if (control instanceof Region region) {
             region.setMaxWidth(Double.MAX_VALUE);
@@ -229,16 +259,22 @@ public class JobEditorController {
 
     private VBox areaField(String labelText, TextArea area, int rows) {
         area.setPrefRowCount(rows);
+        area.setWrapText(true);
         return field(labelText, area);
     }
 
-    private void populateForm(EditorFields fields, Job source) {
+    private void populateForm(EditorFields fields, Job source, String organiserId, List<User> organisers) {
         fields.type.getItems().setAll(JobType.values());
+        configureTypeSelector(fields.type);
         fields.status.getItems().setAll(JobStatus.values());
+        configureStatusSelector(fields.status);
+        fields.organiser.getItems().setAll(organisers);
+        configureOrganiserSelector(fields.organiser);
         if (source == null) {
             fields.type.setValue(JobType.MODULE_TA);
             fields.status.setValue(JobStatus.OPEN);
-            fields.deadline.setValue(LocalDate.now().plusDays(7));
+            fields.deadline.setValue(DateTimeUtils.today().plusDays(7));
+            selectOrganiser(fields.organiser, organiserId);
             return;
         }
 
@@ -253,25 +289,78 @@ public class JobEditorController {
         fields.description.setText(source.getDescription());
         fields.requiredSkills.setText(String.join(", ", source.getRequiredSkills()));
         fields.preferredSkills.setText(String.join(", ", source.getPreferredSkills()));
+        fields.defaultOrganiserId = source.getOrganiserId();
+        selectOrganiser(fields.organiser, source.getOrganiserId());
+    }
+
+    private void configureStatusSelector(ChoiceBox<JobStatus> statusBox) {
+        if (!statusBox.getStyleClass().contains("status-selector")) {
+            statusBox.getStyleClass().add("status-selector");
+        }
+        statusBox.setConverter(new javafx.util.StringConverter<>() {
+            @Override
+            public String toString(JobStatus object) {
+                return object == null ? "" : object.name();
+            }
+
+            @Override
+            public JobStatus fromString(String string) {
+                return string == null || string.isBlank() ? null : JobStatus.valueOf(string);
+            }
+        });
+    }
+
+    private void configureTypeSelector(ChoiceBox<JobType> typeBox) {
+        if (!typeBox.getStyleClass().contains("status-selector")) {
+            typeBox.getStyleClass().add("status-selector");
+        }
+        typeBox.setConverter(new javafx.util.StringConverter<>() {
+            @Override
+            public String toString(JobType object) {
+                return object == null ? "" : object.name();
+            }
+
+            @Override
+            public JobType fromString(String string) {
+                return string == null || string.isBlank() ? null : JobType.valueOf(string);
+            }
+        });
+    }
+
+    private void configureOrganiserSelector(ComboBox<User> organiserBox) {
+        organiserBox.setPromptText("Select organiser");
+        organiserBox.setCellFactory(listView -> new ListCell<>() {
+            @Override
+            protected void updateItem(User item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatOrganiserLabel(item));
+            }
+        });
+        organiserBox.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(User item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatOrganiserLabel(item));
+            }
+        });
     }
 
     private void submitWithStatus(EditorFields fields,
                                   Job source,
-                                  String organiserId,
                                   JobStatus targetStatus,
                                   Stage stage,
                                   AtomicReference<Job> result) {
-        List<String> errors = validate(fields, organiserId);
+        List<String> errors = validate(fields, targetStatus);
         if (!errors.isEmpty()) {
             DialogControllerFactory.validationError(String.join("\n", errors), stage.getOwner());
             return;
         }
-        Job job = buildJob(fields, source, organiserId, targetStatus);
+        Job job = buildJob(fields, source, targetStatus);
         result.set(job);
         stage.close();
     }
 
-    private List<String> validate(EditorFields fields, String organiserId) {
+    private List<String> validate(EditorFields fields, JobStatus targetStatus) {
         List<String> errors = new ArrayList<>();
         if (fields.title.getText() == null || fields.title.getText().isBlank()) {
             errors.add("Title is required.");
@@ -291,17 +380,24 @@ public class JobEditorController {
         if (fields.deadline.getValue() == null) {
             errors.add("Deadline is required.");
         }
+        if (targetStatus == JobStatus.OPEN
+                && fields.deadline.getValue() != null
+                && fields.deadline.getValue().isBefore(DateTimeUtils.today())) {
+            errors.add("An OPEN job must have a deadline of today or later.");
+        }
+        String organiserId = resolveOrganiserId(fields);
         if (organiserId == null || organiserId.isBlank()) {
             errors.add("Organiser ID is required.");
         }
         return errors;
     }
 
-    private Job buildJob(EditorFields fields, Job source, String organiserId, JobStatus targetStatus) {
+    private Job buildJob(EditorFields fields, Job source, JobStatus targetStatus) {
         Job job = new Job();
         if (source != null) {
             job.setJobId(source.getJobId());
             job.setCreatedAt(source.getCreatedAt());
+            job.setSemester(source.getSemester());
         }
         job.setTitle(trim(fields.title.getText()));
         job.setModuleCode(trim(fields.moduleCode.getText()));
@@ -314,7 +410,7 @@ public class JobEditorController {
         job.setDescription(trim(fields.description.getText()));
         job.setRequiredSkills(parseSkills(fields.requiredSkills.getText()));
         job.setPreferredSkills(parseSkills(fields.preferredSkills.getText()));
-        job.setOrganiserId(organiserId);
+        job.setOrganiserId(resolveOrganiserId(fields));
         return job;
     }
 
@@ -327,6 +423,7 @@ public class JobEditorController {
         fields.deadline.valueProperty().addListener((obs, oldValue, newValue) -> updater.run());
         fields.requiredSkills.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
         fields.preferredSkills.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
+        fields.organiser.valueProperty().addListener((obs, oldValue, newValue) -> updater.run());
     }
 
     private void updatePreview(EditorFields fields,
@@ -335,6 +432,7 @@ public class JobEditorController {
                                Label hours,
                                Label positions,
                                Label deadline,
+                               Label organiser,
                                Label requiredLine,
                                Label preferredLine) {
         cardTitle.setText(fallback(fields.title.getText(), "Untitled Job"));
@@ -345,6 +443,7 @@ public class JobEditorController {
         hours.setText("Weekly Hours: " + fallback(fields.weeklyHours.getText(), "-"));
         positions.setText("Positions: " + fallback(fields.positions.getText(), "-"));
         deadline.setText("Deadline: " + (fields.deadline.getValue() == null ? "-" : fields.deadline.getValue().toString()));
+        organiser.setText("Organiser: " + fallback(selectedOrganiserName(fields), "-"));
 
         List<String> requiredSkills = parseSkills(fields.requiredSkills.getText());
         List<String> preferredSkills = parseSkills(fields.preferredSkills.getText());
@@ -393,17 +492,61 @@ public class JobEditorController {
         }
     }
 
+    private void selectOrganiser(ComboBox<User> organiserBox, String organiserId) {
+        if (organiserId == null || organiserId.isBlank()) {
+            if (!organiserBox.getItems().isEmpty()) {
+                organiserBox.getSelectionModel().selectFirst();
+            }
+            return;
+        }
+        boolean matched = organiserBox.getItems().stream()
+                .filter(user -> organiserId.equals(user.getUserId()))
+                .findFirst()
+                .map(user -> {
+                    organiserBox.getSelectionModel().select(user);
+                    return true;
+                })
+                .orElse(false);
+        if (!matched && !organiserBox.getItems().isEmpty()) {
+            organiserBox.getSelectionModel().selectFirst();
+        }
+    }
+
+    private String resolveOrganiserId(EditorFields fields) {
+        User selected = fields.organiser.getValue();
+        if (selected != null && selected.getUserId() != null && !selected.getUserId().isBlank()) {
+            return selected.getUserId();
+        }
+        return fields.defaultOrganiserId;
+    }
+
+    private String selectedOrganiserName(EditorFields fields) {
+        User selected = fields.organiser.getValue();
+        if (selected != null) {
+            return formatOrganiserLabel(selected);
+        }
+        return fields.defaultOrganiserId;
+    }
+
+    private String formatOrganiserLabel(User organiser) {
+        String displayName = organiser.getDisplayName();
+        return (displayName == null || displayName.isBlank() ? organiser.getUserId() : displayName)
+                + " (" + organiser.getUserId() + ")";
+    }
+
     private static class EditorFields {
         private final TextField title = new TextField();
         private final TextField moduleCode = new TextField();
         private final TextField moduleName = new TextField();
-        private final ComboBox<JobType> type = new ComboBox<>();
+        private final ChoiceBox<JobType> type = new ChoiceBox<>();
         private final TextField weeklyHours = new TextField();
         private final TextField positions = new TextField();
         private final DatePicker deadline = new DatePicker();
-        private final ComboBox<JobStatus> status = new ComboBox<>();
+        private final ChoiceBox<JobStatus> status = new ChoiceBox<>();
         private final TextArea description = new TextArea();
-        private final TextField requiredSkills = new TextField();
-        private final TextField preferredSkills = new TextField();
+        private final TextArea requiredSkills = new TextArea();
+        private final TextArea preferredSkills = new TextArea();
+        private final ComboBox<User> organiser = new ComboBox<>();
+        private String defaultOrganiserId;
     }
 }

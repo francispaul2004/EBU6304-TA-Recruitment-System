@@ -55,4 +55,11 @@ class ReviewServiceTest {
         var result = reviewService.rejectApplication("APP001", "U102", "No permission");
         assertFalse(result.isValid());
     }
+
+    @Test
+    void shouldAllowAdminToRejectApplicationAcrossJobs() {
+        var result = reviewService.rejectApplication("APP001", "U900", "Admin override", true);
+        assertTrue(result.isValid());
+        assertEquals("REJECTED", applicationRepository.findById("APP001").orElseThrow().getStatus().name());
+    }
 }
