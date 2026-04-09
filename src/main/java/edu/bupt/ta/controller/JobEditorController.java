@@ -3,6 +3,8 @@ package edu.bupt.ta.controller;
 import edu.bupt.ta.enums.JobStatus;
 import edu.bupt.ta.enums.JobType;
 import edu.bupt.ta.model.Job;
+import edu.bupt.ta.model.User;
+import edu.bupt.ta.util.DateTimeUtils;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
@@ -44,8 +46,13 @@ public class JobEditorController {
 
 
     public Optional<Job> show(Job source, String organiserId) {
+        return show(source, organiserId, List.of());
+    }
+
+    public Optional<Job> show(Job source, String organiserId, List<User> organisers) {
         EditorFields fields = new EditorFields();
-        populateForm(fields, source);
+        fields.defaultOrganiserId = organiserId;
+        populateForm(fields, source, organiserId, organisers);
 
         AtomicReference<Job> result = new AtomicReference<>();
 
@@ -63,8 +70,8 @@ public class JobEditorController {
         VBox leftPanel = new VBox(0);
         leftPanel.setPrefWidth(960);
         leftPanel.setMinWidth(900);
-        leftPanel.getChildren().add(buildHeader(fields, source, organiserId, stage, result));
-        leftPanel.getChildren().add(buildFormContent(fields));
+        leftPanel.getChildren().add(buildHeader(fields, source, stage, result));
+        leftPanel.getChildren().add(buildFormContent(fields, !organisers.isEmpty()));
         HBox.setHgrow(leftPanel, Priority.ALWAYS);
 
         VBox previewPanel = buildPreviewPanel(fields);
@@ -84,11 +91,7 @@ public class JobEditorController {
         return Optional.ofNullable(result.get());
     }
 
-    private Parent buildHeader(EditorFields fields,
-                               Job source,
-                               String organiserId,
-                               Stage stage,
-                               AtomicReference<Job> result) {
+    private Parent buildHeader(EditorFields fields, Job source, Stage stage, AtomicReference<Job> result) {
         HBox header = new HBox();
         header.setPadding(new Insets(20, 24, 20, 24));
         header.setAlignment(Pos.CENTER_LEFT);
@@ -106,19 +109,19 @@ public class JobEditorController {
 
         Button saveDraft = new Button("Save Draft");
         saveDraft.getStyleClass().add("secondary-button");
-        saveDraft.setOnAction(event -> submitWithStatus(fields, source, organiserId, JobStatus.DRAFT, stage, result));
+        saveDraft.setOnAction(event -> submitWithStatus(fields, source, JobStatus.DRAFT, stage, result));
 
         Button update = new Button(source == null ? "Publish Job" : "Update Job");
         update.getStyleClass().add("primary-button");
-        update.setOnAction(event -> submitWithStatus(fields, source, organiserId, fields.status.getValue(), stage, result));
+        update.setOnAction(event -> submitWithStatus(fields, source, fields.status.getValue(), stage, result));
 
         header.getChildren().addAll(title, spacer, cancel, saveDraft, update);
         return header;
     }
 
-    private Parent buildFormContent(EditorFields fields) {
+private Parent buildFormContent(EditorFields fields, boolean showOrganiserField) {
         configureNumericField(fields.positions);
-
+        
         VBox wrapper = new VBox(24);
         wrapper.setPadding(new Insets(24));
         wrapper.setStyle("-fx-background-color: #ffffff;");
@@ -147,7 +150,12 @@ public class JobEditorController {
         basicGrid.add(field("Positions", fields.positions, true), 1, 2);
         basicGrid.add(field("Deadline", deadlineField(fields), true), 0, 3);
         basicGrid.add(field("Publication Status", fields.status), 1, 3);
-        basicGrid.add(areaField("Job Description / Key Responsibilities", fields.description, 6), 0, 4, 2, 1);
+        int descriptionRow = 4;
+        if (showOrganiserField) {
+            basicGrid.add(field("Organiser", fields.organiser, true), 0, 4, 2, 1);
+            descriptionRow = 5;
+        }
+        basicGrid.add(areaField("Job Description / Key Responsibilities", fields.description, 6), 0, descriptionRow, 2, 1);
 
         wrapper.getChildren().add(basicGrid);
 
@@ -199,7 +207,9 @@ public class JobEditorController {
         Label semester = metricLine("Semester", "-");
         Label positions = metricLine("Positions", "-");
         Label deadline = metricLine("Deadline", "-");
-        metrics.getChildren().addAll(metricTitle, semester, positions, deadline);
+        Label organiser = metricLine("Organiser", "-");
+
+        metrics.getChildren().addAll(metricTitle, semester, positions, deadline, organiser);
 
         VBox requirementCard = new VBox(8);
         requirementCard.setPadding(new Insets(14));
@@ -220,7 +230,8 @@ public class JobEditorController {
 
         preview.getChildren().addAll(heading, card, metrics, requirementCard);
 
-        Runnable updater = () -> updatePreview(fields, cardTitle, cardMeta, semester, positions, deadline, requiredLine, preferredLine);
+        Runnable updater = () -> updatePreview(fields, cardTitle, cardMeta, semester, positions, deadline, organiser, requiredLine, preferredLine);
+
         bindPreviewListeners(fields, updater);
         updater.run();
 
@@ -271,6 +282,7 @@ public class JobEditorController {
         return field(labelText, area);
     }
 
+
     private Parent deadlineField(EditorFields fields) {
         fields.deadlineHour.getItems().setAll(buildHourOptions());
         fields.deadlineMinute.getItems().setAll(buildMinuteOptions());
@@ -284,19 +296,27 @@ public class JobEditorController {
         return row;
     }
 
-    private void populateForm(EditorFields fields, Job source) {
+  
+
+    private void populateForm(EditorFields fields, Job source, String organiserId, List<User> organisers) {
         fields.type.getItems().setAll(JobType.values());
         configureTypeSelector(fields.type);
         fields.status.getItems().setAll(JobStatus.values());
         configureStatusSelector(fields.status);
+        fields.organiser.getItems().setAll(organisers);
+        configureOrganiserSelector(fields.organiser);
         if (source == null) {
             fields.type.setValue(JobType.MODULE_TA);
             fields.status.setValue(JobStatus.OPEN);
+
             LocalDateTime defaultDeadline = LocalDateTime.now().plusDays(7).withHour(23).withMinute(59).withSecond(0).withNano(0);
             fields.deadline.setValue(defaultDeadline.toLocalDate());
             fields.deadlineHour.setValue(String.format("%02d", defaultDeadline.getHour()));
             fields.deadlineMinute.setValue(String.format("%02d", defaultDeadline.getMinute()));
             fields.semester.setText("Spring Semester 2026");
+           
+            selectOrganiser(fields.organiser, organiserId);
+
             return;
         }
 
@@ -315,6 +335,8 @@ public class JobEditorController {
         fields.description.setText(source.getDescription());
         fields.requiredSkills.setText(String.join(", ", source.getRequiredSkills()));
         fields.preferredSkills.setText(String.join(", ", source.getPreferredSkills()));
+        fields.defaultOrganiserId = source.getOrganiserId();
+        selectOrganiser(fields.organiser, source.getOrganiserId());
     }
 
     private void configureStatusSelector(ChoiceBox<JobStatus> statusBox) {
@@ -351,23 +373,40 @@ public class JobEditorController {
         });
     }
 
+    private void configureOrganiserSelector(ComboBox<User> organiserBox) {
+        organiserBox.setPromptText("Select organiser");
+        organiserBox.setCellFactory(listView -> new ListCell<>() {
+            @Override
+            protected void updateItem(User item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatOrganiserLabel(item));
+            }
+        });
+        organiserBox.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(User item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatOrganiserLabel(item));
+            }
+        });
+    }
+
     private void submitWithStatus(EditorFields fields,
                                   Job source,
-                                  String organiserId,
                                   JobStatus targetStatus,
                                   Stage stage,
                                   AtomicReference<Job> result) {
-        List<String> errors = validate(fields, organiserId, targetStatus);
+        List<String> errors = validate(fields, targetStatus);
         if (!errors.isEmpty()) {
             DialogControllerFactory.validationError(String.join("\n", errors), stage.getOwner());
             return;
         }
-        Job job = buildJob(fields, source, organiserId, targetStatus);
+        Job job = buildJob(fields, source, targetStatus);
         result.set(job);
         stage.close();
     }
 
-    private List<String> validate(EditorFields fields, String organiserId, JobStatus targetStatus) {
+    private List<String> validate(EditorFields fields, JobStatus targetStatus) {
         List<String> errors = new ArrayList<>();
         if (fields.title.getText() == null || fields.title.getText().isBlank()) {
             errors.add("Title is required.");
@@ -392,18 +431,20 @@ public class JobEditorController {
             errors.add("Please select both deadline hour and minute.");
         }
         if (targetStatus == JobStatus.OPEN
-                && fields.deadline.getValue() != null
-                && deadlineTime != null
-                && LocalDateTime.of(fields.deadline.getValue(), deadlineTime).isBefore(LocalDateTime.now())) {
+               && fields.deadline.getValue() != null
+               && deadlineTime != null
+               && LocalDateTime.of(fields.deadline.getValue(), deadlineTime).isBefore(LocalDateTime.now())) {
+            
             errors.add("An OPEN job must have a deadline in the future.");
         }
+        String organiserId = resolveOrganiserId(fields);
         if (organiserId == null || organiserId.isBlank()) {
             errors.add("Organiser ID is required.");
         }
         return errors;
     }
 
-    private Job buildJob(EditorFields fields, Job source, String organiserId, JobStatus targetStatus) {
+    private Job buildJob(EditorFields fields, Job source, JobStatus targetStatus) {
         Job job = new Job();
         if (source != null) {
             job.setJobId(source.getJobId());
@@ -424,7 +465,7 @@ public class JobEditorController {
         job.setDescription(trim(fields.description.getText()));
         job.setRequiredSkills(parseSkills(fields.requiredSkills.getText()));
         job.setPreferredSkills(parseSkills(fields.preferredSkills.getText()));
-        job.setOrganiserId(organiserId);
+        job.setOrganiserId(resolveOrganiserId(fields));
         return job;
     }
 
@@ -439,6 +480,7 @@ public class JobEditorController {
         fields.deadlineMinute.valueProperty().addListener((obs, oldValue, newValue) -> updater.run());
         fields.requiredSkills.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
         fields.preferredSkills.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
+        fields.organiser.valueProperty().addListener((obs, oldValue, newValue) -> updater.run());
     }
 
     private void updatePreview(EditorFields fields,
@@ -447,6 +489,7 @@ public class JobEditorController {
                                Label semester,
                                Label positions,
                                Label deadline,
+                               Label organiser,
                                Label requiredLine,
                                Label preferredLine) {
         cardTitle.setText(fallback(fields.title.getText(), "Untitled Job"));
@@ -456,7 +499,11 @@ public class JobEditorController {
 
         semester.setText("Semester: " + fallback(fields.semester.getText(), "-"));
         positions.setText("Positions: " + fallback(fields.positions.getText(), "-"));
+
         deadline.setText("Deadline: " + formatDeadline(fields.deadline.getValue(), parseTime(fields.deadlineHour.getValue(), fields.deadlineMinute.getValue())));
+
+        organiser.setText("Organiser: " + fallback(selectedOrganiserName(fields), "-"));
+
 
         List<String> requiredSkills = parseSkills(fields.requiredSkills.getText());
         List<String> preferredSkills = parseSkills(fields.preferredSkills.getText());
@@ -546,6 +593,47 @@ public class JobEditorController {
         }
         return LocalDateTime.of(date, time).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
     }
+    private void selectOrganiser(ComboBox<User> organiserBox, String organiserId) {
+        if (organiserId == null || organiserId.isBlank()) {
+            if (!organiserBox.getItems().isEmpty()) {
+                organiserBox.getSelectionModel().selectFirst();
+            }
+            return;
+        }
+        boolean matched = organiserBox.getItems().stream()
+                .filter(user -> organiserId.equals(user.getUserId()))
+                .findFirst()
+                .map(user -> {
+                    organiserBox.getSelectionModel().select(user);
+                    return true;
+                })
+                .orElse(false);
+        if (!matched && !organiserBox.getItems().isEmpty()) {
+            organiserBox.getSelectionModel().selectFirst();
+        }
+    }
+
+    private String resolveOrganiserId(EditorFields fields) {
+        User selected = fields.organiser.getValue();
+        if (selected != null && selected.getUserId() != null && !selected.getUserId().isBlank()) {
+            return selected.getUserId();
+        }
+        return fields.defaultOrganiserId;
+    }
+
+    private String selectedOrganiserName(EditorFields fields) {
+        User selected = fields.organiser.getValue();
+        if (selected != null) {
+            return formatOrganiserLabel(selected);
+        }
+        return fields.defaultOrganiserId;
+    }
+
+    private String formatOrganiserLabel(User organiser) {
+        String displayName = organiser.getDisplayName();
+        return (displayName == null || displayName.isBlank() ? organiser.getUserId() : displayName)
+                + " (" + organiser.getUserId() + ")";
+    }
 
     private static class EditorFields {
         private final TextField title = new TextField();
@@ -561,5 +649,7 @@ public class JobEditorController {
         private final TextArea description = new TextArea();
         private final TextArea requiredSkills = new TextArea();
         private final TextArea preferredSkills = new TextArea();
+        private final ComboBox<User> organiser = new ComboBox<>();
+        private String defaultOrganiserId;
     }
 }

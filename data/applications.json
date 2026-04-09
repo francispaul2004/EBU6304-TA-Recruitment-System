@@ -14,7 +14,7 @@
   "applicantId" : "A002",
   "applyDate" : "2026-03-18T09:10:00",
   "statement" : "I can support debugging sessions.",
-  "status" : "UNDER_REVIEW",
+  "status" : "REJECTED",
   "decisionNote" : "Awaiting MO interview",
   "matchScore" : 75,
   "missingSkills" : [ "Java" ]
@@ -64,7 +64,7 @@
   "applicantId" : "A001",
   "applyDate" : "2026-03-18T09:40:00",
   "statement" : "Can support coding camp.",
-  "status" : "SUBMITTED",
+  "status" : "REJECTED",
   "decisionNote" : "",
   "matchScore" : 73,
   "missingSkills" : [ "Python" ]
@@ -74,7 +74,7 @@
   "applicantId" : "A001",
   "applyDate" : "2026-03-18T09:50:00",
   "statement" : "Interested in project clinics.",
-  "status" : "REJECTED",
+  "status" : "ACCEPTED",
   "decisionNote" : "Position already filled",
   "matchScore" : 70,
   "missingSkills" : [ ]
@@ -84,8 +84,8 @@
   "applicantId" : "A003",
   "applyDate" : "2026-03-18T10:00:00",
   "statement" : "Frontend tutoring experience.",
-  "status" : "UNDER_REVIEW",
-  "decisionNote" : "",
+  "status" : "REJECTED",
+  "decisionNote" : "-",
   "matchScore" : 79,
   "missingSkills" : [ "Git" ]
 }, {
@@ -94,28 +94,8 @@
   "applicantId" : "A005",
   "applyDate" : "2026-03-18T10:10:00",
   "statement" : "Can help with labs and grading.",
-  "status" : "SUBMITTED",
-  "decisionNote" : "",
+  "status" : "ACCEPTED",
+  "decisionNote" : "TEST",
   "matchScore" : 74,
   "missingSkills" : [ "JavaScript" ]
-}, {
-  "applicationId" : "APP011",
-  "jobId" : "J003",
-  "applicantId" : "A001",
-  "applyDate" : "2026-03-17T23:44:09.817874",
-  "statement" : "",
-  "status" : "SUBMITTED",
-  "decisionNote" : "",
-  "matchScore" : 20,
-  "missingSkills" : [ "Mathematics" ]
-}, {
-  "applicationId" : "APP012",
-  "jobId" : "J002",
-  "applicantId" : "A001",
-  "applyDate" : "2026-03-18T02:31:48.504704",
-  "statement" : "",
-  "status" : "SUBMITTED",
-  "decisionNote" : "",
-  "matchScore" : 20,
-  "missingSkills" : [ "Electronics" ]
 } ]

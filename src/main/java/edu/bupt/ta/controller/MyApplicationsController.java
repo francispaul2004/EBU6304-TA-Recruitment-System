@@ -170,11 +170,13 @@ public class MyApplicationsController {
         Label heading = new Label("STATUS OVERVIEW");
         heading.setStyle("-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #94a3b8;");
 
+        // 排除已取消的申请进行统计
         Map<ApplicationStatus, Long> counts = allApplications.stream()
+                .filter(app -> app.getStatus() != ApplicationStatus.CANCELLED)
                 .collect(Collectors.groupingBy(Application::getStatus, Collectors.counting()));
 
         rail.getChildren().add(heading);
-        rail.getChildren().add(filterButton("ALL", allApplications.size()));
+        rail.getChildren().add(filterButton("ALL", counts.values().stream().mapToInt(Long::intValue).sum()));
         rail.getChildren().add(filterButton("UNDER_REVIEW", counts.getOrDefault(ApplicationStatus.UNDER_REVIEW, 0L).intValue()));
         rail.getChildren().add(filterButton("ACCEPTED", counts.getOrDefault(ApplicationStatus.ACCEPTED, 0L).intValue()));
         rail.getChildren().add(filterButton("REJECTED", counts.getOrDefault(ApplicationStatus.REJECTED, 0L).intValue()));
@@ -257,9 +259,17 @@ public class MyApplicationsController {
 
     private void updateApplicationList() {
         List<Application> filtered = allApplications;
+
+        // 过滤掉 CANCELLED 状态的申请
+        filtered = filtered.stream()
+                .filter(application -> application.getStatus() != ApplicationStatus.CANCELLED)
+                .collect(Collectors.toList());
+
         if (!"ALL".equals(activeFilter)) {
             ApplicationStatus status = ApplicationStatus.valueOf(activeFilter);
-            filtered = filtered.stream().filter(application -> application.getStatus() == status).toList();
+            filtered = filtered.stream()
+                    .filter(application -> application.getStatus() == status)
+                    .toList();
         }
 
         applicationList.setItems(FXCollections.observableArrayList(filtered));
@@ -340,6 +350,7 @@ public class MyApplicationsController {
                 case ACCEPTED -> "-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #047857; -fx-background-color: #ecfdf5; -fx-background-radius: 999; -fx-padding: 2 8 2 8;";
                 case REJECTED -> "-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #b91c1c; -fx-background-color: #fef2f2; -fx-background-radius: 999; -fx-padding: 2 8 2 8;";
                 case UNDER_REVIEW -> "-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #1d4ed8; -fx-background-color: #eff6ff; -fx-background-radius: 999; -fx-padding: 2 8 2 8;";
+                case CANCELLED -> "-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #b45309; -fx-background-color: #fffbeb; -fx-background-radius: 999; -fx-padding: 2 8 2 8;";
                 default -> "-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #b45309; -fx-background-color: #fffbeb; -fx-background-radius: 999; -fx-padding: 2 8 2 8;";
             };
         }

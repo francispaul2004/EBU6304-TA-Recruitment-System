@@ -1,6 +1,7 @@
 package edu.bupt.ta.controller;
 
 import edu.bupt.ta.dto.ApplicantReviewDTO;
+import edu.bupt.ta.enums.Role;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
 import edu.bupt.ta.util.ValidationResult;
@@ -34,7 +35,7 @@ public class ApplicantReviewController {
     }
 
     private void initialize() {
-        ApplicantReviewDTO dto = services.reviewService().getApplicantReviewData(applicationId, user.getUserId());
+        ApplicantReviewDTO dto = services.reviewService().getApplicantReviewData(applicationId, user.getUserId(), isAdmin());
         this.reviewData = dto;
 
         view.setPadding(new Insets(16));
@@ -54,7 +55,9 @@ public class ApplicantReviewController {
                 info("Technical Skills", String.join(", ", dto.technicalSkills())),
                 info("Availability", String.join(", ", dto.availability())),
                 info("Match Score", dto.matchScore() + "%"),
+            info("Matched Skills", safeJoin(dto.matchedSkills())),
                 info("Missing Skills", dto.missingSkills().isEmpty() ? "None" : String.join(", ", dto.missingSkills())),
+            info("Match Explanation", blankToDash(dto.matchExplanation())),
                 info("Workload", "Current " + dto.currentHours() + "h, Projected " + dto.projectedHours()
                         + "h / Max " + dto.maxWeeklyHours() + "h (" + dto.riskLevel() + ")"),
                 info("Statement", dto.statement())
@@ -69,6 +72,7 @@ public class ApplicantReviewController {
 
         decisionNote.setPromptText("Add observation or justification for the recruitment decision...");
         decisionNote.setPrefRowCount(4);
+        decisionNote.setText("");
 
         noteCard.getChildren().addAll(noteLabel, decisionNote);
 
@@ -98,6 +102,17 @@ public class ApplicantReviewController {
         return box;
     }
 
+    private String safeJoin(java.util.List<String> items) {
+        if (items == null || items.isEmpty()) {
+            return "None";
+        }
+        return String.join(", ", items);
+    }
+
+    private String blankToDash(String value) {
+        return value == null || value.isBlank() ? "-" : value;
+    }
+
     private void doAccept() {
         if ("HIGH".equalsIgnoreCase(reviewData.riskLevel())) {
             DialogControllerFactory.workloadWarning(
@@ -111,7 +126,8 @@ public class ApplicantReviewController {
         if (!confirmed) {
             return;
         }
-        ValidationResult result = services.reviewService().acceptApplication(applicationId, user.getUserId(), decisionNote.getText());
+        ValidationResult result = services.reviewService()
+                .acceptApplication(applicationId, user.getUserId(), decisionNote.getText(), isAdmin());
         showResult("Accept Application", result);
     }
 
@@ -123,7 +139,8 @@ public class ApplicantReviewController {
         if (!confirmed) {
             return;
         }
-        ValidationResult result = services.reviewService().rejectApplication(applicationId, user.getUserId(), decisionNote.getText());
+        ValidationResult result = services.reviewService()
+                .rejectApplication(applicationId, user.getUserId(), decisionNote.getText(), isAdmin());
         showResult("Reject Application", result);
     }
 
@@ -135,5 +152,12 @@ public class ApplicantReviewController {
         }
         DialogControllerFactory.success(header, "Operation completed.",
                 view.getScene() == null ? null : view.getScene().getWindow());
+        if (view.getScene() != null && view.getScene().getWindow() != null) {
+            view.getScene().getWindow().hide();
+        }
+    }
+
+    private boolean isAdmin() {
+        return user.getRole() == Role.ADMIN;
     }
 }
