@@ -5,13 +5,20 @@ import edu.bupt.ta.enums.Role;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
 import edu.bupt.ta.util.ValidationResult;
+import javafx.geometry.Pos;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+
+import java.awt.Desktop;
+import java.nio.file.Path;
+import java.util.Optional;
 
 public class ApplicantReviewController {
 
@@ -72,9 +79,18 @@ public class ApplicantReviewController {
 
         decisionNote.setPromptText("Add observation or justification for the recruitment decision...");
         decisionNote.setPrefRowCount(4);
-        decisionNote.setText("");
+        decisionNote.setText(dto.decisionNote() == null ? "" : dto.decisionNote());
 
-        noteCard.getChildren().addAll(noteLabel, decisionNote);
+        Button previewCv = new Button("Preview CV");
+        previewCv.getStyleClass().add("secondary-button");
+        previewCv.setOnAction(event -> openCvFile(dto.applicantId()));
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        HBox noteHeader = new HBox(8, noteLabel, spacer, previewCv);
+        noteHeader.setAlignment(Pos.CENTER_LEFT);
+
+        noteCard.getChildren().addAll(noteHeader, decisionNote);
 
         Button accept = new Button("Accept Candidate");
         accept.getStyleClass().add("primary-button");
@@ -159,5 +175,33 @@ public class ApplicantReviewController {
 
     private boolean isAdmin() {
         return user.getRole() == Role.ADMIN;
+    }
+
+    private void openCvFile(String applicantId) {
+        Optional<Path> filePath = services.resumeService().getCvFilePath(applicantId);
+        if (filePath.isEmpty()) {
+            DialogControllerFactory.info("CV Not Found",
+                    "No uploaded CV file exists for this account.",
+                    view.getScene() == null ? null : view.getScene().getWindow());
+            return;
+        }
+        try {
+            if (!Desktop.isDesktopSupported()) {
+                DialogControllerFactory.operationFailed("Open CV Failed",
+                        "Desktop open action is not supported in this environment.",
+                        view.getScene() == null ? null : view.getScene().getWindow());
+                return;
+            }
+            Desktop desktop = Desktop.getDesktop();
+            if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                desktop.browse(filePath.get().toUri());
+            } else {
+                desktop.open(filePath.get().toFile());
+            }
+        } catch (Exception ex) {
+            DialogControllerFactory.operationFailed("Open CV Failed",
+                    "Unable to open file: " + ex.getMessage(),
+                    view.getScene() == null ? null : view.getScene().getWindow());
+        }
     }
 }
