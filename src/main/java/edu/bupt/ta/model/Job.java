@@ -1,15 +1,21 @@
 package edu.bupt.ta.model;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import edu.bupt.ta.enums.JobStatus;
 import edu.bupt.ta.enums.JobType;
 import edu.bupt.ta.repository.Identifiable;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Job implements Identifiable<String> {
+    private static final DateTimeFormatter DEADLINE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
     private String jobId;
     private String title;
     private String moduleCode;
@@ -21,7 +27,7 @@ public class Job implements Identifiable<String> {
     private List<String> preferredSkills = new ArrayList<>();
     private int weeklyHours;
     private int positions;
-    private LocalDate deadline;
+    private LocalDateTime deadline;
     private String organiserId;
     private JobStatus status;
     private LocalDateTime createdAt;
@@ -31,7 +37,7 @@ public class Job implements Identifiable<String> {
 
     public Job(String jobId, String title, String moduleCode, String moduleName, String semester, JobType type, String description,
                List<String> requiredSkills, List<String> preferredSkills, int weeklyHours, int positions,
-               LocalDate deadline, String organiserId, JobStatus status, LocalDateTime createdAt) {
+               LocalDateTime deadline, String organiserId, JobStatus status, LocalDateTime createdAt) {
         this.jobId = jobId;
         this.title = title;
         this.moduleCode = moduleCode;
@@ -142,12 +148,31 @@ public class Job implements Identifiable<String> {
         this.positions = positions;
     }
 
-    public LocalDate getDeadline() {
+    @JsonIgnore
+    public LocalDateTime getDeadline() {
         return deadline;
     }
 
-    public void setDeadline(LocalDate deadline) {
+    @JsonIgnore
+    public void setDeadline(LocalDateTime deadline) {
         this.deadline = deadline;
+    }
+
+    @JsonGetter("deadline")
+    public String getDeadlineJson() {
+        return deadline == null ? null : deadline.format(DEADLINE_FORMAT);
+    }
+
+    @JsonSetter("deadline")
+    public void setDeadlineJson(String value) {
+        if (value == null || value.isBlank()) {
+            this.deadline = null;
+            return;
+        }
+        String normalized = value.trim();
+        this.deadline = normalized.contains("T")
+                ? LocalDateTime.parse(normalized, DEADLINE_FORMAT)
+                : LocalDateTime.parse(normalized + "T23:59:00", DEADLINE_FORMAT);
     }
 
     public String getOrganiserId() {

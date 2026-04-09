@@ -13,7 +13,7 @@ import org.junit.jupiter.api.io.TempDir;
 import support.TestDataSupport;
 
 import java.nio.file.Path;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -44,7 +44,7 @@ class JobServiceTest {
         job.setType(JobType.MODULE_TA);
         job.setWeeklyHours(3);
         job.setPositions(1);
-        job.setDeadline(LocalDate.now().plusDays(7));
+        job.setDeadline(LocalDateTime.now().plusDays(7));
         job.setOrganiserId("U101");
         job.setStatus(JobStatus.OPEN);
 

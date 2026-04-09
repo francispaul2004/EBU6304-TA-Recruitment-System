@@ -10,12 +10,15 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -26,6 +29,9 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,6 +40,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class JobEditorController {
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
+
 
     public Optional<Job> show(Job source, String organiserId) {
         EditorFields fields = new EditorFields();
@@ -109,6 +117,8 @@ public class JobEditorController {
     }
 
     private Parent buildFormContent(EditorFields fields) {
+        configureNumericField(fields.positions);
+
         VBox wrapper = new VBox(24);
         wrapper.setPadding(new Insets(24));
         wrapper.setStyle("-fx-background-color: #ffffff;");
@@ -122,13 +132,20 @@ public class JobEditorController {
         GridPane basicGrid = new GridPane();
         basicGrid.setHgap(16);
         basicGrid.setVgap(14);
+        ColumnConstraints leftColumn = new ColumnConstraints();
+        leftColumn.setPercentWidth(50);
+        leftColumn.setHgrow(Priority.ALWAYS);
+        ColumnConstraints rightColumn = new ColumnConstraints();
+        rightColumn.setPercentWidth(50);
+        rightColumn.setHgrow(Priority.ALWAYS);
+        basicGrid.getColumnConstraints().setAll(leftColumn, rightColumn);
         basicGrid.add(field("Job Title", fields.title, true), 0, 0);
         basicGrid.add(field("Module Code", fields.moduleCode, true), 1, 0);
         basicGrid.add(field("Module Name", fields.moduleName, true), 0, 1);
         basicGrid.add(field("Job Type", fields.type), 1, 1);
-        basicGrid.add(field("Weekly Hours", fields.weeklyHours, true), 0, 2);
+        basicGrid.add(field("Semester", fields.semester, true), 0, 2);
         basicGrid.add(field("Positions", fields.positions, true), 1, 2);
-        basicGrid.add(field("Deadline", fields.deadline, true), 0, 3);
+        basicGrid.add(field("Deadline", deadlineField(fields), true), 0, 3);
         basicGrid.add(field("Publication Status", fields.status), 1, 3);
         basicGrid.add(areaField("Job Description / Key Responsibilities", fields.description, 6), 0, 4, 2, 1);
 
@@ -142,7 +159,7 @@ public class JobEditorController {
         skillsGrid.add(areaField("Required Skills (comma separated)", fields.requiredSkills, 2), 0, 0);
         skillsGrid.add(areaField("Preferred Skills (comma separated)", fields.preferredSkills, 2), 1, 0);
 
-        Label note = new Label("Tip: Include at least one required skill and clear weekly hour expectation.");
+        Label note = new Label("Tip: Include at least one required skill and set the semester clearly.");
         note.getStyleClass().add("body-muted");
 
         wrapper.getChildren().addAll(skillsGrid, note);
@@ -179,10 +196,10 @@ public class JobEditorController {
         Label metricTitle = new Label("KEY METRICS");
         metricTitle.setStyle("-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #94a3b8;");
 
-        Label hours = metricLine("Weekly Hours", "-");
+        Label semester = metricLine("Semester", "-");
         Label positions = metricLine("Positions", "-");
         Label deadline = metricLine("Deadline", "-");
-        metrics.getChildren().addAll(metricTitle, hours, positions, deadline);
+        metrics.getChildren().addAll(metricTitle, semester, positions, deadline);
 
         VBox requirementCard = new VBox(8);
         requirementCard.setPadding(new Insets(14));
@@ -203,7 +220,7 @@ public class JobEditorController {
 
         preview.getChildren().addAll(heading, card, metrics, requirementCard);
 
-        Runnable updater = () -> updatePreview(fields, cardTitle, cardMeta, hours, positions, deadline, requiredLine, preferredLine);
+        Runnable updater = () -> updatePreview(fields, cardTitle, cardMeta, semester, positions, deadline, requiredLine, preferredLine);
         bindPreviewListeners(fields, updater);
         updater.run();
 
@@ -254,6 +271,19 @@ public class JobEditorController {
         return field(labelText, area);
     }
 
+    private Parent deadlineField(EditorFields fields) {
+        fields.deadlineHour.getItems().setAll(buildHourOptions());
+        fields.deadlineMinute.getItems().setAll(buildMinuteOptions());
+        fields.deadlineHour.setPromptText("HH");
+        fields.deadlineMinute.setPromptText("MM");
+        fields.deadline.setPrefWidth(320);
+        fields.deadlineHour.setPrefWidth(140);
+        fields.deadlineMinute.setPrefWidth(140);
+        HBox row = new HBox(10, fields.deadline, fields.deadlineHour, fields.deadlineMinute);
+        HBox.setHgrow(fields.deadline, Priority.ALWAYS);
+        return row;
+    }
+
     private void populateForm(EditorFields fields, Job source) {
         fields.type.getItems().setAll(JobType.values());
         configureTypeSelector(fields.type);
@@ -262,7 +292,11 @@ public class JobEditorController {
         if (source == null) {
             fields.type.setValue(JobType.MODULE_TA);
             fields.status.setValue(JobStatus.OPEN);
-            fields.deadline.setValue(LocalDate.now().plusDays(7));
+            LocalDateTime defaultDeadline = LocalDateTime.now().plusDays(7).withHour(23).withMinute(59).withSecond(0).withNano(0);
+            fields.deadline.setValue(defaultDeadline.toLocalDate());
+            fields.deadlineHour.setValue(String.format("%02d", defaultDeadline.getHour()));
+            fields.deadlineMinute.setValue(String.format("%02d", defaultDeadline.getMinute()));
+            fields.semester.setText("Spring Semester 2026");
             return;
         }
 
@@ -270,9 +304,13 @@ public class JobEditorController {
         fields.moduleCode.setText(source.getModuleCode());
         fields.moduleName.setText(source.getModuleName());
         fields.type.setValue(source.getType());
-        fields.weeklyHours.setText(source.getWeeklyHours() <= 0 ? "" : String.valueOf(source.getWeeklyHours()));
+        fields.semester.setText(source.getSemester() == null ? "" : source.getSemester());
         fields.positions.setText(source.getPositions() <= 0 ? "" : String.valueOf(source.getPositions()));
-        fields.deadline.setValue(source.getDeadline());
+        if (source.getDeadline() != null) {
+            fields.deadline.setValue(source.getDeadline().toLocalDate());
+            fields.deadlineHour.setValue(String.format("%02d", source.getDeadline().getHour()));
+            fields.deadlineMinute.setValue(String.format("%02d", source.getDeadline().getMinute()));
+        }
         fields.status.setValue(source.getStatus());
         fields.description.setText(source.getDescription());
         fields.requiredSkills.setText(String.join(", ", source.getRequiredSkills()));
@@ -340,8 +378,8 @@ public class JobEditorController {
         if (fields.moduleName.getText() == null || fields.moduleName.getText().isBlank()) {
             errors.add("Module name is required.");
         }
-        if (parseInt(fields.weeklyHours.getText()) <= 0) {
-            errors.add("Weekly hours must be greater than 0.");
+        if (fields.semester.getText() == null || fields.semester.getText().isBlank()) {
+            errors.add("Semester is required.");
         }
         if (parseInt(fields.positions.getText()) <= 0) {
             errors.add("Positions must be greater than 0.");
@@ -349,10 +387,15 @@ public class JobEditorController {
         if (fields.deadline.getValue() == null) {
             errors.add("Deadline is required.");
         }
+        LocalTime deadlineTime = parseTime(fields.deadlineHour.getValue(), fields.deadlineMinute.getValue());
+        if (deadlineTime == null) {
+            errors.add("Please select both deadline hour and minute.");
+        }
         if (targetStatus == JobStatus.OPEN
                 && fields.deadline.getValue() != null
-                && fields.deadline.getValue().isBefore(LocalDate.now())) {
-            errors.add("An OPEN job must have a deadline of today or later.");
+                && deadlineTime != null
+                && LocalDateTime.of(fields.deadline.getValue(), deadlineTime).isBefore(LocalDateTime.now())) {
+            errors.add("An OPEN job must have a deadline in the future.");
         }
         if (organiserId == null || organiserId.isBlank()) {
             errors.add("Organiser ID is required.");
@@ -365,15 +408,18 @@ public class JobEditorController {
         if (source != null) {
             job.setJobId(source.getJobId());
             job.setCreatedAt(source.getCreatedAt());
-            job.setSemester(source.getSemester());
+            job.setWeeklyHours(source.getWeeklyHours());
         }
         job.setTitle(trim(fields.title.getText()));
         job.setModuleCode(trim(fields.moduleCode.getText()));
         job.setModuleName(trim(fields.moduleName.getText()));
+        job.setSemester(trim(fields.semester.getText()));
         job.setType(fields.type.getValue());
-        job.setWeeklyHours(parseInt(fields.weeklyHours.getText()));
+        if (source == null) {
+            job.setWeeklyHours(4);
+        }
         job.setPositions(parseInt(fields.positions.getText()));
-        job.setDeadline(fields.deadline.getValue());
+        job.setDeadline(LocalDateTime.of(fields.deadline.getValue(), parseTime(fields.deadlineHour.getValue(), fields.deadlineMinute.getValue())));
         job.setStatus(targetStatus == null ? JobStatus.OPEN : targetStatus);
         job.setDescription(trim(fields.description.getText()));
         job.setRequiredSkills(parseSkills(fields.requiredSkills.getText()));
@@ -386,9 +432,11 @@ public class JobEditorController {
         fields.title.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
         fields.moduleCode.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
         fields.moduleName.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
-        fields.weeklyHours.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
+        fields.semester.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
         fields.positions.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
         fields.deadline.valueProperty().addListener((obs, oldValue, newValue) -> updater.run());
+        fields.deadlineHour.valueProperty().addListener((obs, oldValue, newValue) -> updater.run());
+        fields.deadlineMinute.valueProperty().addListener((obs, oldValue, newValue) -> updater.run());
         fields.requiredSkills.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
         fields.preferredSkills.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
     }
@@ -396,7 +444,7 @@ public class JobEditorController {
     private void updatePreview(EditorFields fields,
                                Label cardTitle,
                                Label cardMeta,
-                               Label hours,
+                               Label semester,
                                Label positions,
                                Label deadline,
                                Label requiredLine,
@@ -406,9 +454,9 @@ public class JobEditorController {
         String moduleName = fallback(fields.moduleName.getText(), "Module Name");
         cardMeta.setText(module + " | " + moduleName);
 
-        hours.setText("Weekly Hours: " + fallback(fields.weeklyHours.getText(), "-"));
+        semester.setText("Semester: " + fallback(fields.semester.getText(), "-"));
         positions.setText("Positions: " + fallback(fields.positions.getText(), "-"));
-        deadline.setText("Deadline: " + (fields.deadline.getValue() == null ? "-" : fields.deadline.getValue().toString()));
+        deadline.setText("Deadline: " + formatDeadline(fields.deadline.getValue(), parseTime(fields.deadlineHour.getValue(), fields.deadlineMinute.getValue())));
 
         List<String> requiredSkills = parseSkills(fields.requiredSkills.getText());
         List<String> preferredSkills = parseSkills(fields.preferredSkills.getText());
@@ -457,14 +505,58 @@ public class JobEditorController {
         }
     }
 
+    private LocalTime parseTime(String hour, String minute) {
+        try {
+            if (hour == null || minute == null) {
+                return null;
+            }
+            return LocalTime.parse(hour.trim() + ":" + minute.trim(), TIME_FORMAT);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private List<String> buildHourOptions() {
+        List<String> options = new ArrayList<>();
+        for (int hour = 0; hour < 24; hour++) {
+            options.add(String.format("%02d", hour));
+        }
+        return options;
+    }
+
+    private List<String> buildMinuteOptions() {
+        List<String> options = new ArrayList<>();
+        for (int minute = 0; minute < 60; minute++) {
+            options.add(String.format("%02d", minute));
+        }
+        return options;
+    }
+
+    private void configureNumericField(TextField field) {
+        field.setTextFormatter(new TextFormatter<>(change ->
+                change.getControlNewText().matches("\\d*") ? change : null));
+    }
+
+    private String formatDeadline(LocalDate date, LocalTime time) {
+        if (date == null) {
+            return "-";
+        }
+        if (time == null) {
+            return date.toString();
+        }
+        return LocalDateTime.of(date, time).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+    }
+
     private static class EditorFields {
         private final TextField title = new TextField();
         private final TextField moduleCode = new TextField();
         private final TextField moduleName = new TextField();
         private final ChoiceBox<JobType> type = new ChoiceBox<>();
-        private final TextField weeklyHours = new TextField();
+        private final TextField semester = new TextField();
         private final TextField positions = new TextField();
         private final DatePicker deadline = new DatePicker();
+        private final ComboBox<String> deadlineHour = new ComboBox<>();
+        private final ComboBox<String> deadlineMinute = new ComboBox<>();
         private final ChoiceBox<JobStatus> status = new ChoiceBox<>();
         private final TextArea description = new TextArea();
         private final TextArea requiredSkills = new TextArea();

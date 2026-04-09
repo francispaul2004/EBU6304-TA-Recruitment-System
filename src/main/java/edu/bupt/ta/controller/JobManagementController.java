@@ -5,6 +5,8 @@ import edu.bupt.ta.model.Job;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
 import edu.bupt.ta.util.ValidationResult;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
@@ -20,6 +22,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,6 +31,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public class JobManagementController {
+    private static final Duration AUTO_REFRESH_INTERVAL = Duration.seconds(5);
 
     private static final DateTimeFormatter DETAIL_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final String DETAIL_VALUE_STYLE = "-fx-font-size: 13px; -fx-text-fill: #334155;";
@@ -47,6 +51,7 @@ public class JobManagementController {
     private final Button closeButton = new Button("Close Job");
     private final Button viewApplicantsButton = new Button("View All Applicants");
     private final Button editJobDetailsButton = new Button("Edit Job Details");
+    private final Timeline autoRefreshTimeline = new Timeline();
     private HBox kpiRow;
     private JobStatus currentFilterStatus;
 
@@ -58,7 +63,6 @@ public class JobManagementController {
     private final Label detailSemester = new Label("-");
     private final Label detailType = new Label("-");
     private final Label detailStatus = new Label("-");
-    private final Label detailWeeklyHours = new Label("-");
     private final Label detailPositions = new Label("-");
     private final Label detailApplicants = new Label("-");
     private final Label detailDeadline = new Label("-");
@@ -91,6 +95,21 @@ public class JobManagementController {
         page.getChildren().add(buildMainArea());
 
         view.setCenter(page);
+        configureAutoRefresh();
+    }
+
+    private void configureAutoRefresh() {
+        autoRefreshTimeline.getKeyFrames().setAll(new KeyFrame(AUTO_REFRESH_INTERVAL, event -> refresh()));
+        autoRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
+        autoRefreshTimeline.play();
+
+        view.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene == null) {
+                autoRefreshTimeline.stop();
+            } else {
+                autoRefreshTimeline.play();
+            }
+        });
     }
 
     private HBox buildHeader() {
@@ -235,7 +254,6 @@ public class JobManagementController {
                 detailField("Job Type", detailType),
                 detailField("Status", detailStatus),
                 detailGroupTitle("Recruitment"),
-                detailField("Weekly Hours", detailWeeklyHours),
                 detailField("Positions", detailPositions),
                 detailField("Applicants", detailApplicants),
                 detailField("Deadline", detailDeadline),
@@ -422,7 +440,6 @@ public class JobManagementController {
             detailType.setText("-");
             detailStatus.setText("-");
             detailStatus.setStyle(DETAIL_VALUE_STYLE);
-            detailWeeklyHours.setText("-");
             detailPositions.setText("-");
             detailApplicants.setText("-");
             detailDeadline.setText("-");
@@ -444,10 +461,9 @@ public class JobManagementController {
         detailType.setText(job.getType() == null ? "-" : job.getType().name());
         detailStatus.setText(job.getStatus().name());
         detailStatus.setStyle(statusStyle(job.getStatus()));
-        detailWeeklyHours.setText(String.valueOf(job.getWeeklyHours()));
         detailPositions.setText(String.valueOf(job.getPositions()));
         detailApplicants.setText(String.valueOf(applicantCount));
-        detailDeadline.setText(job.getDeadline() == null ? "-" : job.getDeadline().toString());
+        detailDeadline.setText(formatDateTime(job.getDeadline()));
         detailCreated.setText(formatDateTime(job.getCreatedAt()));
         detailOrganiserId.setText(job.getOrganiserId() == null || job.getOrganiserId().isBlank() ? "-" : job.getOrganiserId());
         detailRequiredSkills.setText(formatList(job.getRequiredSkills()));

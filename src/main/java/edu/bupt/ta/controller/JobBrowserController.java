@@ -23,10 +23,14 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
 public class JobBrowserController {
+    private static final DateTimeFormatter DEADLINE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
 
     private final ServiceRegistry services;
     private final User user;
@@ -236,11 +240,15 @@ public class JobBrowserController {
             Label module = new Label(item.getModuleCode() + " | " + item.getModuleName());
             module.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #00a58a;");
 
-            Label meta = new Label(item.getWeeklyHours() + "h/week   |   Deadline: " + item.getDeadline());
+            Label meta = new Label(item.getWeeklyHours() + "h/week   |   Deadline: " + formatDeadline(item.getDeadline()));
             meta.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748b;");
 
             card.getChildren().addAll(header, module, meta);
             setGraphic(card);
         }
+    }
+
+    private static String formatDeadline(LocalDateTime deadline) {
+        return deadline == null ? "-" : deadline.format(DEADLINE_FORMAT);
     }
 }

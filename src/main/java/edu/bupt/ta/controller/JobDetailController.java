@@ -12,9 +12,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.function.Consumer;
 
 public class JobDetailController {
+    private static final DateTimeFormatter DEADLINE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
 
     private final VBox view = new VBox(16);
     private final Label titleLabel = new Label("Select a job");
@@ -62,7 +66,7 @@ public class JobDetailController {
         moduleLabel.setText(job.getModuleCode() + "  |  " + job.getModuleName());
         metaHours.setText("Hours: " + job.getWeeklyHours() + "h/week");
         metaPositions.setText("Seats: " + job.getPositions());
-        metaDeadline.setText("Deadline: " + job.getDeadline());
+        metaDeadline.setText("Deadline: " + formatDeadline(job.getDeadline()));
         descLabel.setText(job.getDescription());
         applyButton.setDisable(job.getStatus() != JobStatus.OPEN);
     }
@@ -142,5 +146,9 @@ public class JobDetailController {
         Label label = new Label(text);
         label.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #475569; -fx-background-color: #f8fafc; -fx-border-color: #e2e8f0; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 8 10 8 10;");
         return label;
+    }
+
+    private String formatDeadline(LocalDateTime deadline) {
+        return deadline == null ? "-" : deadline.format(DEADLINE_FORMAT);
     }
 }
