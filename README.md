@@ -166,13 +166,7 @@ All sample accounts use password: `Password123!`
 - MO: `mo001`, `mo002`
 - Admin: `admin`
 
-## 7. Build, Run, Test
-
-### Build
-
-```bash
-mvn clean compile
-```
+## 7. Run & Test
 
 ### Run desktop app
 
