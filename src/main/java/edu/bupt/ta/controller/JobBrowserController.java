@@ -386,7 +386,7 @@ public class JobBrowserController {
             Label module = new Label(job.getModuleCode() + " | " + job.getModuleName());
             module.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #00a58a;");
 
-            Label meta = new Label(item.getWeeklyHours() + "h/week   |   Deadline: " + formatDeadline(item.getDeadline()));
+            Label meta = new Label(job.getWeeklyHours() + "h/week   |   Deadline: " + formatDeadline(job.getDeadline()));
             meta.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748b;");
 
             card.getChildren().addAll(header, module, meta);

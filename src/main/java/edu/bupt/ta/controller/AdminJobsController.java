@@ -34,7 +34,6 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.nio.file.Path;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
@@ -455,7 +454,7 @@ public class AdminJobsController {
         detailOrganiser.setText(job.organiserName() + " (" + job.organiserId() + ")");
         detailWeeklyHours.setText(job.weeklyHours() + " h/week");
         detailPositions.setText(String.valueOf(job.positions()));
-        detailDeadline.setText(formatDate(job.deadline()));
+        detailDeadline.setText(formatDeadline(job.deadline()));
         detailCreated.setText(formatDateTime(job.createdAt()));
         detailRequiredSkills.setText(joinList(job.requiredSkills()));
         detailPreferredSkills.setText(joinList(job.preferredSkills()));
@@ -717,11 +716,11 @@ public class AdminJobsController {
         return dateTime == null ? "-" : dateTime.format(DATE_FORMAT);
     }
 
-    private String formatDate(LocalDate date) {
-        return date == null ? "-" : date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+    private String formatDateTime(LocalDateTime dateTime) {
+        return dateTime == null ? "-" : dateTime.format(DETAIL_TIME_FORMAT);
     }
 
-    private String formatDateTime(LocalDateTime dateTime) {
+    private String formatDeadline(LocalDateTime dateTime) {
         return dateTime == null ? "-" : dateTime.format(DETAIL_TIME_FORMAT);
     }
 
