@@ -3,13 +3,18 @@ package edu.bupt.ta.controller;
 import edu.bupt.ta.model.ApplicantProfile;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
+import edu.bupt.ta.service.ApplicantProfileService;
 import edu.bupt.ta.util.ValidationResult;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -30,6 +35,10 @@ public class ApplicantProfileController {
     private final ComboBox<Integer> year = new ComboBox<>();
     private final TextField email = new TextField();
     private final TextField phone = new TextField();
+    private final ComboBox<String> currentCampus = new ComboBox<>();
+    private final ToggleGroup crossCampusGroup = new ToggleGroup();
+    private final RadioButton crossCampusYes = new RadioButton("Yes");
+    private final RadioButton crossCampusNo = new RadioButton("No");
 
     public ApplicantProfileController(ServiceRegistry services, User user) {
         this.services = services;
@@ -86,10 +95,12 @@ public class ApplicantProfileController {
 
         form.add(field("Full Name", fullName), 0, 0);
         form.add(field("Student ID", studentId), 1, 0);
-        form.add(field("Email Address", email), 0, 1);
+        form.add(field("School Email", email), 0, 1);
         form.add(yearField("Academic Year"), 1, 1);
         form.add(field("Phone Number", phone), 0, 2);
         form.add(field("Major", programme), 1, 2);
+        form.add(campusField("Current Campus"), 0, 3);
+        form.add(crossCampusField("Willing to cross campus"), 1, 3);
 
         formCard.getChildren().addAll(formTitle, form);
 
@@ -113,12 +124,20 @@ public class ApplicantProfileController {
     }
 
     private VBox field(String title, TextField input) {
+        return field(title, (Node) input);
+    }
+
+    private VBox field(String title, Node input) {
         VBox box = new VBox(6);
         box.setMaxWidth(Double.MAX_VALUE);
         GridPane.setHgrow(box, Priority.ALWAYS);
         Label label = new Label(title);
         label.getStyleClass().add("field-label");
-        input.setMaxWidth(Double.MAX_VALUE);
+        if (input instanceof TextField textField) {
+            textField.setMaxWidth(Double.MAX_VALUE);
+        } else if (input instanceof ComboBox<?> comboBox) {
+            comboBox.setMaxWidth(Double.MAX_VALUE);
+        }
         box.getChildren().addAll(label, input);
         return box;
     }
@@ -136,6 +155,26 @@ public class ApplicantProfileController {
         return box;
     }
 
+    private VBox campusField(String title) {
+        currentCampus.getItems().setAll(ApplicantProfileService.CAMPUS_HAIDIAN, ApplicantProfileService.CAMPUS_SHAHE);
+        currentCampus.setPromptText("Select Campus");
+        return field(title, currentCampus);
+    }
+
+    private VBox crossCampusField(String title) {
+        crossCampusYes.setToggleGroup(crossCampusGroup);
+        crossCampusNo.setToggleGroup(crossCampusGroup);
+        if (!crossCampusYes.getStyleClass().contains("grade-radio")) {
+            crossCampusYes.getStyleClass().add("grade-radio");
+        }
+        if (!crossCampusNo.getStyleClass().contains("grade-radio")) {
+            crossCampusNo.getStyleClass().add("grade-radio");
+        }
+        HBox row = new HBox(16, crossCampusYes, crossCampusNo);
+        row.setPadding(new Insets(6, 0, 0, 0));
+        return field(title, row);
+    }
+
     private void loadFromModel() {
         fullName.setText(nullToEmpty(profile.getFullName()));
         studentId.setText(nullToEmpty(profile.getStudentId()));
@@ -143,6 +182,16 @@ public class ApplicantProfileController {
         year.setValue(profile.getYear() > 0 ? profile.getYear() : null);
         email.setText(nullToEmpty(profile.getEmail()));
         phone.setText(nullToEmpty(profile.getPhone()));
+        currentCampus.setValue(profile.getCurrentCampus());
+
+        Boolean willing = profile.getWillingToCrossCampus();
+        if (willing == null) {
+            crossCampusGroup.selectToggle(null);
+        } else if (willing) {
+            crossCampusGroup.selectToggle(crossCampusYes);
+        } else {
+            crossCampusGroup.selectToggle(crossCampusNo);
+        }
     }
 
     private void saveProfile() {
@@ -153,6 +202,8 @@ public class ApplicantProfileController {
         profile.setPhone(phone.getText());
         Integer selectedYear = year.getValue();
         profile.setYear(selectedYear == null ? 0 : selectedYear);
+        profile.setCurrentCampus(currentCampus.getValue());
+        profile.setWillingToCrossCampus(readCrossCampusSelection());
 
         ValidationResult result = services.applicantProfileService().saveProfile(profile);
         if (!result.isValid()) {
@@ -167,5 +218,16 @@ public class ApplicantProfileController {
 
     private String nullToEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    private Boolean readCrossCampusSelection() {
+        Toggle selected = crossCampusGroup.getSelectedToggle();
+        if (selected == null) {
+            return null;
+        }
+        if (selected == crossCampusYes) {
+            return true;
+        }
+        return false;
     }
 }

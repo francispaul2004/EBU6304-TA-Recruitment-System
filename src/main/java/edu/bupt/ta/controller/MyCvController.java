@@ -140,12 +140,18 @@ public class MyCvController {
         );
 
         HBox row2 = new HBox(24,
-                infoCell("EMAIL", safe(profile.getEmail())),
+                infoCell("SCHOOL EMAIL", safe(profile.getEmail())),
                 infoCell("CV COMPLETION", resumeCompletion + "% complete"),
                 infoCell("PHONE", safe(profile.getPhone()))
         );
 
-        body.getChildren().addAll(row1, row2);
+        HBox row3 = new HBox(24,
+                infoCell("CURRENT CAMPUS", safe(profile.getCurrentCampus())),
+                infoCell("WILLING TO CROSS CAMPUS", yesNo(profile.getWillingToCrossCampus())),
+                infoCell("ACADEMIC YEAR", profile.getYear() > 0 ? String.valueOf(profile.getYear()) : "-")
+        );
+
+        body.getChildren().addAll(row1, row2, row3);
         card.getChildren().addAll(header, body);
         return card;
     }
@@ -167,6 +173,7 @@ public class MyCvController {
         card.getStyleClass().add("cv-upload-card");
         card.setPadding(new Insets(24));
         card.setPrefHeight(470);
+        card.setMinWidth(420);
         card.setMaxWidth(Double.MAX_VALUE);
 
         VBox header = new VBox(4);
@@ -182,11 +189,12 @@ public class MyCvController {
         dropZone.getStyleClass().add("cv-upload-zone");
         dropZone.setMinHeight(340);
         dropZone.setPrefHeight(340);
+        dropZone.setMinWidth(372);
         dropZone.setMaxWidth(Double.MAX_VALUE);
 
         VBox dropContent = new VBox(12);
         dropContent.setAlignment(Pos.CENTER);
-        dropContent.setMaxWidth(300);
+        dropContent.setMaxWidth(360);
 
         StackPane uploadIcon = iconBubble("↑", "cv-drop-icon", "cv-drop-icon-label");
         uploadIcon.setPrefSize(64, 64);
@@ -471,6 +479,13 @@ public class MyCvController {
 
     private String safe(String value) {
         return value == null || value.isBlank() ? "-" : value;
+    }
+
+    private String yesNo(Boolean value) {
+        if (value == null) {
+            return "-";
+        }
+        return value ? "Yes" : "No";
     }
 
     private void handleUploadCv() {

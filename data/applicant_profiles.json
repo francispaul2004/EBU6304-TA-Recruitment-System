@@ -7,7 +7,9 @@
   "year" : 3,
   "email" : "haocheng.gao@qmul.ac.uk",
   "phone" : "13800000001",
-  "lastUpdated" : "2026-03-18T02:52:36.18417"
+  "currentCampus" : "Haidian Campus",
+  "willingToCrossCampus" : true,
+  "lastUpdated" : "2026-04-10T21:10:06.7447466"
 }, {
   "applicantId" : "A002",
   "userId" : "U002",
@@ -17,6 +19,8 @@
   "year" : 3,
   "email" : "brian.li@qmul.ac.uk",
   "phone" : "13800000002",
+  "currentCampus" : null,
+  "willingToCrossCampus" : null,
   "lastUpdated" : "2026-03-17T15:05:00"
 }, {
   "applicantId" : "A003",
@@ -27,6 +31,8 @@
   "year" : 2,
   "email" : "cathy.wang@qmul.ac.uk",
   "phone" : "13800000003",
+  "currentCampus" : null,
+  "willingToCrossCampus" : null,
   "lastUpdated" : "2026-03-17T15:10:00"
 }, {
   "applicantId" : "A004",
@@ -37,6 +43,8 @@
   "year" : 1,
   "email" : "david.zhao@qmul.ac.uk",
   "phone" : "13800000004",
+  "currentCampus" : null,
+  "willingToCrossCampus" : null,
   "lastUpdated" : "2026-03-17T15:12:00"
 }, {
   "applicantId" : "A005",
@@ -47,5 +55,7 @@
   "year" : 2,
   "email" : "eva.liu@qmul.ac.uk",
   "phone" : "13800000005",
+  "currentCampus" : null,
+  "willingToCrossCampus" : null,
   "lastUpdated" : "2026-03-17T15:15:00"
 } ]

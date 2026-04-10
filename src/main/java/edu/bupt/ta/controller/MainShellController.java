@@ -87,7 +87,7 @@ public class MainShellController {
                     new NavEntry("Dashboard", "dashboard"),
                     new NavEntry("Browse Jobs", "browseJobs"),
                     new NavEntry("My Applications", "myApplications"),
-                    new NavEntry("My CV", "myCv")
+                    new NavEntry("CV Management", "myCv")
             )));
         } else if (user.getRole() == Role.MO) {
             navArea.getChildren().add(buildSection("RECRUITMENT", List.of(
@@ -218,7 +218,7 @@ public class MainShellController {
                 page = new MyApplicationsController(services, user).getView();
             }
             case "myCv" -> {
-                breadcrumbCurrent.setText("My CV");
+                breadcrumbCurrent.setText("CV Management");
                 page = new MyCvController(services, user, () -> navigateTo("browseJobs")).getView();
             }
             case "jobManagement" -> {

@@ -16,6 +16,9 @@ public class ApplicantProfileService {
     private final ApplicantProfileRepository profileRepository;
     private final UserRepository userRepository;
 
+    public static final String CAMPUS_HAIDIAN = "Haidian Campus";
+    public static final String CAMPUS_SHAHE = "Shahe Campus";
+
     public ApplicantProfileService(ApplicantProfileRepository profileRepository, UserRepository userRepository) {
         this.profileRepository = profileRepository;
         this.userRepository = userRepository;
@@ -52,6 +55,14 @@ public class ApplicantProfileService {
         if (profile.getPhone() != null && !profile.getPhone().isBlank() && !profile.getPhone().matches("^[0-9+\\-]{6,20}$")) {
             errors.add("phone format is invalid");
         }
+        if (profile.getCurrentCampus() == null || profile.getCurrentCampus().isBlank()) {
+            errors.add("currentCampus is required");
+        } else if (!List.of(CAMPUS_HAIDIAN, CAMPUS_SHAHE).contains(profile.getCurrentCampus())) {
+            errors.add("currentCampus must be one of: " + CAMPUS_HAIDIAN + ", " + CAMPUS_SHAHE);
+        }
+        if (profile.getWillingToCrossCampus() == null) {
+            errors.add("willingToCrossCampus is required");
+        }
 
         if (!errors.isEmpty()) {
             return ValidationResult.fail(errors);
@@ -65,7 +76,7 @@ public class ApplicantProfileService {
     public int calculateProfileCompletion(String applicantId) {
         return profileRepository.findById(applicantId)
                 .map(profile -> {
-                    int total = 6;
+                    int total = 8;
                     int complete = 0;
                     if (notBlank(profile.getFullName())) complete++;
                     if (notBlank(profile.getStudentId())) complete++;
@@ -73,6 +84,8 @@ public class ApplicantProfileService {
                     if (profile.getYear() > 0) complete++;
                     if (notBlank(profile.getEmail())) complete++;
                     if (notBlank(profile.getPhone())) complete++;
+                    if (notBlank(profile.getCurrentCampus())) complete++;
+                    if (profile.getWillingToCrossCampus() != null) complete++;
                     return complete * 100 / total;
                 })
                 .orElse(0);
