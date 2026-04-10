@@ -1,25 +1,36 @@
 package edu.bupt.ta.controller;
 
 import edu.bupt.ta.enums.Role;
+import edu.bupt.ta.model.ApplicantProfile;
 import edu.bupt.ta.model.Job;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
+import edu.bupt.ta.ui.IconFactory;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class MainShellController {
+
+    private static final double SIDEBAR_WIDTH = 220;
+    private static final Insets SIDEBAR_BRAND_PADDING = new Insets(18, 14, 16, 14);
+    private static final Insets SIDEBAR_NAV_PADDING = new Insets(8, 8, 8, 8);
+    private static final Insets SIDEBAR_FOOTER_PADDING = new Insets(10, 8, 10, 8);
 
     private final ServiceRegistry services;
     private final User user;
@@ -46,12 +57,16 @@ public class MainShellController {
     private void initialize() {
         view.getStyleClass().add("shell-root");
         view.setLeft(buildSidebar());
-        view.setTop(buildTopBar());
+
+        BorderPane mainArea = new BorderPane();
+        mainArea.getStyleClass().add("shell-main-area");
+        mainArea.setTop(buildTopBar());
 
         BorderPane center = new BorderPane();
         center.getStyleClass().add("shell-content");
         center.setCenter(contentPane);
-        view.setCenter(center);
+        mainArea.setCenter(center);
+        view.setCenter(mainArea);
 
         if (user.getRole() == Role.TA) {
             navigateTo("dashboard");
@@ -65,67 +80,101 @@ public class MainShellController {
     private VBox buildSidebar() {
         VBox sidebar = new VBox();
         sidebar.getStyleClass().add("shell-sidebar");
-        sidebar.setPrefWidth(256);
-        sidebar.setMinWidth(256);
+        sidebar.setPrefWidth(SIDEBAR_WIDTH);
+        sidebar.setMinWidth(SIDEBAR_WIDTH);
+        sidebar.setMaxWidth(SIDEBAR_WIDTH);
 
-        VBox brandSection = new VBox(2);
-        brandSection.setPadding(new Insets(24));
+        VBox brandSection = new VBox();
+        brandSection.setPadding(SIDEBAR_BRAND_PADDING);
+
+        StackPane brandIcon = IconFactory.badge(
+                IconFactory.IconType.GRADUATION_CAP,
+                46,
+                Color.web("#354a5f"),
+                Color.WHITE
+        );
+        brandIcon.setStyle("-fx-background-color: #354a5f; -fx-background-radius: 999;");
 
         Label brandTitle = new Label("BUPT IS RECRUITMENT");
         brandTitle.getStyleClass().add("shell-brand-title");
+        brandTitle.setWrapText(true);
+        brandTitle.setTextOverrun(OverrunStyle.CLIP);
+        brandTitle.setMaxWidth(Double.MAX_VALUE);
 
         Label brandSub = new Label(roleEditionText());
         brandSub.getStyleClass().add("shell-brand-sub");
+        brandSub.setMaxWidth(Double.MAX_VALUE);
 
-        brandSection.getChildren().addAll(brandTitle, brandSub);
+        VBox brandText = new VBox(2, brandTitle, brandSub);
+        brandText.setFillWidth(true);
+        brandText.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(brandText, Priority.ALWAYS);
+
+        HBox brandRow = new HBox(8, brandIcon, brandText);
+        brandRow.setAlignment(Pos.CENTER_LEFT);
+
+        brandSection.getChildren().add(brandRow);
 
         VBox navArea = new VBox(8);
-        navArea.setPadding(new Insets(8, 16, 8, 16));
+        navArea.setPadding(SIDEBAR_NAV_PADDING);
 
         if (user.getRole() == Role.TA) {
             navArea.getChildren().add(buildSection("RECRUITMENT", List.of(
-                    new NavEntry("Dashboard", "dashboard"),
-                    new NavEntry("Browse Jobs", "browseJobs"),
-                    new NavEntry("My Applications", "myApplications"),
-                    new NavEntry("CV Management", "myCv")
+                    new NavEntry("Dashboard", "dashboard", IconFactory.IconType.DASHBOARD),
+                    new NavEntry("Browse Jobs", "browseJobs", IconFactory.IconType.SEARCH),
+                    new NavEntry("My Applications", "myApplications", IconFactory.IconType.CLIPBOARD),
+                    new NavEntry("My CV", "myCv", IconFactory.IconType.FILE)
             )));
         } else if (user.getRole() == Role.MO) {
             navArea.getChildren().add(buildSection("RECRUITMENT", List.of(
-                    new NavEntry("Job Management", "jobManagement"),
-                    new NavEntry("Applicant List", "applicantList"),
-                    new NavEntry("Profile", "moProfile")
+                    new NavEntry("Job Management", "jobManagement", IconFactory.IconType.BRIEFCASE),
+                    new NavEntry("Applicant List", "applicantList", IconFactory.IconType.USERS),
+                    new NavEntry("Profile", "moProfile", IconFactory.IconType.USER)
             )));
         } else {
             navArea.getChildren().add(buildSection("RECRUITMENT", List.of(
-                    new NavEntry("Dashboard", "adminDashboard"),
-                    new NavEntry("Jobs", "adminJobs"),
-                    new NavEntry("Applications", "adminApplications")
+                    new NavEntry("Dashboard", "adminDashboard", IconFactory.IconType.DASHBOARD),
+                    new NavEntry("Jobs", "adminJobs", IconFactory.IconType.BRIEFCASE),
+                    new NavEntry("Applications", "adminApplications", IconFactory.IconType.CLIPBOARD)
             )));
         }
 
         navArea.getChildren().add(buildSection("SUPPORT", List.of(
-                new NavEntry("Help Center", "helpCenter"),
-                new NavEntry("Settings", "settings")
+                new NavEntry("Help Center", "helpCenter", IconFactory.IconType.HELP),
+                new NavEntry("Settings", "settings", IconFactory.IconType.SETTINGS)
         )));
 
         VBox footer = new VBox(12);
-        footer.setPadding(new Insets(16));
+        footer.setPadding(SIDEBAR_FOOTER_PADDING);
 
-        VBox profileCard = new VBox(2);
+        VBox profileCard = new VBox(10);
         profileCard.getStyleClass().add("shell-profile-card");
         profileCard.setPadding(new Insets(10));
 
-        Label profileName = new Label(user.getDisplayName());
-        profileName.setStyle("-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #0f172a;");
+        StackPane avatar = IconFactory.badge(
+                IconFactory.IconType.USER,
+                40,
+                Color.web("#eef2f7"),
+                Color.web("#64748b")
+        );
+
+        Label profileName = new Label(resolveProfileCardName());
+        profileName.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #0f172a;");
 
         Label profileId = new Label("ID: " + user.getUserId());
         profileId.setStyle("-fx-font-size: 10px; -fx-text-fill: #64748b;");
 
-        profileCard.getChildren().addAll(profileName, profileId);
+        VBox profileText = new VBox(2, profileName, profileId);
+        HBox profileRow = new HBox(10, avatar, profileText);
+        profileRow.setAlignment(Pos.CENTER_LEFT);
+        profileCard.getChildren().add(profileRow);
 
         Button logout = new Button("Logout");
         logout.getStyleClass().add("secondary-button");
         logout.setMaxWidth(Double.MAX_VALUE);
+        logout.setGraphic(IconFactory.glyph(IconFactory.IconType.LOGOUT, 14, Color.web("#64748b")));
+        logout.setGraphicTextGap(8);
+        logout.setContentDisplay(ContentDisplay.RIGHT);
         logout.setOnAction(event -> onLogout.run());
 
         footer.getChildren().addAll(profileCard, logout);
@@ -140,24 +189,27 @@ public class MainShellController {
 
         Label header = new Label(title);
         header.getStyleClass().add("shell-nav-header");
-        header.setPadding(new Insets(12, 12, 0, 12));
+        header.setPadding(new Insets(10, 8, 0, 8));
 
         VBox links = new VBox(6);
         for (NavEntry item : items) {
-            links.getChildren().add(navButton(item.label(), item.pageId()));
+            links.getChildren().add(navButton(item));
         }
 
         section.getChildren().addAll(header, links);
         return section;
     }
 
-    private Button navButton(String label, String pageId) {
-        Button button = new Button(label);
+    private Button navButton(NavEntry entry) {
+        Button button = new Button(entry.label());
         button.getStyleClass().add("shell-nav-item");
         button.setMaxWidth(Double.MAX_VALUE);
         button.setPrefHeight(36);
-        button.setOnAction(event -> navigateTo(pageId));
-        navButtons.put(pageId, button);
+        button.setGraphic(IconFactory.glyph(entry.icon(), 18, Color.web("#475569")));
+        button.setGraphicTextGap(7);
+        button.setContentDisplay(ContentDisplay.LEFT);
+        button.setOnAction(event -> navigateTo(entry.pageId()));
+        navButtons.put(entry.pageId(), button);
         return button;
     }
 
@@ -170,10 +222,9 @@ public class MainShellController {
         breadcrumbBase.getStyleClass().add("shell-breadcrumb-base");
         breadcrumbCurrent.getStyleClass().add("shell-breadcrumb-current");
 
-        Label arrow = new Label("  >  ");
-        arrow.getStyleClass().add("shell-breadcrumb-base");
+        StackPane chevron = IconFactory.glyph(IconFactory.IconType.CHEVRON_RIGHT, 14, Color.web("#64748b"));
 
-        HBox breadcrumb = new HBox(breadcrumbBase, arrow, breadcrumbCurrent);
+        HBox breadcrumb = new HBox(8, breadcrumbBase, chevron, breadcrumbCurrent);
         breadcrumb.setAlignment(Pos.CENTER_LEFT);
 
         HBox spacer = new HBox();
@@ -190,7 +241,19 @@ public class MainShellController {
 
         termInfo.getChildren().addAll(termMain, termSub);
 
-        topBar.getChildren().addAll(breadcrumb, spacer, termInfo);
+        StackPane notification = IconFactory.notificationBell(24, Color.web("#64748b"), Color.web("#ef4444"));
+
+        Region divider = new Region();
+        divider.getStyleClass().add("shell-topbar-divider");
+        divider.setMinWidth(1);
+        divider.setPrefWidth(1);
+        divider.setMaxWidth(1);
+        divider.setPrefHeight(34);
+
+        HBox right = new HBox(16, notification, divider, termInfo);
+        right.setAlignment(Pos.CENTER_RIGHT);
+
+        topBar.getChildren().addAll(breadcrumb, spacer, right);
         return topBar;
     }
 
@@ -218,7 +281,7 @@ public class MainShellController {
                 page = new MyApplicationsController(services, user).getView();
             }
             case "myCv" -> {
-                breadcrumbCurrent.setText("CV Management");
+                breadcrumbCurrent.setText("My CV");
                 page = new MyCvController(services, user, () -> navigateTo("browseJobs")).getView();
             }
             case "jobManagement" -> {
@@ -281,6 +344,19 @@ public class MainShellController {
         return "ADMIN EDITION";
     }
 
-    private record NavEntry(String label, String pageId) {
+    private String resolveProfileCardName() {
+        if (user.getRole() == Role.TA) {
+            ApplicantProfile profile = services.applicantProfileService().getOrCreateProfile(user.getUserId());
+            if (profile.getFullName() != null && !profile.getFullName().isBlank()) {
+                return profile.getFullName().trim();
+            }
+        }
+        if (user.getDisplayName() != null && !user.getDisplayName().isBlank()) {
+            return user.getDisplayName().trim();
+        }
+        return "User";
+    }
+
+    private record NavEntry(String label, String pageId, IconFactory.IconType icon) {
     }
 }

@@ -13,16 +13,13 @@ public class ApplicantProfile implements Identifiable<String> {
     private int year;
     private String email;
     private String phone;
-    private String currentCampus;
-    private Boolean willingToCrossCampus;
     private LocalDateTime lastUpdated;
 
     public ApplicantProfile() {
     }
 
     public ApplicantProfile(String applicantId, String userId, String fullName, String studentId, String programme,
-                            int year, String email, String phone, String currentCampus, Boolean willingToCrossCampus,
-                            LocalDateTime lastUpdated) {
+                            int year, String email, String phone, LocalDateTime lastUpdated) {
         this.applicantId = applicantId;
         this.userId = userId;
         this.fullName = fullName;
@@ -31,8 +28,6 @@ public class ApplicantProfile implements Identifiable<String> {
         this.year = year;
         this.email = email;
         this.phone = phone;
-        this.currentCampus = currentCampus;
-        this.willingToCrossCampus = willingToCrossCampus;
         this.lastUpdated = lastUpdated;
     }
 
@@ -103,22 +98,6 @@ public class ApplicantProfile implements Identifiable<String> {
 
     public void setPhone(String phone) {
         this.phone = phone;
-    }
-
-    public String getCurrentCampus() {
-        return currentCampus;
-    }
-
-    public void setCurrentCampus(String currentCampus) {
-        this.currentCampus = currentCampus;
-    }
-
-    public Boolean getWillingToCrossCampus() {
-        return willingToCrossCampus;
-    }
-
-    public void setWillingToCrossCampus(Boolean willingToCrossCampus) {
-        this.willingToCrossCampus = willingToCrossCampus;
     }
 
     public LocalDateTime getLastUpdated() {

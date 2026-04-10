@@ -9,6 +9,7 @@ import edu.bupt.ta.model.Job;
 import edu.bupt.ta.model.ResumeInfo;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
+import edu.bupt.ta.ui.IconFactory;
 import edu.bupt.ta.util.ValidationResult;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -18,6 +19,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.ScrollPane;
@@ -102,11 +104,11 @@ public class TADashboardController {
                         || app.getStatus() == ApplicationStatus.ACCEPTED)
                 .count();
 
-        Label title = new Label("Welcome back, " + firstName(user.getDisplayName()));
-        title.setStyle("-fx-font-size: 26px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        Label title = new Label("Welcome back, " + resolveApplicantDisplayName() + " 👋");
+        title.getStyleClass().add("page-title");
 
         Label subtitle = new Label("You have " + activeApplications + " active applications for this recruitment cycle.");
-        subtitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 500; -fx-text-fill: #64748b;");
+        subtitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 400; -fx-text-fill: #64748b;");
 
         VBox left = new VBox(4, title, subtitle);
 
@@ -132,15 +134,12 @@ public class TADashboardController {
     private HBox buildStatRow() {
         int profileCompletion = services.applicantProfileService().calculateProfileCompletion(applicantId);
         int resumeCompletion = services.resumeService().calculateResumeCompletion(applicantId);
-        int currentHours = services.workloadService().getWorkload(applicantId).currentHours();
-        int maxHours = Math.max(services.workloadService().getWorkload(applicantId).maxWeeklyHours(), 1);
         int applicationCount = applications.size();
         boolean hasCv = resume.getCvFileName() != null && !resume.getCvFileName().isBlank();
 
         HBox row = new HBox(14,
                 buildProfileCard(profileCompletion),
                 buildResumeCard(resumeCompletion, hasCv),
-                buildWorkloadCard(currentHours, maxHours),
                 buildApplicationCard(applicationCount)
         );
         return row;
@@ -165,11 +164,11 @@ public class TADashboardController {
         HBox header = metricHeader("CV STATUS", pill);
 
         Label file = new Label(hasCv ? resume.getCvFileName() : "Add your latest CV");
-        file.setStyle("-fx-font-size: 18px; -fx-font-weight: 700; -fx-text-fill: #0f172a;");
+        file.setStyle("-fx-font-size: 18px; -fx-font-weight: 600; -fx-text-fill: #0f172a;");
         file.setWrapText(true);
 
         Label meta = new Label(hasCv ? completion + "% completion" : "Resume completion " + completion + "%");
-        meta.setStyle("-fx-font-size: 12px; -fx-font-weight: 500; -fx-text-fill: #64748b;");
+        meta.setStyle("-fx-font-size: 12px; -fx-font-weight: 400; -fx-text-fill: #64748b;");
 
         card.getChildren().addAll(header, file, meta);
         return card;
@@ -184,7 +183,7 @@ public class TADashboardController {
 
         HBox valueRow = new HBox(4);
         Label current = new Label(String.valueOf(currentHours));
-        current.setStyle("-fx-font-size: 30px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        current.setStyle("-fx-font-size: 30px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
         Label max = new Label("/ " + maxHours + " hrs/wk");
         max.setStyle("-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;");
         valueRow.getChildren().addAll(current, max);
@@ -213,10 +212,10 @@ public class TADashboardController {
         HBox header = metricHeader("MY APPLICATIONS", pill);
 
         Label count = new Label(String.format("%02d", applicationCount));
-        count.setStyle("-fx-font-size: 30px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        count.setStyle("-fx-font-size: 30px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
 
         Label meta = new Label(applicationCount == 0 ? "No submissions yet" : "Track current recruitment progress");
-        meta.setStyle("-fx-font-size: 12px; -fx-font-weight: 500; -fx-text-fill: #64748b;");
+        meta.setStyle("-fx-font-size: 12px; -fx-font-weight: 400; -fx-text-fill: #64748b;");
 
         card.getChildren().addAll(header, count, meta);
         return card;
@@ -226,7 +225,9 @@ public class TADashboardController {
         VBox card = new VBox(12);
         card.getStyleClass().add("panel-card");
         card.setPadding(new Insets(16, 18, 16, 18));
-        card.setMinWidth(180);
+        card.setMinWidth(0);
+        card.setPrefWidth(0);
+        card.setMaxWidth(Double.MAX_VALUE);
         card.setAlignment(Pos.TOP_LEFT);
         HBox.setHgrow(card, Priority.ALWAYS);
         return card;
@@ -234,7 +235,7 @@ public class TADashboardController {
 
     private HBox metricHeader(String titleText, Label pill) {
         Label kicker = new Label(titleText);
-        kicker.setStyle("-fx-font-size: 14px; -fx-font-weight: 800; -fx-text-fill: #64748b;");
+        kicker.setStyle("-fx-font-size: 14px; -fx-font-weight: 900; -fx-text-fill: #64748b;");
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         HBox header = new HBox(10, kicker, spacer, pill);
@@ -260,10 +261,10 @@ public class TADashboardController {
         card.setPadding(new Insets(18));
 
         Label title = new Label("Recent Open Jobs");
-        title.setStyle("-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
 
         Button viewAll = new Button("View All");
-        viewAll.setStyle("-fx-background-color: transparent; -fx-text-fill: #475569; -fx-font-size: 12px; -fx-font-weight: 700;");
+        viewAll.setStyle("-fx-background-color: transparent; -fx-text-fill: #475569; -fx-font-size: 12px; -fx-font-weight: 600;");
         viewAll.setOnAction(event -> openJobBrowserModal());
 
         Region spacer = new Region();
@@ -295,11 +296,13 @@ public class TADashboardController {
                 Label title = new Label(item.job().getTitle());
                 title.setWrapText(false);
                 title.setTextOverrun(OverrunStyle.ELLIPSIS);
-                title.setMaxWidth(180);
-                title.setStyle("-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #1f2937;");
+                title.setMinWidth(0);
+                title.setMaxWidth(Double.MAX_VALUE);
+                title.prefWidthProperty().bind(getTableColumn().widthProperty().subtract(26));
+                title.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #1f2937;");
 
                 Label meta = new Label(item.job().getWeeklyHours() + " hrs/week");
-                meta.setStyle("-fx-font-size: 11px; -fx-font-weight: 500; -fx-text-fill: #94a3b8;");
+                meta.setStyle("-fx-font-size: 11px; -fx-font-weight: 400; -fx-text-fill: #94a3b8;");
 
                 VBox box = new VBox(2, title, meta);
                 setGraphic(box);
@@ -341,13 +344,21 @@ public class TADashboardController {
                 }
                 Button action = new Button(item.actionLabel());
                 action.setStyle(item.primaryAction()
-                        ? "-fx-background-color: #354a5f; -fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: 700; -fx-background-radius: 8; -fx-padding: 7 14 7 14;"
-                        : "-fx-background-color: white; -fx-border-color: #cbd5e1; -fx-text-fill: #334155; -fx-font-size: 12px; -fx-font-weight: 700; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 7 14 7 14;");
+                        ? "-fx-background-color: #354a5f; -fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 7 14 7 14;"
+                        : "-fx-background-color: white; -fx-border-color: #cbd5e1; -fx-text-fill: #334155; -fx-font-size: 12px; -fx-font-weight: 600; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 7 14 7 14;");
                 action.setOnAction(event -> handleRecentJobAction(item));
                 setGraphic(action);
                 setText(null);
             }
         });
+
+        courseCol.setPrefWidth(130);
+        titleCol.setPrefWidth(380);
+        deptCol.setPrefWidth(260);
+        statusCol.setPrefWidth(120);
+        actionCol.setPrefWidth(140);
+        statusCol.setStyle("-fx-alignment: CENTER;");
+        actionCol.setStyle("-fx-alignment: CENTER;");
 
         table.getColumns().setAll(courseCol, titleCol, deptCol, statusCol, actionCol);
 
@@ -369,7 +380,7 @@ public class TADashboardController {
         card.setPadding(new Insets(18));
 
         Label title = new Label("Recommended for You");
-        title.setStyle("-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
 
         List<Job> recommendations = services.jobService().searchJobs(null).stream()
                 .filter(job -> job.getStatus() == JobStatus.OPEN)
@@ -384,7 +395,7 @@ public class TADashboardController {
             empty.getStyleClass().add("soft-info-card");
             empty.setPadding(new Insets(18));
             Label emptyTitle = new Label("More recommendations will appear here");
-            emptyTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #334155;");
+            emptyTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #334155;");
             Label emptyMeta = new Label("Complete your profile and CV to improve recommendations.");
             emptyMeta.setWrapText(true);
             emptyMeta.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748b;");
@@ -409,20 +420,20 @@ public class TADashboardController {
 
         Label title = new Label(job.getTitle());
         title.setWrapText(true);
-        title.setStyle("-fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #0f172a;");
+        title.setStyle("-fx-font-size: 16px; -fx-font-weight: 600; -fx-text-fill: #0f172a;");
 
         Label desc = new Label(fallback(job.getDescription(), "Recommended based on your current skills and workload balance."));
         desc.setWrapText(true);
-        desc.setStyle("-fx-font-size: 12px; -fx-font-weight: 500; -fx-text-fill: #64748b;");
+        desc.setStyle("-fx-font-size: 12px; -fx-font-weight: 400; -fx-text-fill: #64748b;");
 
         HBox footer = new HBox();
         footer.setAlignment(Pos.CENTER_LEFT);
 
         Label hours = new Label(job.getWeeklyHours() + "h/week");
-        hours.setStyle("-fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: #334155;");
+        hours.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #334155;");
 
         Label deadline = new Label("Deadline: " + formatDate(job.getDeadline()));
-        deadline.setStyle("-fx-font-size: 11px; -fx-font-weight: 500; -fx-text-fill: #94a3b8;");
+        deadline.setStyle("-fx-font-size: 11px; -fx-font-weight: 400; -fx-text-fill: #94a3b8;");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -439,11 +450,11 @@ public class TADashboardController {
         card.setPadding(new Insets(18));
 
         Label title = new Label("Quick Actions");
-        title.setStyle("-fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: white;");
+        title.setStyle("-fx-font-size: 22px; -fx-font-weight: 900; -fx-text-fill: white;");
 
         int profileCompletion = services.applicantProfileService().calculateProfileCompletion(applicantId);
 
-        Button profileButton = quickActionButton("Complete Profile");
+        Button profileButton = quickActionButton("Complete Profile", IconFactory.IconType.PENCIL);
         profileButton.setOnAction(event -> openProfileModal());
 
         Label pending = buildMiniPill(profileCompletion >= 100 ? "DONE" : "PENDING", profileCompletion >= 100 ? "success" : "warning");
@@ -451,22 +462,25 @@ public class TADashboardController {
         HBox.setHgrow(profileButton, Priority.ALWAYS);
         profileRow.setAlignment(Pos.CENTER_LEFT);
 
-        Button uploadCv = quickActionButton("Upload CV / Portfolio");
+        Button uploadCv = quickActionButton("Upload CV / Portfolio", IconFactory.IconType.UPLOAD);
         uploadCv.setOnAction(event -> openCvModal());
 
-        Button browseJobs = quickActionButton("Browse Jobs");
+        Button browseJobs = quickActionButton("Browse Jobs", IconFactory.IconType.SEARCH);
         browseJobs.setOnAction(event -> openJobBrowserModal());
 
-        Button viewApplications = quickActionButton("View Applications");
+        Button viewApplications = quickActionButton("View Applications", IconFactory.IconType.CLIPBOARD);
         viewApplications.setOnAction(event -> openApplicationsModal());
 
         card.getChildren().addAll(title, profileRow, uploadCv, browseJobs, viewApplications);
         return card;
     }
 
-    private Button quickActionButton(String text) {
+    private Button quickActionButton(String text, IconFactory.IconType iconType) {
         Button button = new Button(text);
         button.getStyleClass().add("dashboard-action-button");
+        button.setGraphic(IconFactory.glyph(iconType, 16, Color.WHITE));
+        button.setGraphicTextGap(10);
+        button.setContentDisplay(ContentDisplay.LEFT);
         button.setMaxWidth(Double.MAX_VALUE);
         return button;
     }
@@ -477,7 +491,7 @@ public class TADashboardController {
         card.setPadding(new Insets(18));
 
         Label title = new Label("Status Check");
-        title.setStyle("-fx-font-size: 16px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        title.setStyle("-fx-font-size: 16px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
 
         VBox body = new VBox(10);
         boolean hasCv = resume.getCvFileName() != null && !resume.getCvFileName().isBlank();
@@ -506,18 +520,31 @@ public class TADashboardController {
     }
 
     private VBox alertBox(String title, String body, String background, String accent) {
-        VBox box = new VBox(3);
+        VBox box = new VBox(5);
         box.setPadding(new Insets(12));
         box.setStyle("-fx-background-color: " + background + "; -fx-border-color: transparent; -fx-background-radius: 10; -fx-border-radius: 10;");
 
-        Label titleNode = new Label(title);
-        titleNode.setStyle("-fx-font-size: 12px; -fx-font-weight: 800; -fx-text-fill: " + accent + ";");
+        IconFactory.IconType iconType = switch (title) {
+            case "All Set" -> IconFactory.IconType.CHECK_CIRCLE;
+            case "Workload Warning" -> IconFactory.IconType.ALERT_TRIANGLE;
+            case "Missing Documents" -> IconFactory.IconType.ALERT_TRIANGLE;
+            default -> IconFactory.IconType.INFO_CIRCLE;
+        };
+
+        HBox titleRow = new HBox(6,
+                IconFactory.glyph(iconType, 14, Color.web(accent)),
+                new Label(title)
+        );
+        titleRow.setAlignment(Pos.CENTER_LEFT);
+
+        Label titleNode = (Label) titleRow.getChildren().get(1);
+        titleNode.setStyle("-fx-font-size: 12px; -fx-font-weight: 900; -fx-text-fill: " + accent + ";");
 
         Label bodyNode = new Label(body);
         bodyNode.setWrapText(true);
-        bodyNode.setStyle("-fx-font-size: 11px; -fx-font-weight: 500; -fx-text-fill: " + accent + ";");
+        bodyNode.setStyle("-fx-font-size: 11px; -fx-font-weight: 400; -fx-text-fill: " + accent + ";");
 
-        box.getChildren().addAll(titleNode, bodyNode);
+        box.getChildren().addAll(titleRow, bodyNode);
         return box;
     }
 
@@ -527,7 +554,7 @@ public class TADashboardController {
         card.setPadding(new Insets(18));
 
         Label title = new Label("Recruitment Deadlines");
-        title.setStyle("-fx-font-size: 16px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        title.setStyle("-fx-font-size: 16px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
 
         VBox body = new VBox(10);
         List<Job> deadlines = services.jobService().searchJobs(null).stream()
@@ -538,7 +565,7 @@ public class TADashboardController {
 
         if (deadlines.isEmpty()) {
             Label empty = new Label("No upcoming deadlines right now.");
-            empty.setStyle("-fx-font-size: 12px; -fx-font-weight: 500; -fx-text-fill: #94a3b8;");
+            empty.setStyle("-fx-font-size: 12px; -fx-font-weight: 400; -fx-text-fill: #94a3b8;");
             body.getChildren().add(empty);
         } else {
             deadlines.forEach(job -> body.getChildren().add(deadlineRow(job)));
@@ -553,18 +580,18 @@ public class TADashboardController {
         String month = job.getDeadline() == null ? "---" : job.getDeadline().getMonth().name().substring(0, 3);
 
         VBox dateBox = new VBox(
-                styledLabel(day, "-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #0f172a;"),
-                styledLabel(month, "-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #94a3b8;")
+                styledLabel(day, "-fx-font-size: 18px; -fx-font-weight: 900; -fx-text-fill: #0f172a;"),
+                styledLabel(month, "-fx-font-size: 10px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;")
         );
         dateBox.setAlignment(Pos.CENTER);
         dateBox.setMinWidth(42);
 
         Label title = new Label(job.getTitle());
-        title.setStyle("-fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: #334155;");
+        title.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #334155;");
         title.setWrapText(true);
 
         Label meta = new Label(fallback(job.getModuleCode(), "-") + " • " + formatDate(job.getDeadline()));
-        meta.setStyle("-fx-font-size: 11px; -fx-font-weight: 500; -fx-text-fill: #94a3b8;");
+        meta.setStyle("-fx-font-size: 11px; -fx-font-weight: 400; -fx-text-fill: #94a3b8;");
 
         VBox body = new VBox(2, title, meta);
         return new HBox(12, dateBox, body);
@@ -584,7 +611,7 @@ public class TADashboardController {
         progress.setStrokeLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
 
         Label value = new Label(percent + "%");
-        value.setStyle("-fx-font-size: 12px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        value.setStyle("-fx-font-size: 12px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
 
         return new StackPane(track, progress, value);
     }
@@ -594,10 +621,10 @@ public class TADashboardController {
         kicker.getStyleClass().add("tiny-kicker");
 
         Label title = new Label(titleText);
-        title.setStyle("-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
 
         Label subtitle = new Label(subtitleText);
-        subtitle.setStyle("-fx-font-size: 12px; -fx-font-weight: 500; -fx-text-fill: #94a3b8;");
+        subtitle.setStyle("-fx-font-size: 12px; -fx-font-weight: 400; -fx-text-fill: #94a3b8;");
 
         return new VBox(3, kicker, title, subtitle);
     }
@@ -607,7 +634,7 @@ public class TADashboardController {
         icon.setMinSize(36, 36);
         icon.setPrefSize(36, 36);
         icon.setMaxSize(36, 36);
-        icon.setStyle("-fx-background-color: #f3f7fb; -fx-background-radius: 10; -fx-font-size: 11px; -fx-font-weight: 800; -fx-text-fill: #64748b;");
+        icon.setStyle("-fx-background-color: #f3f7fb; -fx-background-radius: 10; -fx-font-size: 11px; -fx-font-weight: 900; -fx-text-fill: #64748b;");
         return icon;
     }
 
@@ -726,7 +753,10 @@ public class TADashboardController {
             stage.initOwner(view.getScene().getWindow());
         }
         stage.setTitle(title);
-        Scene scene = new Scene(content, width, height);
+        BorderPane modalRoot = new BorderPane();
+        modalRoot.getStyleClass().add("app-surface");
+        modalRoot.setCenter(content);
+        Scene scene = new Scene(modalRoot, width, height);
         if (TADashboardController.class.getResource("/styles/app.css") != null) {
             scene.getStylesheets().add(TADashboardController.class.getResource("/styles/app.css").toExternalForm());
         }
@@ -749,12 +779,14 @@ public class TADashboardController {
         return value == null || value.isBlank() ? fallback : value;
     }
 
-    private String firstName(String displayName) {
-        if (displayName == null || displayName.isBlank()) {
-            return "Student";
+    private String resolveApplicantDisplayName() {
+        if (profile != null && profile.getFullName() != null && !profile.getFullName().isBlank()) {
+            return profile.getFullName().trim();
         }
-        String[] parts = displayName.trim().split("\\s+");
-        return parts.length == 0 ? displayName : parts[0];
+        if (user.getDisplayName() != null && !user.getDisplayName().isBlank()) {
+            return user.getDisplayName().trim();
+        }
+        return "Student";
     }
 
     private record JobSummaryRow(Job job, String statusLabel, String statusTone, String actionLabel, boolean primaryAction) {

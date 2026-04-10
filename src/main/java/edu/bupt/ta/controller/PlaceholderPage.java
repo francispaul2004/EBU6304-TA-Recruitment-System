@@ -14,7 +14,7 @@ public final class PlaceholderPage {
         VBox box = new VBox(10);
         box.setPadding(new Insets(24));
         Label heading = new Label(title);
-        heading.setStyle("-fx-font-size: 28px; -fx-font-weight: 800; -fx-text-fill: #0F172A;");
+        heading.setStyle("-fx-font-size: 28px; -fx-font-weight: 900; -fx-text-fill: #0F172A;");
         Label desc = new Label(text);
         desc.setStyle("-fx-font-size: 14px; -fx-text-fill: #64748B;");
         box.getChildren().addAll(heading, desc);

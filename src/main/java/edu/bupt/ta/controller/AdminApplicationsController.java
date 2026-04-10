@@ -166,7 +166,7 @@ public class AdminApplicationsController {
         titleNode.getStyleClass().add("metric-kicker");
 
         valueLabel.getStyleClass().add("metric-value");
-        valueLabel.setStyle("-fx-font-size: 36px; -fx-font-weight: 800; -fx-text-fill: " + accent + ";");
+        valueLabel.setStyle("-fx-font-size: 36px; -fx-font-weight: 900; -fx-text-fill: " + accent + ";");
 
         card.getChildren().addAll(titleNode, valueLabel);
         return card;
@@ -179,7 +179,7 @@ public class AdminApplicationsController {
         queuePanel.setPrefWidth(420);
 
         Label queueTitle = new Label("Application Queue");
-        queueTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: 800; -fx-text-fill: #1e293b;");
+        queueTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: 900; -fx-text-fill: #1e293b;");
 
         Label queueSubtitle = new Label("Filtered list of all candidate submissions");
         queueSubtitle.getStyleClass().add("body-muted");
@@ -201,7 +201,7 @@ public class AdminApplicationsController {
                 name.setWrapText(false);
                 name.setTextOverrun(OverrunStyle.ELLIPSIS);
                 name.setMaxWidth(220);
-                name.setStyle("-fx-font-size: 14px; -fx-font-weight: 800; -fx-text-fill: #334155;");
+                name.setStyle("-fx-font-size: 14px; -fx-font-weight: 900; -fx-text-fill: #334155;");
 
                 Label meta = new Label(row.jobTitle() + "  |  " + row.applicationId());
                 meta.setWrapText(false);
@@ -240,7 +240,7 @@ public class AdminApplicationsController {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? null : item.intValue() + "%");
                 if (!empty) {
-                    setStyle("-fx-font-weight: 800; -fx-text-fill: #334155;");
+                    setStyle("-fx-font-weight: 900; -fx-text-fill: #334155;");
                 } else {
                     setStyle("");
                 }
@@ -307,7 +307,7 @@ public class AdminApplicationsController {
         heroCard.setAlignment(Pos.CENTER_LEFT);
 
         VBox heroText = new VBox(6, heroTitle, heroSubtitle);
-        heroTitle.setStyle("-fx-font-size: 34px; -fx-font-weight: 800; -fx-text-fill: #1e293b;");
+        heroTitle.setStyle("-fx-font-size: 34px; -fx-font-weight: 900; -fx-text-fill: #1e293b;");
         heroTitle.setWrapText(true);
         heroSubtitle.setStyle("-fx-font-size: 16px; -fx-text-fill: #64748b; -fx-font-weight: 600;");
         heroSubtitle.setWrapText(true);
@@ -315,7 +315,7 @@ public class AdminApplicationsController {
         Region heroSpacer = new Region();
         HBox.setHgrow(heroSpacer, Priority.ALWAYS);
 
-        heroStatus.setStyle("-fx-background-color: #eef2f7; -fx-text-fill: #64748b; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 6 12 6 12;");
+        heroStatus.setStyle("-fx-background-color: #eef2f7; -fx-text-fill: #64748b; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 6 12 6 12;");
         heroCard.getChildren().addAll(heroText, heroSpacer, heroStatus);
 
         VBox basicInfoCard = new VBox(14);
@@ -340,7 +340,7 @@ public class AdminApplicationsController {
                 attachmentMetaValue
         );
         attachmentNameValue.setWrapText(true);
-        attachmentNameValue.setStyle("-fx-font-size: 13px; -fx-font-weight: 800; -fx-text-fill: #334155;");
+        attachmentNameValue.setStyle("-fx-font-size: 13px; -fx-font-weight: 900; -fx-text-fill: #334155;");
         attachmentMetaValue.setWrapText(true);
         attachmentMetaValue.setStyle("-fx-font-size: 12px; -fx-text-fill: #94a3b8;");
 
@@ -365,11 +365,11 @@ public class AdminApplicationsController {
         openReviewButton.setOnAction(event -> openReview());
 
         acceptButton.getStyleClass().add("primary-button");
-        acceptButton.setStyle("-fx-background-color: #14c7b1; -fx-text-fill: white; -fx-font-weight: 800; -fx-background-radius: 10; -fx-padding: 12 24 12 24;");
+        acceptButton.setStyle("-fx-background-color: #14c7b1; -fx-text-fill: white; -fx-font-weight: 900; -fx-background-radius: 10; -fx-padding: 12 24 12 24;");
         acceptButton.setOnAction(event -> quickAccept());
 
         rejectButton.getStyleClass().add("danger-outline");
-        rejectButton.setStyle("-fx-background-color: white; -fx-border-color: #fca5a5; -fx-text-fill: #ef4444; -fx-font-weight: 800; -fx-background-radius: 10; -fx-border-radius: 10; -fx-padding: 12 24 12 24;");
+        rejectButton.setStyle("-fx-background-color: white; -fx-border-color: #fca5a5; -fx-text-fill: #ef4444; -fx-font-weight: 900; -fx-background-radius: 10; -fx-border-radius: 10; -fx-padding: 12 24 12 24;");
         rejectButton.setOnAction(event -> quickReject());
 
         HBox actions = new HBox(14, openReviewButton, acceptButton, rejectButton);
@@ -589,7 +589,7 @@ public class AdminApplicationsController {
         Label titleNode = new Label(title);
         titleNode.getStyleClass().add("section-kicker");
         value.setWrapText(true);
-        value.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #334155;");
+        value.setStyle("-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #334155;");
         block.getChildren().addAll(titleNode, value);
         HBox.setHgrow(block, Priority.ALWAYS);
         block.setPrefWidth(220);
@@ -604,7 +604,7 @@ public class AdminApplicationsController {
 
     private Label sectionTitle(String text) {
         Label label = new Label(text);
-        label.setStyle("-fx-font-size: 16px; -fx-font-weight: 800; -fx-text-fill: #334155;");
+        label.setStyle("-fx-font-size: 16px; -fx-font-weight: 900; -fx-text-fill: #334155;");
         return label;
     }
 
@@ -648,18 +648,18 @@ public class AdminApplicationsController {
 
     private String statusChipStyle(String status) {
         return switch (status == null ? "" : status) {
-            case "ACCEPTED" -> "-fx-background-color: #ecfdf3; -fx-text-fill: #10b981; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 5 10 5 10;";
-            case "REJECTED" -> "-fx-background-color: #fff1f2; -fx-text-fill: #ef4444; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 5 10 5 10;";
-            case "UNDER_REVIEW" -> "-fx-background-color: #f5f3ff; -fx-text-fill: #8b5cf6; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 5 10 5 10;";
-            default -> "-fx-background-color: #eff6ff; -fx-text-fill: #2563eb; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 5 10 5 10;";
+            case "ACCEPTED" -> "-fx-background-color: #ecfdf3; -fx-text-fill: #10b981; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 5 10 5 10;";
+            case "REJECTED" -> "-fx-background-color: #fff1f2; -fx-text-fill: #ef4444; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 5 10 5 10;";
+            case "UNDER_REVIEW" -> "-fx-background-color: #f5f3ff; -fx-text-fill: #8b5cf6; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 5 10 5 10;";
+            default -> "-fx-background-color: #eff6ff; -fx-text-fill: #2563eb; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 5 10 5 10;";
         };
     }
 
     private String riskChipStyle(String risk) {
         return switch (risk == null ? "" : risk) {
-            case "HIGH" -> "-fx-background-color: #fff1f2; -fx-text-fill: #ef4444; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
-            case "MEDIUM" -> "-fx-background-color: #fff7ed; -fx-text-fill: #f59e0b; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
-            default -> "-fx-background-color: #ecfdf3; -fx-text-fill: #10b981; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
+            case "HIGH" -> "-fx-background-color: #fff1f2; -fx-text-fill: #ef4444; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
+            case "MEDIUM" -> "-fx-background-color: #fff7ed; -fx-text-fill: #f59e0b; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
+            default -> "-fx-background-color: #ecfdf3; -fx-text-fill: #10b981; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
         };
     }
 

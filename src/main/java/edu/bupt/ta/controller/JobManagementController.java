@@ -39,7 +39,6 @@ import java.util.function.Consumer;
 
 public class JobManagementController {
     private static final Duration AUTO_REFRESH_INTERVAL = Duration.seconds(5);
-    private static final DateTimeFormatter CREATED_FORMAT = DateTimeFormatter.ofPattern("MMM d,\nyyyy", Locale.ENGLISH);
     private static final DateTimeFormatter DETAIL_TIME_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy • HH:mm", Locale.ENGLISH);
 
     private final ServiceRegistry services;
@@ -158,13 +157,13 @@ public class JobManagementController {
         HBox.setHgrow(card, Priority.ALWAYS);
 
         Label title = new Label(titleText);
-        title.setStyle("-fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: #94a3b8;");
+        title.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;");
 
         HBox valueRow = new HBox(8);
         valueRow.setAlignment(Pos.BASELINE_LEFT);
 
         Label value = new Label(valueText);
-        value.setStyle("-fx-font-size: 32px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        value.setStyle("-fx-font-size: 32px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
 
         Label meta = new Label(metaText);
         meta.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #10b981;");
@@ -194,55 +193,35 @@ public class JobManagementController {
 
                 Label title = new Label(item.job().getTitle());
                 title.setWrapText(true);
-                title.setStyle("-fx-font-size: 15px; -fx-font-weight: 700; -fx-text-fill: #1f2937;");
+                title.setStyle("-fx-font-size: 15px; -fx-font-weight: 600; -fx-text-fill: #1f2937;");
 
                 Label id = new Label("ID: " + fallback(item.job().getJobId(), "-"));
                 id.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;");
+                id.setWrapText(true);
 
                 VBox box = new VBox(3, title, id);
+                box.setFillWidth(true);
+                title.maxWidthProperty().bind(column.widthProperty().subtract(28));
+                id.maxWidthProperty().bind(column.widthProperty().subtract(28));
                 setGraphic(box);
                 setText(null);
             }
         });
 
-        TableColumn<JobTableRow, JobTableRow> departmentCol = new TableColumn<>("DEPARTMENT");
-        departmentCol.setCellValueFactory(cell -> new SimpleObjectProperty<>(cell.getValue()));
-        departmentCol.setCellFactory(column -> new TableCell<>() {
-            @Override
-            protected void updateItem(JobTableRow item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setGraphic(null);
-                    setText(null);
-                    return;
-                }
-
-                Label moduleName = new Label(fallback(item.job().getModuleName(), "-"));
-                moduleName.setWrapText(true);
-                moduleName.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #475569;");
-
-                Label moduleCode = new Label(fallback(item.job().getModuleCode(), "-"));
-                moduleCode.setStyle("-fx-font-size: 12px; -fx-font-weight: 500; -fx-text-fill: #94a3b8;");
-
-                VBox box = new VBox(3, moduleName, moduleCode);
-                setGraphic(box);
-                setText(null);
-            }
-        });
-
-        TableColumn<JobTableRow, Number> applicantsCol = new TableColumn<>("APPLICANTS");
-        applicantsCol.setCellValueFactory(cell -> new SimpleObjectProperty<>(cell.getValue().applicantCount()));
+        TableColumn<JobTableRow, String> applicantsCol = new TableColumn<>("APPLICANTS");
+        applicantsCol.setCellValueFactory(cell ->
+                new SimpleStringProperty(cell.getValue().appliedApplicantCount() + "/" + cell.getValue().targetApplicantCount()));
         applicantsCol.setCellFactory(column -> new TableCell<>() {
             @Override
-            protected void updateItem(Number item, boolean empty) {
+            protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setGraphic(null);
                     setText(null);
                     return;
                 }
-                Label badge = new Label(String.valueOf(item.intValue()));
-                badge.setStyle("-fx-background-color: #f1f5f9; -fx-text-fill: #475569; -fx-font-size: 12px; -fx-font-weight: 700; -fx-background-radius: 999; -fx-padding: 5 11 5 11;");
+                Label badge = new Label(item);
+                badge.setStyle("-fx-background-color: #f1f5f9; -fx-text-fill: #475569; -fx-font-size: 12px; -fx-font-weight: 600; -fx-background-radius: 999; -fx-padding: 5 11 5 11;");
                 setGraphic(badge);
                 setText(null);
             }
@@ -265,44 +244,7 @@ public class JobManagementController {
             }
         });
 
-        TableColumn<JobTableRow, JobTableRow> createdCol = new TableColumn<>("CREATED");
-        createdCol.setCellValueFactory(cell -> new SimpleObjectProperty<>(cell.getValue()));
-        createdCol.setCellFactory(column -> new TableCell<>() {
-            @Override
-            protected void updateItem(JobTableRow item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setGraphic(null);
-                    setText(null);
-                    return;
-                }
-                Label date = new Label(formatCreated(item.job().getCreatedAt()));
-                date.setStyle("-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;");
-                setGraphic(date);
-                setText(null);
-            }
-        });
-
-        TableColumn<JobTableRow, JobTableRow> actionCol = new TableColumn<>("ACTIONS");
-        actionCol.setCellValueFactory(cell -> new SimpleObjectProperty<>(cell.getValue()));
-        actionCol.setCellFactory(column -> new TableCell<>() {
-            @Override
-            protected void updateItem(JobTableRow item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setGraphic(null);
-                    setText(null);
-                    return;
-                }
-                Button more = new Button("...");
-                more.setStyle("-fx-background-color: transparent; -fx-text-fill: #94a3b8; -fx-font-size: 18px; -fx-font-weight: 700;");
-                more.setOnAction(event -> table.getSelectionModel().select(item));
-                setGraphic(more);
-                setText(null);
-            }
-        });
-
-        table.getColumns().setAll(titleCol, departmentCol, applicantsCol, statusCol, createdCol, actionCol);
+        table.getColumns().setAll(titleCol, applicantsCol, statusCol);
         table.getStyleClass().add("job-table-spaced");
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         table.setFixedCellSize(92);
@@ -313,12 +255,14 @@ public class JobManagementController {
             updateActionButtons(job);
         });
 
-        titleCol.setPrefWidth(290);
-        departmentCol.setPrefWidth(240);
-        applicantsCol.setPrefWidth(110);
-        statusCol.setPrefWidth(120);
-        createdCol.setPrefWidth(130);
-        actionCol.setPrefWidth(80);
+        titleCol.setMinWidth(420);
+        titleCol.setPrefWidth(560);
+        applicantsCol.setMinWidth(90);
+        applicantsCol.setPrefWidth(100);
+        applicantsCol.setMaxWidth(120);
+        statusCol.setMinWidth(100);
+        statusCol.setPrefWidth(110);
+        statusCol.setMaxWidth(130);
 
         emptyState = buildEmptyState();
 
@@ -338,14 +282,14 @@ public class JobManagementController {
         ghost.setMinSize(120, 120);
         ghost.setPrefSize(120, 120);
         ghost.setMaxSize(120, 120);
-        ghost.getChildren().add(styledLabel("JOBS", "-fx-font-size: 24px; -fx-font-weight: 800; -fx-text-fill: #d4dde8;"));
+        ghost.getChildren().add(styledLabel("JOBS", "-fx-font-size: 24px; -fx-font-weight: 900; -fx-text-fill: #d4dde8;"));
 
         Label title = new Label("No job posts yet");
-        title.setStyle("-fx-font-size: 24px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        title.setStyle("-fx-font-size: 24px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
 
         Label subtitle = new Label("Create your first job post to start collecting applications.");
         subtitle.setWrapText(true);
-        subtitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 500; -fx-text-fill: #64748b;");
+        subtitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 400; -fx-text-fill: #64748b;");
 
         Button create = new Button("+ Create New Job");
         create.getStyleClass().add("primary-button");
@@ -365,7 +309,7 @@ public class JobManagementController {
         Label kicker = new Label("JOB DETAILS");
         kicker.getStyleClass().add("tiny-kicker");
 
-        detailTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        detailTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
         detailTitle.setWrapText(true);
 
         detailSubtitle.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;");
@@ -381,12 +325,12 @@ public class JobManagementController {
         Label moduleKicker = new Label("ASSOCIATED MODULE");
         moduleKicker.getStyleClass().add("tiny-kicker");
 
-        moduleTitle.setStyle("-fx-font-size: 15px; -fx-font-weight: 700; -fx-text-fill: #334155;");
+        moduleTitle.setStyle("-fx-font-size: 15px; -fx-font-weight: 600; -fx-text-fill: #334155;");
         moduleTitle.setWrapText(true);
 
         moduleMeta.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;");
         moduleBody.setWrapText(true);
-        moduleBody.setStyle("-fx-font-size: 12px; -fx-font-weight: 500; -fx-text-fill: #64748b;");
+        moduleBody.setStyle("-fx-font-size: 12px; -fx-font-weight: 400; -fx-text-fill: #64748b;");
 
         moduleCard.getChildren().addAll(moduleKicker, moduleTitle, moduleMeta, moduleBody);
 
@@ -440,7 +384,7 @@ public class JobManagementController {
         Label label = new Label(labelText);
         label.setStyle("-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #475569;");
 
-        valueLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: 800; -fx-text-fill: " + accent + ";");
+        valueLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: 900; -fx-text-fill: " + accent + ";");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -462,7 +406,13 @@ public class JobManagementController {
         view.getChildren().set(1, buildKpiRow(jobs));
 
         List<JobTableRow> rows = jobs.stream()
-                .map(job -> new JobTableRow(job, services.applicationService().getApplicationsByJob(job.getJobId()).size()))
+                .map(job -> {
+                    int appliedApplicantCount = (int) services.applicationService().getApplicationsByJob(job.getJobId()).stream()
+                            .filter(app -> app.getStatus() != ApplicationStatus.CANCELLED)
+                            .count();
+                    int targetApplicantCount = Math.max(job.getPositions(), 0);
+                    return new JobTableRow(job, appliedApplicantCount, targetApplicantCount);
+                })
                 .toList();
         table.setItems(FXCollections.observableArrayList(rows));
 
@@ -541,7 +491,7 @@ public class JobManagementController {
 
         applications.stream().limit(4).forEach(app -> avatarRow.getChildren().add(applicantAvatar(app)));
         if (avatarRow.getChildren().isEmpty()) {
-            avatarRow.getChildren().add(styledLabel("No applicants yet", "-fx-font-size: 12px; -fx-font-weight: 500; -fx-text-fill: #94a3b8;"));
+            avatarRow.getChildren().add(styledLabel("No applicants yet", "-fx-font-size: 12px; -fx-font-weight: 400; -fx-text-fill: #94a3b8;"));
         }
 
         activityLog.getChildren().addAll(
@@ -564,18 +514,18 @@ public class JobManagementController {
 
     private Label buildMiniChip(String text, String background, String color) {
         Label chip = new Label(text);
-        chip.setStyle("-fx-background-color: " + background + "; -fx-text-fill: " + color + "; -fx-font-size: 10px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 4 9 4 9;");
+        chip.setStyle("-fx-background-color: " + background + "; -fx-text-fill: " + color + "; -fx-font-size: 10px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 9 4 9;");
         return chip;
     }
 
     private VBox activityLine(String title, String body) {
         VBox line = new VBox(2);
         Label titleLabel = new Label("• " + title);
-        titleLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: #334155;");
+        titleLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #334155;");
 
         Label bodyLabel = new Label(body);
         bodyLabel.setWrapText(true);
-        bodyLabel.setStyle("-fx-font-size: 11px; -fx-font-weight: 500; -fx-text-fill: #94a3b8;");
+        bodyLabel.setStyle("-fx-font-size: 11px; -fx-font-weight: 400; -fx-text-fill: #94a3b8;");
 
         line.getChildren().addAll(titleLabel, bodyLabel);
         return line;
@@ -587,7 +537,7 @@ public class JobManagementController {
                 .orElse(application.getApplicantId());
 
         Label initials = new Label(initials(applicantName));
-        initials.setStyle("-fx-font-size: 11px; -fx-font-weight: 800; -fx-text-fill: #475569;");
+        initials.setStyle("-fx-font-size: 11px; -fx-font-weight: 900; -fx-text-fill: #475569;");
 
         StackPane avatar = new StackPane(initials);
         avatar.setMinSize(28, 28);
@@ -686,10 +636,6 @@ public class JobManagementController {
         return row == null ? null : row.job();
     }
 
-    private String formatCreated(LocalDateTime time) {
-        return time == null ? "-" : time.format(CREATED_FORMAT);
-    }
-
     private String formatTimestamp(LocalDateTime time) {
         return time == null ? "-" : time.format(DETAIL_TIME_FORMAT);
     }
@@ -730,6 +676,6 @@ public class JobManagementController {
         DialogControllerFactory.validationError(message, view.getScene() == null ? null : view.getScene().getWindow());
     }
 
-    private record JobTableRow(Job job, int applicantCount) {
+    private record JobTableRow(Job job, int appliedApplicantCount, int targetApplicantCount) {
     }
 }

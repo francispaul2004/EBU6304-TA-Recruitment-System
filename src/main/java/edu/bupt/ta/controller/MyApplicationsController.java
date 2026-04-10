@@ -5,25 +5,32 @@ import edu.bupt.ta.model.Application;
 import edu.bupt.ta.model.Job;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
+import javafx.scene.control.OverrunStyle;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import edu.bupt.ta.ui.IconFactory;
+import edu.bupt.ta.util.ValidationResult;
 
+import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class MyApplicationsController {
@@ -32,19 +39,47 @@ public class MyApplicationsController {
     private final User user;
     private final BorderPane view = new BorderPane();
 
-    private final ListView<Application> applicationList = new ListView<>();
+    private final VBox statusLinks = new VBox(4);
+    private final Map<String, Button> statusButtons = new LinkedHashMap<>();
+    private final Map<String, Label> statusCounters = new LinkedHashMap<>();
+    private final VBox applicationCards = new VBox(12);
+    private final ScrollPane applicationCardsScroll = new ScrollPane(applicationCards);
 
-    private final Label detailTitle = new Label("Application Details");
+    private final StackPane detailStageIconShell = new StackPane();
     private final Label detailStage = new Label("-");
-    private final Label detailJob = new Label("-");
-    private final Label detailDate = new Label("-");
-    private final Label detailScore = new Label("-");
-    private final Label detailMissing = new Label("-");
-    private final Label detailDecision = new Label("-");
+    private final Label detailStageDate = new Label("-");
+
+    private final Label feedbackAvatar = new Label("--");
+    private final Label feedbackReviewer = new Label("-");
+    private final Label feedbackTime = new Label("-");
+    private final Label feedbackBody = new Label("-");
+
+    private final StackPane timelineSubmittedDot = new StackPane();
+    private final StackPane timelineReviewDot = new StackPane();
+    private final StackPane timelineFinalDot = new StackPane();
+    private final Label timelineSubmittedDate = new Label("-");
+    private final Label timelineReviewDate = new Label("-");
+    private final Label timelineFinalTitle = new Label("Final Decision");
+    private final Label timelineFinalDate = new Label("-");
+    private final VBox timelineFinalBlock = new VBox(2);
+
+    private final Button viewFullButton = new Button("View Full Application");
+    private final Button withdrawButton = new Button("Withdraw Application");
+
+    private Parent normalState;
 
     private String applicantId;
-    private List<Application> allApplications = List.of();
+    private String profileProgramme = "Computer Science";
+    private List<ApplicationRecord> allApplications = List.of();
+    private List<ApplicationRecord> filteredApplications = List.of();
     private String activeFilter = "ALL";
+    private String selectedApplicationId;
+
+    private static final DateTimeFormatter CARD_APPLY_DATE = DateTimeFormatter.ofPattern("MMM dd");
+    private static final DateTimeFormatter STAGE_DATE = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+    private static final DateTimeFormatter FEEDBACK_TIME = DateTimeFormatter.ofPattern("MMM dd, HH:mm");
+    private static final DateTimeFormatter TIMELINE_TIME = DateTimeFormatter.ofPattern("MMM dd, yyyy · h:mm a");
+    private static final double CARD_RIGHT_INFO_WIDTH = 166;
 
     public MyApplicationsController(ServiceRegistry services, User user) {
         this.services = services;
@@ -58,301 +93,686 @@ public class MyApplicationsController {
     }
 
     private void initialize() {
-        view.getStyleClass().add("app-surface");
+        view.getStyleClass().addAll("app-surface", "my-app-page");
+        applicationCards.getStyleClass().add("my-app-cards");
+        applicationCardsScroll.getStyleClass().add("my-app-list-scroll");
+        applicationCardsScroll.setFitToWidth(true);
+        applicationCardsScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 
-        HBox top = new HBox();
-        top.setPadding(new Insets(24, 20, 16, 20));
+        viewFullButton.getStyleClass().add("my-app-action-neutral");
+        viewFullButton.setMaxWidth(Double.MAX_VALUE);
+        viewFullButton.setOnAction(event -> showFullApplication());
 
-        Label title = new Label("My Application");
-        title.getStyleClass().add("page-title");
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        Button refreshButton = new Button("Refresh");
-        refreshButton.getStyleClass().add("secondary-button");
-        refreshButton.setOnAction(event -> refresh());
-
-        top.getChildren().addAll(title, spacer, refreshButton);
-        view.setTop(top);
+        withdrawButton.getStyleClass().add("my-app-action-danger");
+        withdrawButton.setMaxWidth(Double.MAX_VALUE);
+        withdrawButton.setOnAction(event -> withdrawSelectedApplication());
     }
 
     private void refresh() {
         applicantId = services.applicantProfileService().getOrCreateProfile(user.getUserId()).getApplicantId();
-        allApplications = new ArrayList<>(services.applicationService().getApplicationsByApplicant(applicantId));
+        profileProgramme = services.applicantProfileRepository().findById(applicantId)
+                .map(profile -> profile.getProgramme())
+                .filter(text -> !text.isBlank())
+                .orElse("Computer Science");
+
+        allApplications = new ArrayList<>(services.applicationService().getApplicationsByApplicant(applicantId))
+                .stream()
+                .filter(application -> application.getStatus() != ApplicationStatus.CANCELLED)
+                .map(this::toRecord)
+                .sorted(Comparator.comparing((ApplicationRecord row) -> row.application().getApplyDate()).reversed())
+                .toList();
 
         if (allApplications.isEmpty()) {
             view.setCenter(buildEmptyState());
             return;
         }
 
-        view.setCenter(buildNormalState());
-        updateApplicationList();
+        if (normalState == null) {
+            normalState = buildNormalState();
+        }
+
+        view.setCenter(normalState);
+        updateStatusRail();
+        updateApplicationCards();
     }
 
-    private Parent buildEmptyState() {
-        VBox root = new VBox(20);
-        root.setAlignment(Pos.TOP_CENTER);
-        root.setPadding(new Insets(34, 20, 20, 20));
-
-        VBox hero = new VBox(14);
-        hero.setAlignment(Pos.CENTER);
-        hero.getStyleClass().add("panel-card");
-        hero.setPadding(new Insets(50));
-        hero.setMaxWidth(760);
-
-        Label icon = new Label("No applications yet");
-        icon.setStyle("-fx-font-size: 40px; -fx-font-weight: 700; -fx-text-fill: #0f172a;");
-
-        Label subtitle = new Label("You have not applied to any TA positions. Start your journey by exploring open roles.");
-        subtitle.setWrapText(true);
-        subtitle.setStyle("-fx-font-size: 16px; -fx-text-fill: #64748b;");
-
-        Button browse = new Button("Browse Open Jobs");
-        browse.getStyleClass().add("primary-button");
-
-        Button guide = new Button("View Guide");
-        guide.getStyleClass().add("secondary-button");
-
-        HBox actions = new HBox(12, browse, guide);
-        actions.setAlignment(Pos.CENTER);
-
-        hero.getChildren().addAll(icon, subtitle, actions);
-
-        HBox guideRow = new HBox(16,
-                guideCard("Complete Profile", "Ensure your CV and academic background are up to date in settings."),
-                guideCard("Find a Role", "Search for modules that match your major and available hours."),
-                guideCard("Track Progress", "Once you apply, track your interview and selection status here.")
-        );
-        guideRow.setMaxWidth(1040);
-
-        root.getChildren().addAll(hero, guideRow);
-        return root;
-    }
-
-    private VBox guideCard(String title, String body) {
-        VBox card = new VBox(8);
-        card.getStyleClass().add("panel-card");
-        card.setPadding(new Insets(16));
-        card.setPrefWidth(320);
-
-        Label titleNode = new Label(title);
-        titleNode.setStyle("-fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: #0f172a;");
-
-        Label bodyNode = new Label(body);
-        bodyNode.setWrapText(true);
-        bodyNode.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748b;");
-
-        card.getChildren().addAll(titleNode, bodyNode);
-        HBox.setHgrow(card, Priority.ALWAYS);
-        return card;
+    private ApplicationRecord toRecord(Application application) {
+        Job job = services.jobService().getJob(application.getJobId()).orElse(null);
+        String reviewer = "Module Organiser";
+        if (job != null && job.getOrganiserId() != null) {
+            reviewer = services.userRepository().findById(job.getOrganiserId())
+                    .map(User::getDisplayName)
+                    .filter(name -> !name.isBlank())
+                    .orElse("Module Organiser");
+        }
+        return new ApplicationRecord(application, job, reviewer);
     }
 
     private Parent buildNormalState() {
-        HBox body = new HBox(16);
-        body.setPadding(new Insets(0, 20, 20, 20));
+        HBox layout = new HBox();
+        layout.getStyleClass().add("my-app-layout");
 
         VBox statusRail = buildStatusRail();
-        VBox listPanel = buildListPanel();
+        VBox mainListArea = buildMainListArea();
         VBox detailPanel = buildDetailPanel();
 
-        HBox.setHgrow(listPanel, Priority.ALWAYS);
-        body.getChildren().addAll(statusRail, listPanel, detailPanel);
-        return body;
+        HBox.setHgrow(mainListArea, Priority.ALWAYS);
+        layout.getChildren().addAll(statusRail, mainListArea, detailPanel);
+        return layout;
     }
 
     private VBox buildStatusRail() {
         VBox rail = new VBox(10);
-        rail.getStyleClass().add("panel-card");
-        rail.setPadding(new Insets(14));
-        rail.setPrefWidth(180);
+        rail.getStyleClass().add("my-app-status-rail");
+        rail.setPrefWidth(200);
+        rail.setMinWidth(200);
+        rail.setMaxWidth(200);
 
         Label heading = new Label("STATUS OVERVIEW");
-        heading.setStyle("-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #94a3b8;");
+        heading.getStyleClass().addAll("tiny-kicker", "my-app-status-overview-title");
 
-        // 排除已取消的申请进行统计
-        Map<ApplicationStatus, Long> counts = allApplications.stream()
-                .filter(app -> app.getStatus() != ApplicationStatus.CANCELLED)
-                .collect(Collectors.groupingBy(Application::getStatus, Collectors.counting()));
+        statusLinks.getStyleClass().add("my-app-status-links");
+        statusLinks.getChildren().setAll(
+                createStatusButton("ALL", "All Applications", IconFactory.IconType.CLIPBOARD, Color.web("#475569")),
+                createStatusButton("UNDER_REVIEW", "Under Review", IconFactory.IconType.SEARCH, Color.web("#f59e0b")),
+                createStatusButton("SUBMITTED", "SUBMITTED", IconFactory.IconType.FILE, Color.web("#475569")),
+                createStatusButton("ACCEPTED", "Accepted", IconFactory.IconType.CHECK_CIRCLE, Color.web("#10b981")),
+                createStatusButton("REJECTED", "Rejected", IconFactory.IconType.ALERT_TRIANGLE, Color.web("#ef4444"))
+        );
 
-        rail.getChildren().add(heading);
-        rail.getChildren().add(filterButton("ALL", counts.values().stream().mapToInt(Long::intValue).sum()));
-        rail.getChildren().add(filterButton("UNDER_REVIEW", counts.getOrDefault(ApplicationStatus.UNDER_REVIEW, 0L).intValue()));
-        rail.getChildren().add(filterButton("ACCEPTED", counts.getOrDefault(ApplicationStatus.ACCEPTED, 0L).intValue()));
-        rail.getChildren().add(filterButton("REJECTED", counts.getOrDefault(ApplicationStatus.REJECTED, 0L).intValue()));
-        rail.getChildren().add(filterButton("SUBMITTED", counts.getOrDefault(ApplicationStatus.SUBMITTED, 0L).intValue()));
-
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+        rail.getChildren().addAll(heading, statusLinks, spacer);
         return rail;
     }
 
-    private Button filterButton(String filter, int count) {
-        String label = ("ALL".equals(filter) ? "All Applications" : filter.replace('_', ' ')) + "   " + count;
-        Button button = new Button(label);
+    private Button createStatusButton(String key, String text, IconFactory.IconType icon, Color iconColor) {
+        Button button = new Button();
+        button.getStyleClass().add("my-app-status-link");
         button.setMaxWidth(Double.MAX_VALUE);
         button.setAlignment(Pos.CENTER_LEFT);
-        button.setStyle(filter.equals(activeFilter)
-                ? "-fx-background-color: #eef2f5; -fx-text-fill: #334155; -fx-font-size: 12px; -fx-font-weight: 700; -fx-background-radius: 8;"
-                : "-fx-background-color: transparent; -fx-text-fill: #475569; -fx-font-size: 12px; -fx-font-weight: 600;");
+        button.setContentDisplay(javafx.scene.control.ContentDisplay.GRAPHIC_ONLY);
+
+        StackPane iconNode = IconFactory.glyph(icon, 13, iconColor);
+        iconNode.getStyleClass().add("my-app-status-icon");
+
+        Label textNode = new Label(text);
+        textNode.getStyleClass().add("my-app-status-text");
+
+        Label countNode = new Label("0");
+        countNode.getStyleClass().add("my-app-status-count");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        HBox content = new HBox(10, iconNode, textNode, spacer, countNode);
+        content.setAlignment(Pos.CENTER_LEFT);
+
+        button.setGraphic(content);
         button.setOnAction(event -> {
-            activeFilter = filter;
-            view.setCenter(buildNormalState());
-            updateApplicationList();
+            activeFilter = key;
+            updateStatusRail();
+            updateApplicationCards();
         });
+
+        statusButtons.put(key, button);
+        statusCounters.put(key, countNode);
         return button;
     }
 
-    private VBox buildListPanel() {
-        VBox panel = new VBox(12);
-        panel.getStyleClass().add("panel-card");
-        panel.setPadding(new Insets(14));
+    private VBox buildMainListArea() {
+        VBox panel = new VBox();
+        panel.getStyleClass().add("my-app-main-area");
 
-        HBox filters = new HBox(8);
-        filters.getChildren().add(chip("All Status"));
-        filters.getChildren().add(chip("Spring 2026"));
-        filters.getChildren().add(chip("Computer Science"));
+        VBox filterBar = new VBox();
+        filterBar.getStyleClass().add("my-app-filter-bar");
 
-        applicationList.setCellFactory(param -> new ApplicationCell(services));
-        applicationList.setPrefHeight(720);
-        VBox.setVgrow(applicationList, Priority.ALWAYS);
+        HBox sortRow = new HBox(8);
+        sortRow.setAlignment(Pos.CENTER_RIGHT);
+        sortRow.getStyleClass().add("my-app-sort-row");
+        Button sortButton = new Button("Sort by: Applied Date  ↓");
+        sortButton.getStyleClass().add("my-app-sort-button");
+        sortButton.setFocusTraversable(false);
+        sortRow.getChildren().add(sortButton);
 
-        applicationList.getSelectionModel().selectedItemProperty().addListener((obs, oldItem, newItem) -> updateDetail(newItem));
-
-        panel.getChildren().addAll(filters, applicationList);
+        filterBar.getChildren().add(sortRow);
+        VBox.setVgrow(applicationCardsScroll, Priority.ALWAYS);
+        panel.getChildren().addAll(filterBar, applicationCardsScroll);
         return panel;
-    }
-
-    private Label chip(String text) {
-        Label label = new Label(text);
-        label.setStyle("-fx-background-color: #eef2f5; -fx-text-fill: #354a5f; -fx-font-size: 12px; -fx-font-weight: 700; -fx-background-radius: 999; -fx-padding: 6 10 6 10;");
-        return label;
     }
 
     private VBox buildDetailPanel() {
-        VBox panel = new VBox(14);
-        panel.getStyleClass().add("panel-card");
-        panel.setPadding(new Insets(16));
-        panel.setPrefWidth(320);
+        VBox panel = new VBox();
+        panel.getStyleClass().add("my-app-detail-panel");
+        panel.setPrefWidth(360);
+        panel.setMinWidth(340);
+        panel.setMaxWidth(380);
 
-        detailTitle.setStyle("-fx-font-size: 34px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        HBox header = new HBox();
+        header.getStyleClass().add("my-app-detail-header");
+        Label title = new Label("Application Details");
+        title.getStyleClass().add("my-app-detail-title");
+        Label close = new Label("×");
+        close.getStyleClass().add("my-app-detail-close");
 
-        panel.getChildren().addAll(
-                detailTitle,
-                detailField("Current Stage", detailStage),
-                detailField("Job", detailJob),
-                detailField("Applied Date", detailDate),
-                detailField("Match Score", detailScore),
-                detailField("Missing Skills", detailMissing),
-                detailField("Decision Note", detailDecision)
-        );
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        header.getChildren().addAll(title, spacer, close);
+
+        Label currentStageKicker = new Label("CURRENT STAGE");
+        currentStageKicker.getStyleClass().addAll("tiny-kicker", "my-app-stage-kicker");
+
+        detailStageIconShell.getStyleClass().add("my-app-stage-icon-shell");
+        detailStage.getStyleClass().add("my-app-stage-label");
+        detailStageDate.getStyleClass().add("my-app-stage-date");
+
+        VBox stageText = new VBox(2, detailStage, detailStageDate);
+        HBox stageRow = new HBox(12, detailStageIconShell, stageText);
+        stageRow.setAlignment(Pos.CENTER_LEFT);
+        VBox stageCard = new VBox(16, currentStageKicker, stageRow);
+        stageCard.getStyleClass().add("my-app-stage-card");
+
+        HBox feedbackHeading = new HBox(8,
+                IconFactory.glyph(IconFactory.IconType.INFO_CIRCLE, 12, Color.web("#475569")),
+                sectionTitle("Reviewer Feedback"));
+        feedbackHeading.setAlignment(Pos.CENTER_LEFT);
+
+        feedbackAvatar.getStyleClass().add("my-app-feedback-avatar");
+        feedbackReviewer.getStyleClass().add("my-app-feedback-reviewer");
+        feedbackTime.getStyleClass().add("my-app-feedback-time");
+        feedbackBody.getStyleClass().add("my-app-feedback-body");
+        feedbackBody.setWrapText(true);
+
+        Region feedbackSpacer = new Region();
+        HBox.setHgrow(feedbackSpacer, Priority.ALWAYS);
+        HBox feedbackMeta = new HBox(8, feedbackAvatar, feedbackReviewer, feedbackSpacer, feedbackTime);
+        feedbackMeta.setAlignment(Pos.CENTER_LEFT);
+
+        VBox feedbackCard = new VBox(8, feedbackMeta, feedbackBody);
+        feedbackCard.getStyleClass().add("my-app-feedback-card");
+
+        VBox feedbackSection = new VBox(12, feedbackHeading, feedbackCard);
+
+        Label timelineTitle = sectionTitle("Timeline");
+        Label submittedTitle = timelineStepTitle("Application Submitted");
+        Label reviewTitle = timelineStepTitle("Application Under Review");
+        timelineFinalTitle.getStyleClass().add("my-app-timeline-step-title");
+
+        timelineSubmittedDate.getStyleClass().add("my-app-timeline-step-date");
+        timelineReviewDate.getStyleClass().add("my-app-timeline-step-date");
+        timelineFinalDate.getStyleClass().add("my-app-timeline-step-date");
+
+        HBox submittedStep = buildTimelineStep(timelineSubmittedDot, submittedTitle, timelineSubmittedDate);
+        HBox reviewStep = buildTimelineStep(timelineReviewDot, reviewTitle, timelineReviewDate);
+        timelineFinalBlock.getChildren().setAll(timelineFinalTitle, timelineFinalDate);
+        HBox finalStep = buildTimelineStep(timelineFinalDot, timelineFinalBlock);
+
+        VBox steps = new VBox(24, submittedStep, reviewStep, finalStep);
+        steps.getStyleClass().add("my-app-timeline-steps");
+
+        Region line = new Region();
+        line.getStyleClass().add("my-app-timeline-line");
+        line.setMaxWidth(2);
+        line.setMinWidth(2);
+        line.setPrefWidth(2);
+
+        StackPane timelineStack = new StackPane(line, steps);
+        StackPane.setAlignment(line, Pos.TOP_LEFT);
+        StackPane.setMargin(line, new Insets(8, 0, 0, 5));
+
+        VBox timelineSection = new VBox(16, timelineTitle, timelineStack);
+        timelineSection.getStyleClass().add("my-app-timeline-section");
+
+        VBox actionFooter = new VBox(8, viewFullButton, withdrawButton);
+        actionFooter.getStyleClass().add("my-app-action-footer");
+
+        VBox detailContent = new VBox(24, stageCard, feedbackSection, timelineSection, actionFooter);
+        detailContent.getStyleClass().add("my-app-detail-content");
+
+        ScrollPane detailScroll = new ScrollPane(detailContent);
+        detailScroll.getStyleClass().add("my-app-detail-scroll");
+        detailScroll.setFitToWidth(true);
+        detailScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        VBox.setVgrow(detailScroll, Priority.ALWAYS);
+
+        panel.getChildren().addAll(header, detailScroll);
         return panel;
     }
 
-    private VBox detailField(String label, Label valueNode) {
-        VBox box = new VBox(4);
-        Label title = new Label(label);
-        title.setStyle("-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #94a3b8;");
-        valueNode.setWrapText(true);
-        valueNode.setStyle("-fx-font-size: 13px; -fx-text-fill: #334155;");
-        box.getChildren().addAll(title, valueNode);
-        return box;
+    private Label sectionTitle(String text) {
+        Label label = new Label(text);
+        label.getStyleClass().add("my-app-section-title");
+        return label;
     }
 
-    private void updateApplicationList() {
-        List<Application> filtered = allApplications;
+    private Label timelineStepTitle(String text) {
+        Label title = new Label(text);
+        title.getStyleClass().add("my-app-timeline-step-title");
+        return title;
+    }
 
-        // 过滤掉 CANCELLED 状态的申请
-        filtered = filtered.stream()
-                .filter(application -> application.getStatus() != ApplicationStatus.CANCELLED)
-                .collect(Collectors.toList());
+    private HBox buildTimelineStep(StackPane dot, Label title, Label date) {
+        VBox text = new VBox(2, title, date);
+        return buildTimelineStep(dot, text);
+    }
 
-        if (!"ALL".equals(activeFilter)) {
-            ApplicationStatus status = ApplicationStatus.valueOf(activeFilter);
-            filtered = filtered.stream()
-                    .filter(application -> application.getStatus() == status)
-                    .toList();
-        }
+    private HBox buildTimelineStep(StackPane dot, VBox textBlock) {
+        dot.getStyleClass().add("my-app-timeline-dot");
+        HBox row = new HBox(10, dot, textBlock);
+        row.setAlignment(Pos.TOP_LEFT);
+        return row;
+    }
 
-        applicationList.setItems(FXCollections.observableArrayList(filtered));
-        if (!filtered.isEmpty()) {
-            applicationList.getSelectionModel().selectFirst();
-        } else {
+    private void updateStatusRail() {
+        Map<ApplicationStatus, Long> counts = allApplications.stream()
+                .collect(Collectors.groupingBy(row -> row.application().getStatus(), Collectors.counting()));
+
+        statusCounters.get("ALL").setText(String.valueOf(allApplications.size()));
+        statusCounters.get("UNDER_REVIEW").setText(String.valueOf(counts.getOrDefault(ApplicationStatus.UNDER_REVIEW, 0L)));
+        statusCounters.get("SUBMITTED").setText(String.valueOf(counts.getOrDefault(ApplicationStatus.SUBMITTED, 0L)));
+        statusCounters.get("ACCEPTED").setText(String.valueOf(counts.getOrDefault(ApplicationStatus.ACCEPTED, 0L)));
+        statusCounters.get("REJECTED").setText(String.valueOf(counts.getOrDefault(ApplicationStatus.REJECTED, 0L)));
+
+        statusButtons.forEach((key, button) -> {
+            button.getStyleClass().remove("my-app-status-link-active");
+            if (key.equals(activeFilter)) {
+                button.getStyleClass().add("my-app-status-link-active");
+            }
+        });
+    }
+
+    private void updateApplicationCards() {
+        filteredApplications = allApplications.stream()
+                .filter(this::matchesFilter)
+                .toList();
+
+        if (filteredApplications.isEmpty()) {
+            selectedApplicationId = null;
+            applicationCards.getChildren().setAll(buildNoResultCard());
             updateDetail(null);
-        }
-    }
-
-    private void updateDetail(Application application) {
-        if (application == null) {
-            detailStage.setText("-");
-            detailJob.setText("-");
-            detailDate.setText("-");
-            detailScore.setText("-");
-            detailMissing.setText("-");
-            detailDecision.setText("-");
             return;
         }
 
-        Optional<Job> jobOpt = services.jobService().getJob(application.getJobId());
+        boolean selectedStillExists = selectedApplicationId != null && filteredApplications.stream()
+                .anyMatch(row -> row.application().getApplicationId().equals(selectedApplicationId));
+        if (!selectedStillExists) {
+            selectedApplicationId = filteredApplications.get(0).application().getApplicationId();
+        }
 
-        detailStage.setText(application.getStatus().name().replace('_', ' '));
-        detailJob.setText(jobOpt.map(Job::getTitle).orElse(application.getJobId()));
-        detailDate.setText(application.getApplyDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
-        detailScore.setText(application.getMatchScore() + "%");
-        detailMissing.setText(application.getMissingSkills().isEmpty() ? "None" : String.join(", ", application.getMissingSkills()));
-        detailDecision.setText(application.getDecisionNote() == null || application.getDecisionNote().isBlank()
-                ? "No note"
-                : application.getDecisionNote());
+        renderApplicationCards();
+        updateDetail(findSelectedApplication());
     }
 
-    private static class ApplicationCell extends ListCell<Application> {
-        private final ServiceRegistry services;
+    private boolean matchesFilter(ApplicationRecord record) {
+        if ("ALL".equals(activeFilter)) {
+            return true;
+        }
+        return record.application().getStatus().name().equals(activeFilter);
+    }
 
-        private ApplicationCell(ServiceRegistry services) {
-            this.services = services;
+    private Parent buildNoResultCard() {
+        VBox card = new VBox(8);
+        card.getStyleClass().add("my-app-no-results");
+        Label title = new Label("No applications in this status");
+        title.getStyleClass().add("my-app-no-results-title");
+        Label subtitle = new Label("Try switching to another status or clear filters.");
+        subtitle.getStyleClass().add("my-app-no-results-subtitle");
+        card.getChildren().addAll(title, subtitle);
+        return card;
+    }
+
+    private void renderApplicationCards() {
+        List<Parent> cards = filteredApplications.stream()
+                .map(row -> buildApplicationCard(row,
+                        row.application().getApplicationId().equals(selectedApplicationId)))
+                .collect(Collectors.toList());
+        applicationCards.getChildren().setAll(cards);
+    }
+
+    private Parent buildApplicationCard(ApplicationRecord row, boolean selected) {
+        Application application = row.application();
+        Job job = row.job();
+
+        HBox card = new HBox(12);
+        card.getStyleClass().add("my-app-card");
+        if (selected) {
+            card.getStyleClass().add("my-app-card-selected");
+        }
+        card.setOnMouseClicked(event -> {
+            selectedApplicationId = application.getApplicationId();
+            renderApplicationCards();
+            updateDetail(row);
+        });
+
+        Label title = new Label(resolveCardTitle(job, application));
+        title.getStyleClass().add("my-app-card-title");
+        title.setWrapText(true);
+        title.setTextOverrun(OverrunStyle.ELLIPSIS);
+        title.setEllipsisString("…");
+        title.setMaxHeight(40);
+        title.setMinHeight(Region.USE_PREF_SIZE);
+        title.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(title, Priority.ALWAYS);
+
+        Label statusTag = new Label(displayStatus(application.getStatus()));
+        statusTag.getStyleClass().add("my-app-card-status-tag");
+        statusTag.setStyle(statusTagStyle(application.getStatus()));
+
+        HBox titleRow = new HBox(title);
+        titleRow.setAlignment(Pos.TOP_LEFT);
+        titleRow.setMaxWidth(Double.MAX_VALUE);
+
+        FlowPane metaRow = new FlowPane();
+        metaRow.setHgap(14);
+        metaRow.setVgap(4);
+        metaRow.setPrefWrapLength(320);
+        metaRow.setMaxWidth(Double.MAX_VALUE);
+        metaRow.getChildren().addAll(
+                buildMetaItem(IconFactory.IconType.CALENDAR, resolveSemesterLabel(job, application)),
+                buildMetaItem(IconFactory.IconType.INFO_CIRCLE, "Applied " + application.getApplyDate().format(CARD_APPLY_DATE)),
+                buildMetaItem(IconFactory.IconType.USER, row.reviewer()));
+
+        VBox content = new VBox(7, titleRow, metaRow);
+        HBox.setHgrow(content, Priority.ALWAYS);
+        content.setMaxWidth(Double.MAX_VALUE);
+        content.setMinWidth(0);
+
+        Label idLabel = new Label("ID: " + application.getApplicationId());
+        idLabel.getStyleClass().add("my-app-card-id");
+        idLabel.setMaxWidth(Double.MAX_VALUE);
+        idLabel.setAlignment(Pos.CENTER_RIGHT);
+
+        Label updated = new Label("Updated " + toRelative(application.getApplyDate()));
+        updated.getStyleClass().add("my-app-card-updated");
+        updated.setMaxWidth(Double.MAX_VALUE);
+        updated.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox right = new VBox(6, statusTag, idLabel, updated);
+        right.setAlignment(Pos.TOP_RIGHT);
+        right.getStyleClass().add("my-app-card-right");
+        right.setMinWidth(CARD_RIGHT_INFO_WIDTH);
+        right.setPrefWidth(CARD_RIGHT_INFO_WIDTH);
+
+        card.getChildren().addAll(content, right);
+        return card;
+    }
+
+    private HBox buildMetaItem(IconFactory.IconType type, String text) {
+        Label label = new Label(text);
+        label.getStyleClass().add("my-app-card-meta-text");
+        HBox item = new HBox(4, IconFactory.glyph(type, 9.5, Color.web("#64748b")), label);
+        item.setAlignment(Pos.CENTER_LEFT);
+        return item;
+    }
+
+    private ApplicationRecord findSelectedApplication() {
+        if (selectedApplicationId == null) {
+            return null;
+        }
+        return filteredApplications.stream()
+                .filter(row -> row.application().getApplicationId().equals(selectedApplicationId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void updateDetail(ApplicationRecord row) {
+        if (row == null) {
+            detailStage.setText("-");
+            detailStageDate.setText("-");
+            detailStageIconShell.getChildren().setAll();
+            feedbackAvatar.setText("--");
+            feedbackReviewer.setText("-");
+            feedbackTime.setText("-");
+            feedbackBody.setText("-");
+            timelineSubmittedDate.setText("-");
+            timelineReviewDate.setText("-");
+            timelineFinalTitle.setText("Final Decision");
+            timelineFinalDate.setText("-");
+            timelineSubmittedDot.setStyle(dotStyle("#10b981"));
+            timelineReviewDot.setStyle(dotStyle("#f59e0b"));
+            timelineFinalDot.setStyle(dotStyle("#cbd5e1"));
+            timelineFinalBlock.setOpacity(0.4);
+            withdrawButton.setDisable(true);
+            viewFullButton.setDisable(true);
+            return;
         }
 
-        @Override
-        protected void updateItem(Application item, boolean empty) {
-            super.updateItem(item, empty);
-            if (empty || item == null) {
-                setText(null);
-                setGraphic(null);
-                return;
-            }
+        Application application = row.application();
+        ApplicationStatus status = application.getStatus();
 
-            VBox row = new VBox(6);
-            row.setPadding(new Insets(12));
-            row.setStyle("-fx-background-color: white; -fx-border-color: #e2e8f0; -fx-border-radius: 10; -fx-background-radius: 10;");
+        detailStage.setText(displayStatus(status));
+        detailStageDate.setText(application.getApplyDate().format(STAGE_DATE));
 
-            String title = services.jobService().getJob(item.getJobId()).map(Job::getTitle).orElse(item.getJobId());
+        detailStageIconShell.getChildren().setAll(IconFactory.glyph(iconForStatus(status), 15, Color.WHITE));
+        detailStageIconShell.setStyle(stageIconStyle(status));
 
-            HBox top = new HBox();
-            Label titleNode = new Label(title);
-            titleNode.setStyle("-fx-font-size: 15px; -fx-font-weight: 700; -fx-text-fill: #0f172a;");
+        feedbackReviewer.setText(row.reviewer());
+        feedbackAvatar.setText(initialsOf(row.reviewer()));
+        feedbackTime.setText(application.getApplyDate().format(FEEDBACK_TIME));
+        feedbackBody.setText(resolveFeedback(row));
 
-            Region spacer = new Region();
-            HBox.setHgrow(spacer, Priority.ALWAYS);
+        LocalDateTime submittedAt = application.getApplyDate();
+        timelineSubmittedDate.setText(submittedAt.format(TIMELINE_TIME));
+        timelineReviewDate.setText(submittedAt.plusDays(3).format(TIMELINE_TIME));
 
-            Label status = new Label(item.getStatus().name().replace('_', ' '));
-            status.setStyle(statusStyle(item.getStatus()));
+        boolean finalized = status == ApplicationStatus.ACCEPTED
+                || status == ApplicationStatus.REJECTED
+                || status == ApplicationStatus.CANCELLED;
+        timelineFinalTitle.setText("Final Decision");
+        timelineFinalDate.setText(finalized
+                ? submittedAt.plusDays(7).format(TIMELINE_TIME)
+                : "Expected within 2 weeks");
 
-            top.getChildren().addAll(titleNode, spacer, status);
-
-            Label meta = new Label("ID: " + item.getApplicationId() + "   |   Applied "
-                    + item.getApplyDate().format(DateTimeFormatter.ofPattern("MMM dd")));
-            meta.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748b;");
-
-            row.getChildren().addAll(top, meta);
-            setGraphic(row);
+        timelineSubmittedDot.setStyle(dotStyle("#10b981"));
+        timelineReviewDot.setStyle(dotStyle("#f59e0b"));
+        if (finalized) {
+            timelineFinalDot.setStyle(dotStyle(status == ApplicationStatus.REJECTED ? "#ef4444" : "#10b981"));
+            timelineFinalBlock.setOpacity(1);
+        } else {
+            timelineFinalDot.setStyle(dotStyle("#cbd5e1"));
+            timelineFinalBlock.setOpacity(0.4);
         }
 
-        private String statusStyle(ApplicationStatus status) {
-            return switch (status) {
-                case ACCEPTED -> "-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #047857; -fx-background-color: #ecfdf5; -fx-background-radius: 999; -fx-padding: 2 8 2 8;";
-                case REJECTED -> "-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #b91c1c; -fx-background-color: #fef2f2; -fx-background-radius: 999; -fx-padding: 2 8 2 8;";
-                case UNDER_REVIEW -> "-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #1d4ed8; -fx-background-color: #eff6ff; -fx-background-radius: 999; -fx-padding: 2 8 2 8;";
-                case CANCELLED -> "-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #b45309; -fx-background-color: #fffbeb; -fx-background-radius: 999; -fx-padding: 2 8 2 8;";
-                default -> "-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #b45309; -fx-background-color: #fffbeb; -fx-background-radius: 999; -fx-padding: 2 8 2 8;";
-            };
+        viewFullButton.setDisable(false);
+        withdrawButton.setDisable(status != ApplicationStatus.SUBMITTED);
+    }
+
+    private String resolveFeedback(ApplicationRecord row) {
+        Application application = row.application();
+        if (application.getDecisionNote() != null && !application.getDecisionNote().isBlank()) {
+            return "\"" + application.getDecisionNote().trim() + "\"";
         }
+        return switch (application.getStatus()) {
+            case SUBMITTED -> "\"Your application has been submitted successfully and is currently queued for review.\"";
+            case UNDER_REVIEW -> "\"Your application is currently under academic review. We will update this panel after the interview stage.\"";
+            case ACCEPTED -> "\"Congratulations. You have been selected for this position. Further onboarding details will be shared shortly.\"";
+            case REJECTED -> "\"Thank you for applying. This role has moved forward with another candidate.\"";
+            case CANCELLED -> "\"This application was withdrawn.\"";
+        };
+    }
+
+    private String resolveCardTitle(Job job, Application application) {
+        if (job == null) {
+            return application.getJobId();
+        }
+        if (job.getModuleCode() != null && !job.getModuleCode().isBlank()
+                && job.getModuleName() != null && !job.getModuleName().isBlank()) {
+            return job.getModuleCode() + " " + job.getModuleName();
+        }
+        return job.getTitle();
+    }
+
+    private String resolveSemesterLabel(Job job, Application application) {
+        if (job != null && job.getSemester() != null && !job.getSemester().isBlank()) {
+            return job.getSemester();
+        }
+        Month month = application.getApplyDate().getMonth();
+        String term = switch (month) {
+            case SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER -> "Fall";
+            default -> "Spring";
+        };
+        return term + " " + application.getApplyDate().getYear();
+    }
+
+    private IconFactory.IconType iconForStatus(ApplicationStatus status) {
+        return switch (status) {
+            case SUBMITTED -> IconFactory.IconType.FILE;
+            case UNDER_REVIEW -> IconFactory.IconType.SEARCH;
+            case ACCEPTED -> IconFactory.IconType.CHECK_CIRCLE;
+            case REJECTED -> IconFactory.IconType.ALERT_TRIANGLE;
+            case CANCELLED -> IconFactory.IconType.TRASH;
+        };
+    }
+
+    private String displayStatus(ApplicationStatus status) {
+        return switch (status) {
+            case UNDER_REVIEW -> "UNDER REVIEW";
+            case ACCEPTED -> "ACCEPTED";
+            case REJECTED -> "REJECTED";
+            case CANCELLED -> "CANCELLED";
+            case SUBMITTED -> "SUBMITTED";
+        };
+    }
+
+    private String statusTagStyle(ApplicationStatus status) {
+        return switch (status) {
+            case SUBMITTED -> "-fx-background-color: rgba(245,158,11,0.1); -fx-text-fill: #f59e0b;";
+            case UNDER_REVIEW -> "-fx-background-color: rgba(53,74,95,0.1); -fx-text-fill: #354a5f;";
+            case ACCEPTED -> "-fx-background-color: rgba(16,185,129,0.1); -fx-text-fill: #10b981;";
+            case REJECTED -> "-fx-background-color: rgba(239,68,68,0.1); -fx-text-fill: #ef4444;";
+            case CANCELLED -> "-fx-background-color: rgba(100,116,139,0.12); -fx-text-fill: #64748b;";
+        };
+    }
+
+    private String stageIconStyle(ApplicationStatus status) {
+        return switch (status) {
+            case SUBMITTED -> "-fx-background-color: #f59e0b; -fx-background-radius: 999;";
+            case UNDER_REVIEW -> "-fx-background-color: #354a5f; -fx-background-radius: 999;";
+            case ACCEPTED -> "-fx-background-color: #10b981; -fx-background-radius: 999;";
+            case REJECTED -> "-fx-background-color: #ef4444; -fx-background-radius: 999;";
+            case CANCELLED -> "-fx-background-color: #64748b; -fx-background-radius: 999;";
+        };
+    }
+
+    private String dotStyle(String color) {
+        return "-fx-background-color: " + color + "; -fx-background-radius: 999;";
+    }
+
+    private String toRelative(LocalDateTime timestamp) {
+        LocalDateTime now = LocalDateTime.now();
+        if (timestamp.isAfter(now)) {
+            return "just now";
+        }
+        long minutes = java.time.Duration.between(timestamp, now).toMinutes();
+        if (minutes < 60) {
+            return minutes <= 1 ? "1m ago" : minutes + "m ago";
+        }
+        long hours = minutes / 60;
+        if (hours < 24) {
+            return hours + "h ago";
+        }
+        long days = hours / 24;
+        if (days < 7) {
+            return days + " day" + (days == 1 ? "" : "s") + " ago";
+        }
+        long weeks = days / 7;
+        return weeks + " week" + (weeks == 1 ? "" : "s") + " ago";
+    }
+
+    private String initialsOf(String name) {
+        if (name == null || name.isBlank()) {
+            return "--";
+        }
+        String[] parts = name.trim().split("\\s+");
+        if (parts.length == 1) {
+            return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase();
+        }
+        String first = parts[0].substring(0, 1);
+        String last = parts[parts.length - 1].substring(0, 1);
+        return (first + last).toUpperCase();
+    }
+
+    private void showFullApplication() {
+        ApplicationRecord row = findSelectedApplication();
+        if (row == null) {
+            return;
+        }
+
+        Application app = row.application();
+        Job job = row.job();
+        String message = "Position: " + resolveCardTitle(job, app) + "\n"
+                + "Application ID: " + app.getApplicationId() + "\n"
+                + "Match Score: " + app.getMatchScore() + "%\n"
+                + "Missing Skills: " + (app.getMissingSkills().isEmpty() ? "None" : String.join(", ", app.getMissingSkills())) + "\n\n"
+                + "Statement:\n"
+                + (app.getStatement() == null || app.getStatement().isBlank() ? "(No statement)" : app.getStatement());
+        DialogControllerFactory.info("Application Detail", message, view.getScene() == null ? null : view.getScene().getWindow());
+    }
+
+    private void withdrawSelectedApplication() {
+        ApplicationRecord row = findSelectedApplication();
+        if (row == null) {
+            return;
+        }
+        if (row.application().getStatus() != ApplicationStatus.SUBMITTED) {
+            DialogControllerFactory.operationFailed("Unable to withdraw",
+                    "Only submitted applications can be withdrawn.",
+                    view.getScene() == null ? null : view.getScene().getWindow());
+            return;
+        }
+
+        boolean confirmed = DialogControllerFactory.confirmAction(
+                "Withdraw Application",
+                "Are you sure you want to withdraw this application?",
+                view.getScene() == null ? null : view.getScene().getWindow());
+        if (!confirmed) {
+            return;
+        }
+
+        ValidationResult result = services.applicationService().cancelApplication(applicantId, row.application().getJobId());
+        if (!result.isValid()) {
+            DialogControllerFactory.operationFailed("Withdraw Failed",
+                    result.getErrors().isEmpty() ? "Unable to withdraw application." : String.join("\n", result.getErrors()),
+                    view.getScene() == null ? null : view.getScene().getWindow());
+            return;
+        }
+
+        DialogControllerFactory.success("Application Withdrawn",
+                "Your application has been withdrawn successfully.",
+                view.getScene() == null ? null : view.getScene().getWindow());
+        refresh();
+    }
+
+    private Parent buildEmptyState() {
+        VBox root = new VBox(16);
+        root.getStyleClass().add("my-app-empty-state");
+        root.setAlignment(Pos.CENTER);
+        root.setPadding(new Insets(48));
+
+        Label title = new Label("No applications yet");
+        title.getStyleClass().add("my-app-empty-title");
+
+        Label subtitle = new Label("You have not applied to any TA positions yet. Start by browsing open roles.");
+        subtitle.getStyleClass().add("my-app-empty-subtitle");
+        subtitle.setWrapText(true);
+        subtitle.setMaxWidth(520);
+
+        HBox actions = new HBox(10);
+        actions.setAlignment(Pos.CENTER);
+        Button browse = new Button("Browse Open Jobs");
+        browse.getStyleClass().add("primary-button");
+        browse.setOnAction(event -> DialogControllerFactory.info("Browse Jobs",
+                "Use the Browse Jobs page from the left navigation.",
+                view.getScene() == null ? null : view.getScene().getWindow()));
+        Button refreshButton = new Button("Refresh");
+        refreshButton.getStyleClass().add("secondary-button");
+        refreshButton.setOnAction(event -> refresh());
+        actions.getChildren().addAll(browse, refreshButton);
+
+        root.getChildren().addAll(title, subtitle, actions);
+        return root;
+    }
+
+    private record ApplicationRecord(Application application, Job job, String reviewer) {
     }
 }

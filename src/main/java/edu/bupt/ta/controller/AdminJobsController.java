@@ -169,7 +169,7 @@ public class AdminJobsController {
         titleNode.getStyleClass().add("metric-kicker");
 
         valueLabel.getStyleClass().add("metric-value");
-        valueLabel.setStyle("-fx-font-size: 36px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        valueLabel.setStyle("-fx-font-size: 36px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
 
         Label noteNode = new Label(note);
         noteNode.setWrapText(true);
@@ -201,11 +201,11 @@ public class AdminJobsController {
                 title.setWrapText(false);
                 title.setTextOverrun(OverrunStyle.ELLIPSIS);
                 title.setMaxWidth(250);
-                title.setStyle("-fx-font-size: 15px; -fx-font-weight: 800; -fx-text-fill: #334155;");
+                title.setStyle("-fx-font-size: 15px; -fx-font-weight: 900; -fx-text-fill: #334155;");
 
                 Label id = new Label("ID: " + row.jobId());
                 id.setTextOverrun(OverrunStyle.ELLIPSIS);
-                id.setStyle("-fx-font-size: 11px; -fx-text-fill: #94a3b8; -fx-font-weight: 700;");
+                id.setStyle("-fx-font-size: 11px; -fx-text-fill: #94a3b8; -fx-font-weight: 600;");
 
                 VBox box = new VBox(3, title, id);
                 setGraphic(box);
@@ -230,7 +230,7 @@ public class AdminJobsController {
                 title.setWrapText(false);
                 title.setTextOverrun(OverrunStyle.ELLIPSIS);
                 title.setMaxWidth(220);
-                title.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #475569;");
+                title.setStyle("-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #475569;");
 
                 Label meta = new Label(row.moduleCode());
                 meta.setStyle("-fx-font-size: 11px; -fx-text-fill: #94a3b8;");
@@ -252,7 +252,7 @@ public class AdminJobsController {
                     return;
                 }
                 Label badge = new Label(String.valueOf(item.intValue()));
-                badge.setStyle("-fx-background-color: #eef2f7; -fx-text-fill: #475569; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 4 10 4 10;");
+                badge.setStyle("-fx-background-color: #eef2f7; -fx-text-fill: #475569; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 10 4 10;");
                 setGraphic(badge);
                 setText(null);
             }
@@ -310,10 +310,10 @@ public class AdminJobsController {
         kicker.getStyleClass().add("section-kicker");
 
         detailTitle.setWrapText(true);
-        detailTitle.setStyle("-fx-font-size: 32px; -fx-font-weight: 800; -fx-text-fill: #1e293b;");
+        detailTitle.setStyle("-fx-font-size: 32px; -fx-font-weight: 900; -fx-text-fill: #1e293b;");
 
         detailSubline.setWrapText(true);
-        detailSubline.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748b; -fx-font-weight: 700;");
+        detailSubline.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748b; -fx-font-weight: 600;");
 
         VBox moduleCard = new VBox(8,
                 sectionTitle("ASSOCIATED MODULE"),
@@ -321,7 +321,7 @@ public class AdminJobsController {
                 detailModuleMeta,
                 detailModuleDescription);
         moduleCard.getStyleClass().add("surface-toolbar");
-        detailModuleTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 800; -fx-text-fill: #334155;");
+        detailModuleTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 900; -fx-text-fill: #334155;");
         detailModuleMeta.setStyle("-fx-font-size: 12px; -fx-text-fill: #94a3b8;");
         detailModuleDescription.setWrapText(true);
         detailModuleDescription.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748b;");
@@ -507,7 +507,7 @@ public class AdminJobsController {
             VBox row = new VBox(4);
             Label detail = new Label(log.actorName() + " " + log.action().replace('_', ' ').toLowerCase(Locale.ROOT));
             detail.setWrapText(true);
-            detail.setStyle("-fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: #334155;");
+            detail.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #334155;");
 
             Label meta = new Label(formatDateTime(log.timestamp()));
             meta.setStyle("-fx-font-size: 11px; -fx-text-fill: #94a3b8;");
@@ -619,9 +619,9 @@ public class AdminJobsController {
 
     private HBox detailLine(String label, Label value) {
         Label labelNode = new Label(label);
-        labelNode.setStyle("-fx-font-size: 11px; -fx-font-weight: 800; -fx-text-fill: #94a3b8;");
+        labelNode.setStyle("-fx-font-size: 11px; -fx-font-weight: 900; -fx-text-fill: #94a3b8;");
         value.setWrapText(true);
-        value.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #334155;");
+        value.setStyle("-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #334155;");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -632,8 +632,8 @@ public class AdminJobsController {
 
     private HBox statusRow(String label, Label valueLabel, String accent) {
         Label name = new Label(label);
-        name.setStyle("-fx-font-size: 13px; -fx-text-fill: #475569; -fx-font-weight: 700;");
-        valueLabel.setStyle("-fx-font-size: 26px; -fx-font-weight: 800; -fx-text-fill: " + accent + ";");
+        name.setStyle("-fx-font-size: 13px; -fx-text-fill: #475569; -fx-font-weight: 600;");
+        valueLabel.setStyle("-fx-font-size: 26px; -fx-font-weight: 900; -fx-text-fill: " + accent + ";");
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         HBox row = new HBox(12, name, spacer, valueLabel);
@@ -646,7 +646,7 @@ public class AdminJobsController {
         Label avatar = new Label(label);
         avatar.setAlignment(Pos.CENTER);
         avatar.setMinSize(30, 30);
-        avatar.setStyle("-fx-background-color: #eef2f7; -fx-text-fill: #475569; -fx-background-radius: 999; -fx-font-size: 11px; -fx-font-weight: 800;");
+        avatar.setStyle("-fx-background-color: #eef2f7; -fx-text-fill: #475569; -fx-background-radius: 999; -fx-font-size: 11px; -fx-font-weight: 900;");
         return avatar;
     }
 
@@ -689,7 +689,7 @@ public class AdminJobsController {
                     return;
                 }
                 Label dots = new Label("...");
-                dots.setStyle("-fx-font-size: 16px; -fx-font-weight: 800; -fx-text-fill: #94a3b8;");
+                dots.setStyle("-fx-font-size: 16px; -fx-font-weight: 900; -fx-text-fill: #94a3b8;");
                 setGraphic(dots);
                 setText(null);
             }
@@ -698,10 +698,10 @@ public class AdminJobsController {
 
     private String statusChipStyle(String status) {
         return switch (status == null ? "" : status) {
-            case "OPEN" -> "-fx-background-color: #ecfdf3; -fx-text-fill: #10b981; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
-            case "DRAFT" -> "-fx-background-color: #eff6ff; -fx-text-fill: #2563eb; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
-            case "EXPIRED" -> "-fx-background-color: #fff7ed; -fx-text-fill: #f59e0b; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
-            default -> "-fx-background-color: #f8fafc; -fx-text-fill: #64748b; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
+            case "OPEN" -> "-fx-background-color: #ecfdf3; -fx-text-fill: #10b981; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
+            case "DRAFT" -> "-fx-background-color: #eff6ff; -fx-text-fill: #2563eb; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
+            case "EXPIRED" -> "-fx-background-color: #fff7ed; -fx-text-fill: #f59e0b; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
+            default -> "-fx-background-color: #f8fafc; -fx-text-fill: #64748b; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
         };
     }
 

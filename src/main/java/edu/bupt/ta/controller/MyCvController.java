@@ -4,6 +4,7 @@ import edu.bupt.ta.model.ApplicantProfile;
 import edu.bupt.ta.model.ResumeInfo;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
+import edu.bupt.ta.ui.IconFactory;
 import edu.bupt.ta.util.DateTimeUtils;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -14,6 +15,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.Label;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -21,6 +23,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -75,9 +78,10 @@ public class MyCvController {
 
         pageRoot = new VBox(24);
         pageRoot.getStyleClass().add("cv-page");
-        pageRoot.setPadding(new Insets(32, 64, 32, 64));
+        pageRoot.setPadding(new Insets(20, 16, 24, 16));
         pageRoot.setFillWidth(true);
-        pageRoot.setMaxWidth(896);
+        pageRoot.setMaxWidth(Double.MAX_VALUE);
+        pageRoot.setMinWidth(0);
 
         pageRoot.getChildren().add(buildTitleBlock());
         pageRoot.getChildren().add(buildBasicInfoCard(profile, resume, resumeCompletion));
@@ -85,10 +89,7 @@ public class MyCvController {
         pageRoot.getChildren().add(editorSection);
         pageRoot.getChildren().add(buildGuidelineCard());
 
-        StackPane pageShell = new StackPane(pageRoot);
-        StackPane.setAlignment(pageRoot, Pos.TOP_CENTER);
-
-        scrollPane.setContent(pageShell);
+        scrollPane.setContent(pageRoot);
         scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;");
@@ -140,18 +141,12 @@ public class MyCvController {
         );
 
         HBox row2 = new HBox(24,
-                infoCell("SCHOOL EMAIL", safe(profile.getEmail())),
+                infoCell("EMAIL", safe(profile.getEmail())),
                 infoCell("CV COMPLETION", resumeCompletion + "% complete"),
                 infoCell("PHONE", safe(profile.getPhone()))
         );
 
-        HBox row3 = new HBox(24,
-                infoCell("CURRENT CAMPUS", safe(profile.getCurrentCampus())),
-                infoCell("WILLING TO CROSS CAMPUS", yesNo(profile.getWillingToCrossCampus())),
-                infoCell("ACADEMIC YEAR", profile.getYear() > 0 ? String.valueOf(profile.getYear()) : "-")
-        );
-
-        body.getChildren().addAll(row1, row2, row3);
+        body.getChildren().addAll(row1, row2);
         card.getChildren().addAll(header, body);
         return card;
     }
@@ -162,6 +157,11 @@ public class MyCvController {
 
         HBox row = new HBox(32, uploadCard, statusCard);
         row.setFillHeight(true);
+        row.setMaxWidth(Double.MAX_VALUE);
+        uploadCard.setMinWidth(0);
+        uploadCard.setPrefWidth(0);
+        statusCard.setMinWidth(0);
+        statusCard.setPrefWidth(0);
         HBox.setHgrow(uploadCard, Priority.ALWAYS);
         HBox.setHgrow(statusCard, Priority.ALWAYS);
         return row;
@@ -173,7 +173,7 @@ public class MyCvController {
         card.getStyleClass().add("cv-upload-card");
         card.setPadding(new Insets(24));
         card.setPrefHeight(470);
-        card.setMinWidth(420);
+        card.setMinWidth(0);
         card.setMaxWidth(Double.MAX_VALUE);
 
         VBox header = new VBox(4);
@@ -189,14 +189,13 @@ public class MyCvController {
         dropZone.getStyleClass().add("cv-upload-zone");
         dropZone.setMinHeight(340);
         dropZone.setPrefHeight(340);
-        dropZone.setMinWidth(372);
         dropZone.setMaxWidth(Double.MAX_VALUE);
 
         VBox dropContent = new VBox(12);
         dropContent.setAlignment(Pos.CENTER);
-        dropContent.setMaxWidth(360);
+        dropContent.setMaxWidth(300);
 
-        StackPane uploadIcon = iconBubble("↑", "cv-drop-icon", "cv-drop-icon-label");
+        StackPane uploadIcon = iconBubble(IconFactory.IconType.UPLOAD, "cv-drop-icon", Color.web("#354a5f"), 24);
         uploadIcon.setPrefSize(64, 64);
         uploadIcon.setMinSize(64, 64);
         uploadIcon.setMaxSize(64, 64);
@@ -228,12 +227,13 @@ public class MyCvController {
         card.getStyleClass().add("cv-status-card");
         card.setPadding(new Insets(32));
         card.setPrefHeight(414);
+        card.setMinWidth(0);
         card.setMaxWidth(Double.MAX_VALUE);
 
         HBox statusHeader = new HBox(16);
         statusHeader.setAlignment(Pos.CENTER_LEFT);
 
-        StackPane badge = iconBubble("✓", "cv-status-badge", "cv-status-badge-label");
+        StackPane badge = iconBubble(IconFactory.IconType.CHECK_CIRCLE, "cv-status-badge", Color.web("#00c29f"), 22);
         badge.setPrefSize(48, 48);
         badge.setMinSize(48, 48);
         badge.setMaxSize(48, 48);
@@ -254,29 +254,42 @@ public class MyCvController {
         fileRow.setAlignment(Pos.CENTER_LEFT);
         fileRow.setPadding(new Insets(21));
 
-        StackPane fileIcon = iconBubble("PDF", "cv-file-icon", "cv-file-icon-label");
+        StackPane fileIcon = iconBubble(IconFactory.IconType.FILE, "cv-file-icon", Color.web("#ef4444"), 18);
         fileIcon.setPrefSize(40, 40);
         fileIcon.setMinSize(40, 40);
         fileIcon.setMaxSize(40, 40);
 
         VBox fileCopy = new VBox(2);
+        fileCopy.setFillWidth(true);
         fileCopy.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(fileCopy, Priority.ALWAYS);
         Label fileTitle = new Label(buildResumeLabel(profile, resume));
         fileTitle.getStyleClass().add("cv-file-title");
+        fileTitle.setMaxWidth(Double.MAX_VALUE);
+        fileTitle.setTextOverrun(OverrunStyle.ELLIPSIS);
 
         Label fileMeta = new Label(buildResumeMeta(resume, resumeCompletion));
         fileMeta.getStyleClass().add("cv-file-meta");
+        fileMeta.setMaxWidth(Double.MAX_VALUE);
+        fileMeta.setTextOverrun(OverrunStyle.ELLIPSIS);
 
         fileCopy.getChildren().addAll(fileTitle, fileMeta);
-        Button openFile = new Button("👁");
+        Button openFile = new Button();
         openFile.getStyleClass().add("secondary-button");
+        openFile.setGraphic(IconFactory.glyph(IconFactory.IconType.EYE, 16, Color.web("#64748b")));
+        openFile.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        openFile.setMinWidth(40);
+        openFile.setPrefWidth(40);
         openFile.setTooltip(new Tooltip("Open CV file"));
         openFile.setOnAction(event -> openCvFile());
         openFile.setDisable(!hasUploadedCv);
 
-        Button deleteFile = new Button("🗑");
+        Button deleteFile = new Button();
         deleteFile.getStyleClass().add("danger-outline");
+        deleteFile.setGraphic(IconFactory.glyph(IconFactory.IconType.TRASH, 16, Color.web("#ef4444")));
+        deleteFile.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        deleteFile.setMinWidth(40);
+        deleteFile.setPrefWidth(40);
         deleteFile.setTooltip(new Tooltip("Delete CV file"));
         deleteFile.setOnAction(event -> deleteCvFile());
         deleteFile.setDisable(!hasUploadedCv);
@@ -290,8 +303,8 @@ public class MyCvController {
 
         VBox stepList = new VBox(12);
         stepList.getChildren().addAll(
-                stepButton("Browse Available Positions", "↗", () -> browseJobsAction.run()),
-                stepButton("Complete Profile Details", "✎", this::showProfileEditor)
+                stepButton("Browse Available Positions", IconFactory.IconType.SEARCH, () -> browseJobsAction.run()),
+                stepButton("Complete Profile Details", IconFactory.IconType.PENCIL, this::showProfileEditor)
         );
 
         nextSteps.getChildren().addAll(nextStepsTitle, stepList);
@@ -308,7 +321,7 @@ public class MyCvController {
         HBox row = new HBox(16);
         row.setAlignment(Pos.TOP_LEFT);
 
-        StackPane icon = iconBubble("i", "cv-guideline-icon", "cv-guideline-icon-label");
+        StackPane icon = iconBubble(IconFactory.IconType.INFO_CIRCLE, "cv-guideline-icon", Color.web("#354a5f"), 14);
         icon.setPrefSize(24, 24);
         icon.setMinSize(24, 24);
         icon.setMaxSize(24, 24);
@@ -357,7 +370,7 @@ public class MyCvController {
         return cell;
     }
 
-    private Button stepButton(String text, String glyph, Runnable action) {
+    private Button stepButton(String text, IconFactory.IconType iconType, Runnable action) {
         Button button = new Button();
         button.getStyleClass().add("cv-step-button");
         button.setMaxWidth(Double.MAX_VALUE);
@@ -369,7 +382,7 @@ public class MyCvController {
             }
         });
 
-        StackPane icon = iconBubble(glyph, "cv-step-icon", "cv-step-icon-label");
+        StackPane icon = iconBubble(iconType, "cv-step-icon", Color.web("#354a5f"), 12);
         icon.setPrefSize(20, 20);
         icon.setMinSize(20, 20);
         icon.setMaxSize(20, 20);
@@ -380,8 +393,7 @@ public class MyCvController {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Label arrow = new Label(">");
-        arrow.getStyleClass().add("cv-step-arrow");
+        StackPane arrow = IconFactory.glyph(IconFactory.IconType.CHEVRON_RIGHT, 12, Color.web("#cbd5e1"));
 
         HBox row = new HBox(12, icon, label, spacer, arrow);
         row.setAlignment(Pos.CENTER_LEFT);
@@ -391,14 +403,11 @@ public class MyCvController {
         return button;
     }
 
-    private StackPane iconBubble(String glyph, String bubbleStyleClass, String glyphStyleClass) {
+    private StackPane iconBubble(IconFactory.IconType iconType, String bubbleStyleClass, Color iconColor, double iconSize) {
         StackPane bubble = new StackPane();
         bubble.getStyleClass().add(bubbleStyleClass);
 
-        Label label = new Label(glyph);
-        label.getStyleClass().add(glyphStyleClass);
-
-        bubble.getChildren().add(label);
+        bubble.getChildren().add(IconFactory.glyph(iconType, iconSize, iconColor));
         return bubble;
     }
 
@@ -479,13 +488,6 @@ public class MyCvController {
 
     private String safe(String value) {
         return value == null || value.isBlank() ? "-" : value;
-    }
-
-    private String yesNo(Boolean value) {
-        if (value == null) {
-            return "-";
-        }
-        return value ? "Yes" : "No";
     }
 
     private void handleUploadCv() {

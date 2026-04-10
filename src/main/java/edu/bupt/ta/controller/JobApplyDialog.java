@@ -80,7 +80,7 @@ public final class JobApplyDialog {
         grid.getColumnConstraints().addAll(c0, c1);
 
         Label stmtTitle = new Label("Application Statement");
-        stmtTitle.setStyle("-fx-font-size: 12px; -fx-font-weight: 800; -fx-text-fill: #334155;");
+        stmtTitle.setStyle("-fx-font-size: 12px; -fx-font-weight: 900; -fx-text-fill: #334155;");
 
         Label stmtHint = new Label("Please explain your motivation and strengths for this role in English.");
         stmtHint.setWrapText(true);

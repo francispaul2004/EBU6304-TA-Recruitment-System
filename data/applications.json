@@ -98,4 +98,24 @@
   "decisionNote" : "TEST",
   "matchScore" : 74,
   "missingSkills" : [ "JavaScript" ]
+}, {
+  "applicationId" : "APP011",
+  "jobId" : "J110",
+  "applicantId" : "A001",
+  "applyDate" : "2026-04-10T01:11:25.569316",
+  "statement" : "",
+  "status" : "SUBMITTED",
+  "decisionNote" : "",
+  "matchScore" : 50,
+  "missingSkills" : [ "Networking" ]
+}, {
+  "applicationId" : "APP012",
+  "jobId" : "J107",
+  "applicantId" : "A001",
+  "applyDate" : "2026-04-10T02:04:58.922162",
+  "statement" : "",
+  "status" : "SUBMITTED",
+  "decisionNote" : "",
+  "matchScore" : 80,
+  "missingSkills" : [ ]
 } ]

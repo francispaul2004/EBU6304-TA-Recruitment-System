@@ -49,7 +49,7 @@ public class ApplicantReviewController {
         view.getStyleClass().add("app-surface");
 
         Label title = new Label(dto.applicantName());
-        title.setStyle("-fx-font-size: 40px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        title.setStyle("-fx-font-size: 40px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
 
         Label subtitle = new Label("Applicant ID: " + dto.applicantId());
         subtitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #64748b;");
@@ -110,7 +110,7 @@ public class ApplicantReviewController {
     private VBox info(String title, String value) {
         VBox box = new VBox(2);
         Label t = new Label(title);
-        t.setStyle("-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #94a3b8;");
+        t.setStyle("-fx-font-size: 11px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;");
         Label v = new Label(value == null || value.isBlank() ? "-" : value);
         v.setWrapText(true);
         v.setStyle("-fx-font-size: 13px; -fx-text-fill: #334155;");

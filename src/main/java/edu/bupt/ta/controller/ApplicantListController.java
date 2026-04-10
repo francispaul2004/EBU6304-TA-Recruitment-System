@@ -174,10 +174,10 @@ public class ApplicantListController {
         panel.setPrefWidth(340);
         panel.setMinWidth(340);
 
-        detailName.setStyle("-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        detailName.setStyle("-fx-font-size: 18px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
         detailName.setWrapText(true);
 
-        detailMeta.setStyle("-fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: #64748b;");
+        detailMeta.setStyle("-fx-font-size: 13px; -fx-font-weight: 400; -fx-text-fill: #64748b;");
         detailMeta.setWrapText(true);
 
         Label skillKicker = new Label("SKILLS OVERLAP");
@@ -312,7 +312,7 @@ public class ApplicantListController {
     private Button tabButton(String key, String label) {
         Button button = new Button(label);
         if (key.equals(activeTab)) {
-            button.setStyle("-fx-background-color: transparent; -fx-text-fill: #334155; -fx-font-size: 14px; -fx-font-weight: 800; -fx-border-color: transparent transparent #334155 transparent; -fx-border-width: 0 0 2 0; -fx-padding: 4 2 8 2;");
+            button.setStyle("-fx-background-color: transparent; -fx-text-fill: #334155; -fx-font-size: 14px; -fx-font-weight: 900; -fx-border-color: transparent transparent #334155 transparent; -fx-border-width: 0 0 2 0; -fx-padding: 4 2 8 2;");
         } else {
             button.setStyle("-fx-background-color: transparent; -fx-text-fill: #94a3b8; -fx-font-size: 14px; -fx-font-weight: 600; -fx-padding: 4 2 8 2;");
         }
@@ -325,7 +325,7 @@ public class ApplicantListController {
 
     private void updateJobModeTabs(Job job, int applicantCount) {
         Button applicantsTab = new Button("Applicants (" + applicantCount + ")");
-        applicantsTab.setStyle("-fx-background-color: transparent; -fx-text-fill: #334155; -fx-font-size: 14px; -fx-font-weight: 800; -fx-border-color: transparent transparent #334155 transparent; -fx-border-width: 0 0 2 0; -fx-padding: 4 2 8 2;");
+        applicantsTab.setStyle("-fx-background-color: transparent; -fx-text-fill: #334155; -fx-font-size: 14px; -fx-font-weight: 900; -fx-border-color: transparent transparent #334155 transparent; -fx-border-width: 0 0 2 0; -fx-padding: 4 2 8 2;");
         applicantsTab.setDisable(true);
 
         Button detailsTab = new Button("Job Details");
@@ -340,7 +340,7 @@ public class ApplicantListController {
         int target = job == null ? 0 : Math.max(job.getPositions(), 0);
         long accepted = rows.stream().filter(row -> row.status == ApplicationStatus.ACCEPTED).count();
         goalCount.setText(accepted + " / " + target);
-        goalCount.setStyle("-fx-font-size: 16px; -fx-font-weight: 800; -fx-text-fill: #334155;");
+        goalCount.setStyle("-fx-font-size: 16px; -fx-font-weight: 900; -fx-text-fill: #334155;");
 
         goalProgress.getChildren().clear();
         RectangleBar bar = new RectangleBar(170, 6);
@@ -368,14 +368,14 @@ public class ApplicantListController {
         ghost.getStyleClass().add("ghost-empty-shell");
         ghost.setMinSize(170, 170);
         ghost.setPrefSize(170, 170);
-        ghost.getChildren().add(styledLabel("APPS", "-fx-font-size: 34px; -fx-font-weight: 800; -fx-text-fill: #d7e0ea;"));
+        ghost.getChildren().add(styledLabel("APPS", "-fx-font-size: 34px; -fx-font-weight: 900; -fx-text-fill: #d7e0ea;"));
 
         Label title = new Label(titleText);
-        title.setStyle("-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
 
         Label body = new Label(bodyText);
         body.setWrapText(true);
-        body.setStyle("-fx-font-size: 14px; -fx-font-weight: 500; -fx-text-fill: #64748b; -fx-text-alignment: center;");
+        body.setStyle("-fx-font-size: 14px; -fx-font-weight: 400; -fx-text-fill: #64748b; -fx-text-alignment: center;");
 
         VBox internalCard = new VBox(4);
         internalCard.getStyleClass().add("soft-info-card");
@@ -383,10 +383,10 @@ public class ApplicantListController {
         internalCard.setMaxWidth(360);
 
         Label internalTitle = new Label("Add internal candidate");
-        internalTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #334155;");
+        internalTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #334155;");
         Label internalMeta = new Label("Manually upload information for a known student candidate for internal tracking.");
         internalMeta.setWrapText(true);
-        internalMeta.setStyle("-fx-font-size: 12px; -fx-font-weight: 500; -fx-text-fill: #64748b;");
+        internalMeta.setStyle("-fx-font-size: 12px; -fx-font-weight: 400; -fx-text-fill: #64748b;");
         internalCard.getChildren().addAll(internalTitle, internalMeta);
 
         emptyState.getChildren().addAll(ghost, title, body, internalCard);
@@ -451,11 +451,11 @@ public class ApplicantListController {
 
         Label title = new Label(titleText);
         title.setWrapText(true);
-        title.setStyle("-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #334155;");
+        title.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #334155;");
 
         Label body = new Label(bodyText);
         body.setWrapText(true);
-        body.setStyle("-fx-font-size: 12px; -fx-font-weight: 500; -fx-text-fill: #64748b;");
+        body.setStyle("-fx-font-size: 12px; -fx-font-weight: 400; -fx-text-fill: #64748b;");
 
         card.getChildren().addAll(title, body);
         return card;
@@ -543,7 +543,7 @@ public class ApplicantListController {
             top.setAlignment(Pos.CENTER_LEFT);
 
             Label name = new Label(item.applicantName);
-            name.setStyle("-fx-font-size: 16px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+            name.setStyle("-fx-font-size: 16px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
 
             Region spacer = new Region();
             HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -556,11 +556,11 @@ public class ApplicantListController {
             Label meta = new Label(item.programme + (item.year > 0 ? ", Year " + item.year : "")
                     + "   •   Score " + item.matchScore + "%");
             meta.setWrapText(true);
-            meta.setStyle("-fx-font-size: 12px; -fx-font-weight: 500; -fx-text-fill: #64748b;");
+            meta.setStyle("-fx-font-size: 12px; -fx-font-weight: 400; -fx-text-fill: #64748b;");
 
             Label job = new Label(item.jobTitle + "  |  " + item.applicationId);
             job.setWrapText(true);
-            job.setStyle("-fx-font-size: 12px; -fx-font-weight: 500; -fx-text-fill: #94a3b8;");
+            job.setStyle("-fx-font-size: 12px; -fx-font-weight: 400; -fx-text-fill: #94a3b8;");
 
             card.getChildren().addAll(top, meta, job);
             setGraphic(card);
@@ -595,10 +595,10 @@ public class ApplicantListController {
 
         String statusStyle() {
             return switch (status) {
-                case ACCEPTED -> "-fx-background-color: #ecfdf3; -fx-text-fill: #10b981; -fx-font-size: 10px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
-                case REJECTED -> "-fx-background-color: #fff1f2; -fx-text-fill: #ef4444; -fx-font-size: 10px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
-                case UNDER_REVIEW, SUBMITTED -> "-fx-background-color: #eff6ff; -fx-text-fill: #2563eb; -fx-font-size: 10px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
-                case CANCELLED -> "-fx-background-color: #f1f5f9; -fx-text-fill: #64748b; -fx-font-size: 10px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
+                case ACCEPTED -> "-fx-background-color: #ecfdf3; -fx-text-fill: #10b981; -fx-font-size: 10px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
+                case REJECTED -> "-fx-background-color: #fff1f2; -fx-text-fill: #ef4444; -fx-font-size: 10px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
+                case UNDER_REVIEW, SUBMITTED -> "-fx-background-color: #eff6ff; -fx-text-fill: #2563eb; -fx-font-size: 10px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
+                case CANCELLED -> "-fx-background-color: #f1f5f9; -fx-text-fill: #64748b; -fx-font-size: 10px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
             };
         }
     }

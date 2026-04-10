@@ -106,7 +106,7 @@ public class JobEditorController {
         header.setStyle("-fx-background-color: white; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 1 0;");
 
         Label title = new Label(source == null ? "Create Job Post" : "Edit Job Post");
-        title.setStyle("-fx-font-size: 26px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        title.setStyle("-fx-font-size: 26px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -168,10 +168,10 @@ public class JobEditorController {
         skillsGrid.add(areaField("Preferred Skills (comma separated)", fields.preferredSkills, 2), 1, 0);
 
         Label essentialTitle = new Label("Essential Technical Skills");
-        essentialTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 800; -fx-text-fill: #334155;");
+        essentialTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 900; -fx-text-fill: #334155;");
 
         Label gradeTitle = new Label("Minimum Academic Grade");
-        gradeTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 800; -fx-text-fill: #334155;");
+        gradeTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 900; -fx-text-fill: #334155;");
 
         HBox gradeRow = new HBox(18, fields.gradeA, fields.gradeB);
         gradeRow.setAlignment(Pos.CENTER_LEFT);
@@ -200,18 +200,18 @@ public class JobEditorController {
         preview.setStyle("-fx-background-color: #ffffff; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 0 1;");
 
         Label heading = new Label("Live Preview Summary");
-        heading.setStyle("-fx-font-size: 16px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        heading.setStyle("-fx-font-size: 16px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
 
         VBox card = new VBox(4);
         card.setPadding(new Insets(16));
         card.setStyle("-fx-background-color: linear-gradient(to bottom right, #354a5f, #243447); -fx-background-radius: 14;");
 
         Label cardCaption = new Label("JOB CARD PREVIEW");
-        cardCaption.setStyle("-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #cbd5e1;");
+        cardCaption.setStyle("-fx-font-size: 10px; -fx-font-weight: 600; -fx-text-fill: #cbd5e1;");
 
         Label cardTitle = new Label();
         cardTitle.setWrapText(true);
-        cardTitle.setStyle("-fx-font-size: 15px; -fx-font-weight: 700; -fx-text-fill: white;");
+        cardTitle.setStyle("-fx-font-size: 15px; -fx-font-weight: 600; -fx-text-fill: white;");
 
         Label cardMeta = new Label();
         cardMeta.setWrapText(true);
@@ -221,7 +221,7 @@ public class JobEditorController {
 
         VBox metrics = new VBox(8);
         Label metricTitle = new Label("KEY METRICS");
-        metricTitle.setStyle("-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #94a3b8;");
+        metricTitle.setStyle("-fx-font-size: 10px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;");
 
         Label semester = metricLine("Semester", "-");
         Label positions = metricLine("Positions", "-");
@@ -235,7 +235,7 @@ public class JobEditorController {
         requirementCard.setStyle("-fx-background-color: white; -fx-border-color: #e2e8f0; -fx-border-radius: 12; -fx-background-radius: 12;");
 
         Label requirementTitle = new Label("REQUIREMENTS CHECK");
-        requirementTitle.setStyle("-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #354a5f;");
+        requirementTitle.setStyle("-fx-font-size: 10px; -fx-font-weight: 600; -fx-text-fill: #354a5f;");
 
         Label requiredLine = new Label();
         requiredLine.setWrapText(true);
@@ -256,10 +256,10 @@ public class JobEditorController {
         editorCard.getStyleClass().add("soft-info-card");
 
         Label editorTitle = new Label("Admin (Last Editor)");
-        editorTitle.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: #334155;");
+        editorTitle.setStyle("-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #334155;");
 
         Label editorTime = new Label("Updated just now");
-        editorTime.setStyle("-fx-font-size: 12px; -fx-font-weight: 500; -fx-text-fill: #94a3b8;");
+        editorTime.setStyle("-fx-font-size: 12px; -fx-font-weight: 400; -fx-text-fill: #94a3b8;");
 
         editorCard.getChildren().addAll(editorTitle, editorTime);
 
@@ -278,7 +278,7 @@ public class JobEditorController {
         box.setPadding(new Insets(0, 0, 4, 0));
         box.setStyle("-fx-border-color: #f1f5f9; -fx-border-width: 0 0 1 0;");
         Label title = new Label(titleText);
-        title.setStyle("-fx-font-size: 18px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
         box.getChildren().add(title);
         return box;
     }
@@ -356,7 +356,7 @@ public class JobEditorController {
 
     private void styleGradeRadio(RadioButton radio, boolean selected) {
         radio.setStyle(selected
-                ? "-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #334155;"
+                ? "-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #334155;"
                 : "-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #64748b;");
     }
 
