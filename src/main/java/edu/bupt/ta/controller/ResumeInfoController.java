@@ -101,7 +101,7 @@ public class ResumeInfoController {
         hintCard.setPadding(new Insets(12));
 
         Label hintTitle = new Label("Matching Quality Hint");
-        hintTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #0f766e;");
+        hintTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #0f766e;");
 
         Label hintText = new Label("Include required skills and availability windows to improve explainable match score.");
         hintText.setWrapText(true);

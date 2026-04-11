@@ -78,7 +78,7 @@ public class ApplicantProfileController {
         formCard.setFillWidth(true);
 
         Label formTitle = new Label("Personal Information");
-        formTitle.setStyle("-fx-font-size: 20px; -fx-font-weight: 700; -fx-text-fill: #0f172a;");
+        formTitle.setStyle("-fx-font-size: 20px; -fx-font-weight: 600; -fx-text-fill: #0f172a;");
 
         GridPane form = new GridPane();
         form.setHgap(16);
@@ -98,7 +98,7 @@ public class ApplicantProfileController {
         tipCard.setPadding(new Insets(12));
 
         Label tipTitle = new Label("Pro Tip");
-        tipTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #b45309;");
+        tipTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #b45309;");
 
         Label tipBody = new Label("Complete profile and resume to unlock all apply actions in the job browser.");
         tipBody.setWrapText(true);

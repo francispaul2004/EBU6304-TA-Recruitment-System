@@ -8,6 +8,7 @@ import edu.bupt.ta.model.Workload;
 import edu.bupt.ta.repository.ApplicationRepository;
 import edu.bupt.ta.repository.JobRepository;
 import edu.bupt.ta.repository.WorkloadRepository;
+import edu.bupt.ta.util.DisplayPlaceholders;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -62,7 +63,7 @@ public class ExportService {
                             jobRepository.findById(application.getJobId()).map(job -> job.getTitle()).orElse(""),
                             application.getApplicantId(),
                             String.valueOf(application.getStatus()),
-                            String.valueOf(application.getMatchScore())
+                            DisplayPlaceholders.MATCH_VALUE
                     });
                 }
             }

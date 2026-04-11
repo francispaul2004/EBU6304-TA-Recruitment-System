@@ -1,72 +1,73 @@
 package edu.bupt.ta.controller;
 
+import edu.bupt.ta.enums.ApplicationStatus;
 import edu.bupt.ta.enums.JobStatus;
+import edu.bupt.ta.model.Application;
 import edu.bupt.ta.model.Job;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
 import edu.bupt.ta.util.ValidationResult;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 public class JobManagementController {
-
-    private static final DateTimeFormatter DETAIL_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-    private static final String DETAIL_VALUE_STYLE = "-fx-font-size: 13px; -fx-text-fill: #334155;";
-    private static final String STATUS_OPEN_STYLE = "-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #047857; -fx-background-color: #dcfce7; -fx-background-radius: 999; -fx-padding: 3 8 3 8;";
-    private static final String STATUS_CLOSED_STYLE = "-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #475569; -fx-background-color: #e2e8f0; -fx-background-radius: 999; -fx-padding: 3 8 3 8;";
-    private static final String STATUS_EXPIRED_STYLE = "-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #b45309; -fx-background-color: #fef3c7; -fx-background-radius: 999; -fx-padding: 3 8 3 8;";
-    private static final String STATUS_DRAFT_STYLE = "-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #1d4ed8; -fx-background-color: #dbeafe; -fx-background-radius: 999; -fx-padding: 3 8 3 8;";
+    private static final Duration AUTO_REFRESH_INTERVAL = Duration.seconds(5);
+    private static final DateTimeFormatter DETAIL_TIME_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy • HH:mm", Locale.ENGLISH);
 
     private final ServiceRegistry services;
     private final User user;
     private final Consumer<Job> onViewApplicants;
-    private final BorderPane view = new BorderPane();
-    private final VBox page = new VBox(16);
-    private final TableView<Job> table = new TableView<>();
-    private final VBox emptyState = new VBox(10);
-    private final Button editButton = new Button("Edit");
-    private final Button closeButton = new Button("Close Job");
-    private final Button viewApplicantsButton = new Button("View All Applicants");
-    private final Button editJobDetailsButton = new Button("Edit Job Details");
+
+    private final VBox view = new VBox(18);
+    private final TableView<JobTableRow> table = new TableView<>();
+    private final Timeline autoRefreshTimeline = new Timeline();
+
     private HBox kpiRow;
     private JobStatus currentFilterStatus;
+    private VBox listPanel;
+    private VBox emptyState;
 
-    private final Label detailTitle = new Label("No Job Selected");
-    private final Label detailSubtitle = new Label("-");
-    private final Label detailJobId = new Label("-");
-    private final Label detailModuleCode = new Label("-");
-    private final Label detailModuleName = new Label("-");
-    private final Label detailSemester = new Label("-");
-    private final Label detailType = new Label("-");
-    private final Label detailStatus = new Label("-");
-    private final Label detailWeeklyHours = new Label("-");
-    private final Label detailPositions = new Label("-");
-    private final Label detailApplicants = new Label("-");
-    private final Label detailDeadline = new Label("-");
-    private final Label detailCreated = new Label("-");
-    private final Label detailOrganiserId = new Label("-");
-    private final Label detailRequiredSkills = new Label("-");
-    private final Label detailPreferredSkills = new Label("-");
-    private final Label detailDescription = new Label("-");
+    private final Label detailTitle = new Label("Select a job");
+    private final Label detailSubtitle = new Label("Choose a row to view job details and applicant activity.");
+    private final HBox detailBadges = new HBox(8);
+    private final Label moduleTitle = new Label("-");
+    private final Label moduleMeta = new Label("-");
+    private final Label moduleBody = new Label("-");
+    private final Label appliedCount = new Label("0");
+    private final Label reviewCount = new Label("0");
+    private final Label hiredCount = new Label("0");
+    private final HBox avatarRow = new HBox(6);
+    private final VBox activityLog = new VBox(10);
+    private final Button viewApplicantsButton = new Button("View All Applicants");
+    private final Button editButton = new Button("Edit Job Details");
+    private final Button closeButton = new Button("Close Job");
 
     public JobManagementController(ServiceRegistry services, User user, Consumer<Job> onViewApplicants) {
         this.services = services;
@@ -82,15 +83,31 @@ public class JobManagementController {
 
     private void initialize() {
         view.getStyleClass().add("app-surface");
+        view.setPadding(new Insets(24));
 
-        page.setPadding(new Insets(24));
+        kpiRow = buildKpiRow(List.of());
+        listPanel = buildListPanel();
+        VBox detailPanel = buildDetailPanel();
 
-        kpiRow = buildKpiRow();
-        page.getChildren().add(buildHeader());
-        page.getChildren().add(kpiRow);
-        page.getChildren().add(buildMainArea());
+        HBox body = new HBox(18, listPanel, detailPanel);
+        HBox.setHgrow(listPanel, Priority.ALWAYS);
 
-        view.setCenter(page);
+        view.getChildren().addAll(buildHeader(), kpiRow, body);
+        configureAutoRefresh();
+    }
+
+    private void configureAutoRefresh() {
+        autoRefreshTimeline.getKeyFrames().setAll(new KeyFrame(AUTO_REFRESH_INTERVAL, event -> refresh()));
+        autoRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
+        autoRefreshTimeline.play();
+
+        view.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene == null) {
+                autoRefreshTimeline.stop();
+            } else {
+                autoRefreshTimeline.play();
+            }
+        });
     }
 
     private HBox buildHeader() {
@@ -108,176 +125,426 @@ public class JobManagementController {
         create.getStyleClass().add("primary-button");
         create.setOnAction(event -> onCreate());
 
-        HBox row = new HBox(10, title, spacer, filter, create);
+        HBox row = new HBox(12, title, spacer, filter, create);
+        row.setAlignment(Pos.CENTER_LEFT);
         return row;
     }
 
-    private HBox buildKpiRow() {
-        List<Job> jobs = services.jobService().getJobsByOrganiser(user.getUserId());
-        long open = jobs.stream().filter(job -> job.getStatus() == JobStatus.OPEN).count();
-        long closedOrExpired = jobs.stream()
-                .filter(job -> job.getStatus() == JobStatus.CLOSED || job.getStatus() == JobStatus.EXPIRED)
+    private HBox buildKpiRow(List<Job> jobs) {
+        int totalOpenings = jobs.stream().mapToInt(Job::getPositions).sum();
+        int totalApplicants = jobs.stream()
+                .mapToInt(job -> services.applicationService().getApplicationsByJob(job.getJobId()).size())
+                .sum();
+        long reviewedApplicants = jobs.stream()
+                .flatMap(job -> services.applicationService().getApplicationsByJob(job.getJobId()).stream())
+                .filter(app -> app.getStatus() == ApplicationStatus.UNDER_REVIEW || app.getStatus() == ApplicationStatus.ACCEPTED)
                 .count();
-        long draft = jobs.stream().filter(job -> job.getStatus() == JobStatus.DRAFT).count();
+        int reviewRate = totalApplicants == 0 ? 0 : (int) Math.round(reviewedApplicants * 100.0 / totalApplicants);
 
         HBox row = new HBox(16,
-                kpiCard("Total Jobs", String.valueOf(jobs.size())),
-                kpiCard("Active Jobs", String.valueOf(open)),
-                kpiCard("Closed / Expired", String.valueOf(closedOrExpired)),
-                kpiCard("Draft", String.valueOf(draft))
+                kpiCard("Total Openings", String.valueOf(totalOpenings), jobs.isEmpty() ? "No active postings yet" : jobs.size() + " job posts"),
+                kpiCard("Total Applicants", String.valueOf(totalApplicants), "Across all managed jobs"),
+                kpiCard("Interview Rate", reviewRate + "%", totalApplicants == 0 ? "Waiting for applications" : "Pipeline coverage")
         );
         return row;
     }
 
-    private VBox kpiCard(String title, String value) {
-        VBox card = new VBox(4);
+    private VBox kpiCard(String titleText, String valueText, String metaText) {
+        VBox card = new VBox(6);
         card.getStyleClass().add("panel-card");
-        card.setPadding(new Insets(14));
-        card.setMinWidth(230);
-
-        Label titleNode = new Label(title);
-        titleNode.setStyle("-fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: #64748b;");
-
-        Label valueNode = new Label(value);
-        valueNode.setStyle("-fx-font-size: 40px; -fx-font-weight: 800; -fx-text-fill: #1e293b;");
-
-        card.getChildren().addAll(titleNode, valueNode);
+        card.setPadding(new Insets(16));
+        card.setMinWidth(180);
         HBox.setHgrow(card, Priority.ALWAYS);
+
+        Label title = new Label(titleText);
+        title.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;");
+
+        HBox valueRow = new HBox(8);
+        valueRow.setAlignment(Pos.BASELINE_LEFT);
+
+        Label value = new Label(valueText);
+        value.setStyle("-fx-font-size: 32px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
+
+        Label meta = new Label(metaText);
+        meta.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #10b981;");
+
+        valueRow.getChildren().addAll(value, meta);
+        card.getChildren().addAll(title, valueRow);
         return card;
     }
 
-    private HBox buildMainArea() {
-        VBox listPanel = new VBox(12);
-        listPanel.getStyleClass().add("panel-card");
-        listPanel.setPadding(new Insets(14));
+    private VBox buildListPanel() {
+        VBox panel = new VBox(10);
+        panel.getStyleClass().add("panel-card");
+        panel.setPadding(new Insets(12));
+        HBox.setHgrow(panel, Priority.ALWAYS);
 
-        HBox actions = new HBox(8);
-        editButton.getStyleClass().add("secondary-button");
-        editButton.setOnAction(event -> onEdit());
+        TableColumn<JobTableRow, JobTableRow> titleCol = new TableColumn<>("JOB TITLE & ID");
+        titleCol.setCellValueFactory(cell -> new SimpleObjectProperty<>(cell.getValue()));
+        titleCol.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(JobTableRow item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                    setText(null);
+                    return;
+                }
 
-        closeButton.getStyleClass().add("secondary-button");
-        closeButton.setOnAction(event -> onClose());
+                Label title = new Label(item.job().getTitle());
+                title.setWrapText(true);
+                title.setStyle("-fx-font-size: 15px; -fx-font-weight: 600; -fx-text-fill: #1f2937;");
 
-        Button reload = new Button("Refresh");
-        reload.getStyleClass().add("secondary-button");
-        reload.setOnAction(event -> refresh());
+                Label id = new Label("ID: " + fallback(item.job().getJobId(), "-"));
+                id.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;");
+                id.setWrapText(true);
 
-        actions.getChildren().addAll(editButton, closeButton, reload);
-
-        TableColumn<Job, String> titleCol = new TableColumn<>("JOB TITLE");
-        titleCol.setCellValueFactory(new PropertyValueFactory<>("title"));
-
-        TableColumn<Job, String> idCol = new TableColumn<>("JOB ID");
-        idCol.setCellValueFactory(new PropertyValueFactory<>("jobId"));
-
-        TableColumn<Job, String> moduleCol = new TableColumn<>("MODULE");
-        moduleCol.setCellValueFactory(new PropertyValueFactory<>("moduleCode"));
-
-        TableColumn<Job, String> semesterCol = new TableColumn<>("SEMESTER");
-        semesterCol.setCellValueFactory(new PropertyValueFactory<>("semester"));
-
-        TableColumn<Job, Integer> positionsCol = new TableColumn<>("POSITIONS");
-        positionsCol.setCellValueFactory(new PropertyValueFactory<>("positions"));
-
-        TableColumn<Job, String> statusCol = new TableColumn<>("STATUS");
-        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
-
-        TableColumn<Job, String> createdCol = new TableColumn<>("CREATED");
-        createdCol.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
-
-        table.getColumns().setAll(titleCol, idCol, moduleCol, semesterCol, positionsCol, statusCol, createdCol);
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        table.setPrefHeight(620);
-        table.getSelectionModel().selectedItemProperty().addListener((obs, oldJob, newJob) -> {
-            updateActionButtons(newJob);
-            updateDetail(newJob);
+                VBox box = new VBox(3, title, id);
+                box.setFillWidth(true);
+                title.maxWidthProperty().bind(column.widthProperty().subtract(28));
+                id.maxWidthProperty().bind(column.widthProperty().subtract(28));
+                setGraphic(box);
+                setText(null);
+            }
         });
 
-        emptyState.setPadding(new Insets(40, 20, 40, 20));
-        emptyState.setStyle("-fx-alignment: center;");
-        Label emptyTitle = new Label("No jobs yet");
-        emptyTitle.setStyle("-fx-font-size: 20px; -fx-font-weight: 700; -fx-text-fill: #1e293b;");
-        Label emptyHint = new Label("Create your first job post to start managing applications.");
-        emptyHint.setStyle("-fx-font-size: 13px; -fx-text-fill: #64748b;");
-        Button emptyCreate = new Button("+ Create New Job");
-        emptyCreate.getStyleClass().add("primary-button");
-        emptyCreate.setOnAction(event -> onCreate());
-        emptyState.getChildren().addAll(emptyTitle, emptyHint, emptyCreate);
-        emptyState.setVisible(false);
-        emptyState.setManaged(false);
+        TableColumn<JobTableRow, String> applicantsCol = new TableColumn<>("APPLICANTS");
+        applicantsCol.setCellValueFactory(cell ->
+                new SimpleStringProperty(cell.getValue().appliedApplicantCount() + "/" + cell.getValue().targetApplicantCount()));
+        applicantsCol.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                    setText(null);
+                    return;
+                }
+                Label badge = new Label(item);
+                badge.setStyle("-fx-background-color: #f1f5f9; -fx-text-fill: #475569; -fx-font-size: 12px; -fx-font-weight: 600; -fx-background-radius: 999; -fx-padding: 5 11 5 11;");
+                setGraphic(badge);
+                setText(null);
+            }
+        });
 
-        listPanel.getChildren().addAll(actions, table, emptyState);
+        TableColumn<JobTableRow, String> statusCol = new TableColumn<>("STATUS");
+        statusCol.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().job().getStatus().name()));
+        statusCol.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                    setText(null);
+                    return;
+                }
+                Label chip = buildStatusChip(JobStatus.valueOf(item));
+                setGraphic(chip);
+                setText(null);
+            }
+        });
 
-        VBox detailContent = new VBox(12);
-        detailContent.setPadding(new Insets(16));
+        table.getColumns().setAll(titleCol, applicantsCol, statusCol);
+        table.getStyleClass().add("job-table-spaced");
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setFixedCellSize(92);
+        table.setPrefHeight(640);
+        table.getSelectionModel().selectedItemProperty().addListener((obs, oldRow, newRow) -> {
+            Job job = newRow == null ? null : newRow.job();
+            updateDetail(job);
+            updateActionButtons(job);
+        });
 
-        detailTitle.setStyle("-fx-font-size: 34px; -fx-font-weight: 800; -fx-text-fill: #1e293b;");
+        titleCol.setMinWidth(420);
+        titleCol.setPrefWidth(560);
+        applicantsCol.setMinWidth(90);
+        applicantsCol.setPrefWidth(100);
+        applicantsCol.setMaxWidth(120);
+        statusCol.setMinWidth(100);
+        statusCol.setPrefWidth(110);
+        statusCol.setMaxWidth(130);
+
+        emptyState = buildEmptyState();
+
+        panel.getChildren().addAll(table, emptyState);
+        return panel;
+    }
+
+    private VBox buildEmptyState() {
+        VBox box = new VBox(10);
+        box.setPadding(new Insets(48, 20, 48, 20));
+        box.setAlignment(Pos.CENTER);
+        box.setVisible(false);
+        box.setManaged(false);
+
+        StackPane ghost = new StackPane();
+        ghost.getStyleClass().add("ghost-empty-shell");
+        ghost.setMinSize(120, 120);
+        ghost.setPrefSize(120, 120);
+        ghost.setMaxSize(120, 120);
+        ghost.getChildren().add(styledLabel("JOBS", "-fx-font-size: 24px; -fx-font-weight: 900; -fx-text-fill: #d4dde8;"));
+
+        Label title = new Label("No job posts yet");
+        title.setStyle("-fx-font-size: 24px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
+
+        Label subtitle = new Label("Create your first job post to start collecting applications.");
+        subtitle.setWrapText(true);
+        subtitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 400; -fx-text-fill: #64748b;");
+
+        Button create = new Button("+ Create New Job");
+        create.getStyleClass().add("primary-button");
+        create.setOnAction(event -> onCreate());
+
+        box.getChildren().addAll(ghost, title, subtitle, create);
+        return box;
+    }
+
+    private VBox buildDetailPanel() {
+        VBox shell = new VBox(16);
+        shell.getStyleClass().add("panel-card");
+        shell.setPadding(new Insets(20));
+        shell.setPrefWidth(420);
+        shell.setMinWidth(420);
+
+        Label kicker = new Label("JOB DETAILS");
+        kicker.getStyleClass().add("tiny-kicker");
+
+        detailTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
         detailTitle.setWrapText(true);
-        detailSubtitle.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #64748b;");
+
+        detailSubtitle.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;");
         detailSubtitle.setWrapText(true);
+
+        detailBadges.setAlignment(Pos.CENTER_LEFT);
+        VBox hero = new VBox(12, kicker, detailTitle, detailBadges, detailSubtitle);
+
+        VBox moduleCard = new VBox(8);
+        moduleCard.getStyleClass().add("soft-info-card");
+        moduleCard.setPadding(new Insets(16));
+
+        Label moduleKicker = new Label("ASSOCIATED MODULE");
+        moduleKicker.getStyleClass().add("tiny-kicker");
+
+        moduleTitle.setStyle("-fx-font-size: 15px; -fx-font-weight: 600; -fx-text-fill: #334155;");
+        moduleTitle.setWrapText(true);
+
+        moduleMeta.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;");
+        moduleBody.setWrapText(true);
+        moduleBody.setStyle("-fx-font-size: 12px; -fx-font-weight: 400; -fx-text-fill: #64748b;");
+
+        moduleCard.getChildren().addAll(moduleKicker, moduleTitle, moduleMeta, moduleBody);
+
+        VBox applicantCard = new VBox(12);
+        applicantCard.getStyleClass().add("soft-info-card");
+        applicantCard.setPadding(new Insets(16));
+
+        Label applicantKicker = new Label("APPLICANT STATUS");
+        applicantKicker.getStyleClass().add("tiny-kicker");
+
+        applicantCard.getChildren().addAll(
+                applicantKicker,
+                statLine("Applied", appliedCount, "#2563eb"),
+                statLine("Under Review", reviewCount, "#8b5cf6"),
+                statLine("Hired", hiredCount, "#10b981"),
+                avatarRow
+        );
+
+        Label activityKicker = new Label("ACTIVITY LOG");
+        activityKicker.getStyleClass().add("tiny-kicker");
+
+        activityLog.setPadding(new Insets(2, 0, 0, 0));
+        VBox activityCard = new VBox(12, activityKicker, activityLog);
+        activityCard.getStyleClass().add("soft-info-card");
+        activityCard.setPadding(new Insets(16));
 
         viewApplicantsButton.getStyleClass().add("primary-button");
         viewApplicantsButton.setMaxWidth(Double.MAX_VALUE);
         viewApplicantsButton.setOnAction(event -> onViewApplicants());
 
-        editJobDetailsButton.getStyleClass().add("secondary-button");
-        editJobDetailsButton.setMaxWidth(Double.MAX_VALUE);
-        editJobDetailsButton.setOnAction(event -> onEdit());
+        editButton.getStyleClass().add("secondary-button");
+        editButton.setMaxWidth(Double.MAX_VALUE);
+        editButton.setOnAction(event -> onEdit());
 
-        detailContent.getChildren().addAll(
-                detailTitle,
-                detailSubtitle,
-                detailGroupTitle("Basic"),
-                detailField("Job ID", detailJobId),
-                detailField("Module Code", detailModuleCode),
-                detailField("Module Name", detailModuleName),
-                detailField("Semester", detailSemester),
-                detailField("Job Type", detailType),
-                detailField("Status", detailStatus),
-                detailGroupTitle("Recruitment"),
-                detailField("Weekly Hours", detailWeeklyHours),
-                detailField("Positions", detailPositions),
-                detailField("Applicants", detailApplicants),
-                detailField("Deadline", detailDeadline),
-                detailField("Created", detailCreated),
-                detailField("Organiser ID", detailOrganiserId),
-                detailGroupTitle("Requirements"),
-                detailField("Required Skills", detailRequiredSkills),
-                detailField("Preferred Skills", detailPreferredSkills),
-                detailField("Description", detailDescription)
+        closeButton.getStyleClass().add("secondary-button");
+        closeButton.setMaxWidth(Double.MAX_VALUE);
+        closeButton.setOnAction(event -> onClose());
+
+        VBox detailContent = new VBox(22, hero, moduleCard, applicantCard, activityCard);
+        ScrollPane scrollPane = new ScrollPane(detailContent);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.getStyleClass().add("detail-scroll-plain");
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+
+        shell.getChildren().addAll(scrollPane, viewApplicantsButton, editButton, closeButton);
+        return shell;
+    }
+
+    private HBox statLine(String labelText, Label valueLabel, String accent) {
+        Label label = new Label(labelText);
+        label.setStyle("-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #475569;");
+
+        valueLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: 900; -fx-text-fill: " + accent + ";");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        return new HBox(10, label, spacer, valueLabel);
+    }
+
+    private void refresh() {
+        Job selected = table.getSelectionModel().getSelectedItem() == null ? null : table.getSelectionModel().getSelectedItem().job();
+        String selectedJobId = selected == null ? null : selected.getJobId();
+
+        List<Job> jobs = services.jobService().getJobsByOrganiser(user.getUserId());
+        if (currentFilterStatus != null) {
+            jobs = jobs.stream().filter(job -> job.getStatus() == currentFilterStatus).toList();
+        }
+        jobs = jobs.stream()
+                .sorted(Comparator.comparing(Job::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
+
+        view.getChildren().set(1, buildKpiRow(jobs));
+
+        List<JobTableRow> rows = jobs.stream()
+                .map(job -> {
+                    int appliedApplicantCount = (int) services.applicationService().getApplicationsByJob(job.getJobId()).stream()
+                            .filter(app -> app.getStatus() != ApplicationStatus.CANCELLED)
+                            .count();
+                    int targetApplicantCount = Math.max(job.getPositions(), 0);
+                    return new JobTableRow(job, appliedApplicantCount, targetApplicantCount);
+                })
+                .toList();
+        table.setItems(FXCollections.observableArrayList(rows));
+
+        if (rows.isEmpty()) {
+            table.setVisible(false);
+            table.setManaged(false);
+            emptyState.setVisible(true);
+            emptyState.setManaged(true);
+            updateDetail(null);
+            updateActionButtons(null);
+            return;
+        }
+
+        table.setVisible(true);
+        table.setManaged(true);
+        emptyState.setVisible(false);
+        emptyState.setManaged(false);
+
+        if (selectedJobId != null) {
+            rows.stream()
+                    .filter(row -> selectedJobId.equals(row.job().getJobId()))
+                    .findFirst()
+                    .ifPresentOrElse(row -> table.getSelectionModel().select(row), () -> table.getSelectionModel().selectFirst());
+        } else {
+            table.getSelectionModel().selectFirst();
+        }
+    }
+
+    private void updateActionButtons(Job selectedJob) {
+        boolean hasSelection = selectedJob != null;
+        viewApplicantsButton.setDisable(!hasSelection);
+        editButton.setDisable(!hasSelection);
+        closeButton.setDisable(!hasSelection || selectedJob.getStatus() != JobStatus.OPEN);
+        closeButton.setManaged(hasSelection && selectedJob.getStatus() == JobStatus.OPEN);
+        closeButton.setVisible(hasSelection && selectedJob.getStatus() == JobStatus.OPEN);
+    }
+
+    private void updateDetail(Job job) {
+        detailBadges.getChildren().clear();
+        avatarRow.getChildren().clear();
+        activityLog.getChildren().clear();
+
+        if (job == null) {
+            detailTitle.setText("Select a job");
+            detailSubtitle.setText("Choose a row to view job details and applicant activity.");
+            moduleTitle.setText("-");
+            moduleMeta.setText("-");
+            moduleBody.setText("-");
+            appliedCount.setText("0");
+            reviewCount.setText("0");
+            hiredCount.setText("0");
+            activityLog.getChildren().add(activityLine("No activity yet", "Select one job to inspect its timeline."));
+            return;
+        }
+
+        List<Application> applications = services.applicationService().getApplicationsByJob(job.getJobId());
+        long applied = applications.stream()
+                .filter(app -> app.getStatus() == ApplicationStatus.SUBMITTED || app.getStatus() == ApplicationStatus.UNDER_REVIEW)
+                .count();
+        long underReview = applications.stream().filter(app -> app.getStatus() == ApplicationStatus.UNDER_REVIEW).count();
+        long hired = applications.stream().filter(app -> app.getStatus() == ApplicationStatus.ACCEPTED).count();
+
+        detailTitle.setText(fallback(job.getTitle(), "Untitled Job"));
+        detailSubtitle.setText("Recruitment Period: " + formatTimeline(job));
+        detailBadges.getChildren().addAll(
+                buildMiniChip(fallback(job.getModuleCode(), "MODULE"), "#eff6ff", "#2563eb"),
+                buildStatusChip(job.getStatus())
         );
+        moduleTitle.setText(fallback(job.getModuleName(), "Associated module not set"));
+        moduleMeta.setText(fallback(job.getModuleCode(), "-") + " • " + fallback(job.getSemester(), "-"));
+        moduleBody.setText(descriptionSnippet(job.getDescription()));
 
-        ScrollPane detailScroll = new ScrollPane(detailContent);
-        detailScroll.setFitToWidth(true);
-        detailScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        detailScroll.setPrefWidth(340);
-        detailScroll.getStyleClass().add("detail-scroll");
-        VBox.setVgrow(detailScroll, Priority.ALWAYS);
+        appliedCount.setText(String.valueOf(applied));
+        reviewCount.setText(String.valueOf(underReview));
+        hiredCount.setText(String.valueOf(hired));
 
-        VBox detailPanel = new VBox(12, detailScroll, viewApplicantsButton, editJobDetailsButton);
-        detailPanel.getStyleClass().add("panel-card");
-        detailPanel.setPadding(new Insets(16));
-        detailPanel.setPrefWidth(340);
+        applications.stream().limit(4).forEach(app -> avatarRow.getChildren().add(applicantAvatar(app)));
+        if (avatarRow.getChildren().isEmpty()) {
+            avatarRow.getChildren().add(styledLabel("No applicants yet", "-fx-font-size: 12px; -fx-font-weight: 400; -fx-text-fill: #94a3b8;"));
+        }
 
-        HBox body = new HBox(16, listPanel, detailPanel);
-        HBox.setHgrow(listPanel, Priority.ALWAYS);
-        return body;
+        activityLog.getChildren().addAll(
+                activityLine("Job created", formatTimestamp(job.getCreatedAt())),
+                activityLine("Deadline", formatTimestamp(job.getDeadline()))
+        );
     }
 
-    private VBox detailField(String title, Label value) {
-        VBox box = new VBox(4);
-        Label t = new Label(title);
-        t.setStyle("-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #94a3b8;");
-        value.setStyle(DETAIL_VALUE_STYLE);
-        value.setWrapText(true);
-        box.getChildren().addAll(t, value);
-        return box;
+    private Label buildStatusChip(JobStatus status) {
+        if (status == null) {
+            return buildMiniChip("UNKNOWN", "#f1f5f9", "#64748b");
+        }
+        return switch (status) {
+            case OPEN -> buildMiniChip("ACTIVE", "#ecfdf3", "#10b981");
+            case DRAFT -> buildMiniChip("DRAFT", "#eff6ff", "#2563eb");
+            case EXPIRED -> buildMiniChip("EXPIRED", "#fff7ed", "#f59e0b");
+            case CLOSED -> buildMiniChip("CLOSED", "#f1f5f9", "#64748b");
+        };
     }
 
-    private Label detailGroupTitle(String text) {
-        Label label = new Label(text);
-        label.setStyle("-fx-font-size: 10px; -fx-font-weight: 800; -fx-text-fill: #64748b; -fx-letter-spacing: 0.8px;");
-        return label;
+    private Label buildMiniChip(String text, String background, String color) {
+        Label chip = new Label(text);
+        chip.setStyle("-fx-background-color: " + background + "; -fx-text-fill: " + color + "; -fx-font-size: 10px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 9 4 9;");
+        return chip;
+    }
+
+    private VBox activityLine(String title, String body) {
+        VBox line = new VBox(2);
+        Label titleLabel = new Label("• " + title);
+        titleLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: #334155;");
+
+        Label bodyLabel = new Label(body);
+        bodyLabel.setWrapText(true);
+        bodyLabel.setStyle("-fx-font-size: 11px; -fx-font-weight: 400; -fx-text-fill: #94a3b8;");
+
+        line.getChildren().addAll(titleLabel, bodyLabel);
+        return line;
+    }
+
+    private StackPane applicantAvatar(Application application) {
+        String applicantName = services.applicantProfileRepository().findById(application.getApplicantId())
+                .map(profile -> fallback(profile.getFullName(), application.getApplicantId()))
+                .orElse(application.getApplicantId());
+
+        Label initials = new Label(initials(applicantName));
+        initials.setStyle("-fx-font-size: 11px; -fx-font-weight: 900; -fx-text-fill: #475569;");
+
+        StackPane avatar = new StackPane(initials);
+        avatar.setMinSize(28, 28);
+        avatar.setPrefSize(28, 28);
+        avatar.setMaxSize(28, 28);
+        avatar.setStyle("-fx-background-color: #eef2f7; -fx-background-radius: 999;");
+        return avatar;
     }
 
     private void onCreate() {
@@ -293,7 +560,7 @@ public class JobManagementController {
     }
 
     private void onEdit() {
-        Job selected = table.getSelectionModel().getSelectedItem();
+        Job selected = selectedJob();
         if (selected == null) {
             showError("Please select one job first.");
             return;
@@ -311,7 +578,7 @@ public class JobManagementController {
     }
 
     private void onClose() {
-        Job selected = table.getSelectionModel().getSelectedItem();
+        Job selected = selectedJob();
         if (selected == null) {
             showError("Please select one job first.");
             return;
@@ -349,13 +616,12 @@ public class JobManagementController {
         if (selected.isEmpty()) {
             return;
         }
-
         currentFilterStatus = "All Statuses".equals(selected.get()) ? null : JobStatus.valueOf(selected.get());
         refresh();
     }
 
     private void onViewApplicants() {
-        Job selected = table.getSelectionModel().getSelectedItem();
+        Job selected = selectedJob();
         if (selected == null) {
             showError("Please select one job first.");
             return;
@@ -365,126 +631,51 @@ public class JobManagementController {
         }
     }
 
-    private void refresh() {
-        Job previouslySelected = table.getSelectionModel().getSelectedItem();
-        String selectedJobId = previouslySelected == null ? null : previouslySelected.getJobId();
-
-        kpiRow = buildKpiRow();
-        page.getChildren().set(1, kpiRow);
-        List<Job> jobs = services.jobService().getJobsByOrganiser(user.getUserId());
-        if (currentFilterStatus != null) {
-            jobs = jobs.stream().filter(job -> job.getStatus() == currentFilterStatus).toList();
-        }
-        table.setItems(FXCollections.observableArrayList(jobs));
-        if (jobs.isEmpty()) {
-            table.setVisible(false);
-            table.setManaged(false);
-            emptyState.setVisible(true);
-            emptyState.setManaged(true);
-            updateActionButtons(null);
-            updateDetail(null);
-            return;
-        }
-
-        table.setVisible(true);
-        table.setManaged(true);
-        emptyState.setVisible(false);
-        emptyState.setManaged(false);
-
-        if (selectedJobId != null) {
-            for (Job job : jobs) {
-                if (selectedJobId.equals(job.getJobId())) {
-                    table.getSelectionModel().select(job);
-                    return;
-                }
-            }
-        }
-
-        table.getSelectionModel().selectFirst();
+    private Job selectedJob() {
+        JobTableRow row = table.getSelectionModel().getSelectedItem();
+        return row == null ? null : row.job();
     }
 
-    private void updateActionButtons(Job selectedJob) {
-        boolean hasSelection = selectedJob != null;
-        editButton.setDisable(!hasSelection);
-        closeButton.setDisable(!hasSelection || selectedJob.getStatus() != JobStatus.OPEN);
-        viewApplicantsButton.setDisable(!hasSelection);
-        editJobDetailsButton.setDisable(!hasSelection);
+    private String formatTimestamp(LocalDateTime time) {
+        return time == null ? "-" : time.format(DETAIL_TIME_FORMAT);
     }
 
-    private void updateDetail(Job job) {
-        if (job == null) {
-            detailTitle.setText("No Job Selected");
-            detailSubtitle.setText("-");
-            detailJobId.setText("-");
-            detailModuleCode.setText("-");
-            detailModuleName.setText("-");
-            detailSemester.setText("-");
-            detailType.setText("-");
-            detailStatus.setText("-");
-            detailStatus.setStyle(DETAIL_VALUE_STYLE);
-            detailWeeklyHours.setText("-");
-            detailPositions.setText("-");
-            detailApplicants.setText("-");
-            detailDeadline.setText("-");
-            detailCreated.setText("-");
-            detailOrganiserId.setText("-");
-            detailRequiredSkills.setText("-");
-            detailPreferredSkills.setText("-");
-            detailDescription.setText("-");
-            return;
+    private String formatTimeline(Job job) {
+        String start = job.getCreatedAt() == null ? "-" : job.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH));
+        String end = job.getDeadline() == null ? "-" : job.getDeadline().format(DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.ENGLISH));
+        return start + " - " + end + " • ID: " + fallback(job.getJobId(), "-");
+    }
+
+    private String descriptionSnippet(String description) {
+        String text = fallback(description, "Add a short description to explain the role scope and expectations.");
+        return text.length() <= 110 ? text : text.substring(0, 107) + "...";
+    }
+
+    private String fallback(String value, String defaultValue) {
+        return value == null || value.isBlank() ? defaultValue : value;
+    }
+
+    private String initials(String name) {
+        if (name == null || name.isBlank()) {
+            return "MO";
         }
-
-        int applicantCount = services.applicationService().getApplicationsByJob(job.getJobId()).size();
-        detailTitle.setText(job.getTitle() == null || job.getTitle().isBlank() ? "Untitled Job" : job.getTitle());
-        detailSubtitle.setText(buildDetailSubtitle(job));
-        detailJobId.setText(job.getJobId() == null || job.getJobId().isBlank() ? "-" : job.getJobId());
-        detailModuleCode.setText(job.getModuleCode() == null || job.getModuleCode().isBlank() ? "-" : job.getModuleCode());
-        detailModuleName.setText(job.getModuleName() == null || job.getModuleName().isBlank() ? "-" : job.getModuleName());
-        detailSemester.setText(job.getSemester() == null || job.getSemester().isBlank() ? "-" : job.getSemester());
-        detailType.setText(job.getType() == null ? "-" : job.getType().name());
-        detailStatus.setText(job.getStatus().name());
-        detailStatus.setStyle(statusStyle(job.getStatus()));
-        detailWeeklyHours.setText(String.valueOf(job.getWeeklyHours()));
-        detailPositions.setText(String.valueOf(job.getPositions()));
-        detailApplicants.setText(String.valueOf(applicantCount));
-        detailDeadline.setText(job.getDeadline() == null ? "-" : job.getDeadline().toString());
-        detailCreated.setText(formatDateTime(job.getCreatedAt()));
-        detailOrganiserId.setText(job.getOrganiserId() == null || job.getOrganiserId().isBlank() ? "-" : job.getOrganiserId());
-        detailRequiredSkills.setText(formatList(job.getRequiredSkills()));
-        detailPreferredSkills.setText(formatList(job.getPreferredSkills()));
-        detailDescription.setText(job.getDescription() == null || job.getDescription().isBlank() ? "-" : job.getDescription());
-    }
-
-    private String buildDetailSubtitle(Job job) {
-        String moduleCode = job.getModuleCode() == null || job.getModuleCode().isBlank() ? "No Module Code" : job.getModuleCode();
-        String status = job.getStatus() == null ? "UNKNOWN" : job.getStatus().name();
-        return moduleCode + " | " + status;
-    }
-
-    private String formatList(List<String> values) {
-        if (values == null || values.isEmpty()) {
-            return "-";
+        String[] parts = name.trim().split("\\s+");
+        if (parts.length == 1) {
+            return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase();
         }
-        return String.join(", ", values);
+        return (parts[0].substring(0, 1) + parts[parts.length - 1].substring(0, 1)).toUpperCase();
     }
 
-    private String formatDateTime(LocalDateTime value) {
-        return value == null ? "-" : value.format(DETAIL_TIME_FORMAT);
-    }
-
-    private String statusStyle(JobStatus status) {
-        if (status == null) {
-            return DETAIL_VALUE_STYLE;
-        }
-        return switch (status) {
-            case OPEN -> STATUS_OPEN_STYLE;
-            case CLOSED -> STATUS_CLOSED_STYLE;
-            case EXPIRED -> STATUS_EXPIRED_STYLE;
-            case DRAFT -> STATUS_DRAFT_STYLE;
-        };
+    private Label styledLabel(String text, String style) {
+        Label label = new Label(text);
+        label.setStyle(style);
+        return label;
     }
 
     private void showError(String message) {
         DialogControllerFactory.validationError(message, view.getScene() == null ? null : view.getScene().getWindow());
+    }
+
+    private record JobTableRow(Job job, int appliedApplicantCount, int targetApplicantCount) {
     }
 }

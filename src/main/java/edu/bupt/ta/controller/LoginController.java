@@ -3,8 +3,10 @@ package edu.bupt.ta.controller;
 import edu.bupt.ta.dto.LoginResult;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
+import edu.bupt.ta.ui.IconFactory;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -15,7 +17,9 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 
 import java.util.function.Consumer;
 
@@ -44,12 +48,16 @@ public class LoginController {
 
         HBox root = new HBox();
         root.getStyleClass().add("login-shell");
+        root.setFillHeight(true);
+        root.setMaxWidth(1400);
+        root.setPrefHeight(760);
+        root.setMinHeight(680);
 
         VBox leftPane = buildLeftPane();
         VBox rightPane = buildRightPane();
 
-        leftPane.setPrefWidth(640);
-        rightPane.setPrefWidth(640);
+        leftPane.setMinWidth(520);
+        rightPane.setMinWidth(520);
         HBox.setHgrow(leftPane, Priority.ALWAYS);
         HBox.setHgrow(rightPane, Priority.ALWAYS);
 
@@ -58,18 +66,22 @@ public class LoginController {
     }
 
     private VBox buildLeftPane() {
-        VBox left = new VBox(44);
+        VBox left = new VBox();
         left.getStyleClass().add("login-left");
         left.setPadding(new Insets(64));
 
         HBox brandRow = new HBox(12);
         brandRow.setAlignment(Pos.CENTER_LEFT);
 
-        Region brandIcon = new Region();
-        brandIcon.setPrefSize(36, 36);
-        brandIcon.setStyle("-fx-background-color: rgba(255,255,255,0.15); -fx-background-radius: 8;");
+        StackPane brandIcon = IconFactory.badge(
+                IconFactory.IconType.GRADUATION_CAP,
+                36,
+                Color.rgb(255, 255, 255, 0.12),
+                Color.WHITE
+        );
+        brandIcon.getStyleClass().add("login-brand-icon");
 
-        Label brandTitle = new Label("BUPT International");
+        Label brandTitle = new Label("BUPT International School");
         brandTitle.getStyleClass().add("login-brand-title");
 
         brandRow.getChildren().addAll(brandIcon, brandTitle);
@@ -77,32 +89,31 @@ public class LoginController {
         Label hero = new Label("Teaching Assistant\nRecruitment System");
         hero.getStyleClass().add("login-hero-title");
 
-        Region bar = new Region();
-        bar.setPrefSize(96, 6);
-        bar.setStyle("-fx-background-color: rgba(255,255,255,0.35); -fx-background-radius: 999;");
-
-        Label desc = new Label(
-                "Streamlining the bridge between academic excellence\n"
-                        + "and professional teaching support. Manage\n"
-                        + "applications, schedules, and assignments in one\n"
-                        + "professional portal.");
-        desc.getStyleClass().add("login-hero-desc");
-
-        VBox heroBlock = new VBox(22, hero, bar, desc);
+        VBox topBlock = new VBox(48, brandRow, hero);
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        VBox footer = new VBox(12);
-        Label secure = new Label("Secure Academic Portal for Students & Faculty");
-        secure.setStyle("-fx-font-size: 14px; -fx-text-fill: #cbd5e1;");
+        HBox secureRow = new HBox(16);
+        secureRow.setAlignment(Pos.CENTER_LEFT);
 
-        Label copyright = new Label("(c) 2024 Beijing University of Posts and Telecommunications. All rights reserved.");
+        StackPane secureIcon = IconFactory.glyph(
+                IconFactory.IconType.SHIELD,
+                13,
+                Color.web("#cbd5e1")
+        );
+        secureIcon.getStyleClass().add("login-left-meta-icon");
+
+        Label secure = new Label("Secure Academic Portal for Students & Faculty");
+        secure.getStyleClass().add("login-left-meta");
+        secureRow.getChildren().addAll(secureIcon, secure);
+
+        Label copyright = new Label("© 2026 Beijing University of Posts and Telecommunications. All rights reserved.");
         copyright.getStyleClass().add("login-left-footer");
 
-        footer.getChildren().addAll(secure, copyright);
+        VBox footer = new VBox(12, secureRow, copyright);
 
-        left.getChildren().addAll(brandRow, heroBlock, spacer, footer);
+        left.getChildren().addAll(topBlock, spacer, footer);
         return left;
     }
 
@@ -112,9 +123,10 @@ public class LoginController {
         right.setAlignment(Pos.CENTER);
         right.setPadding(new Insets(48));
 
-        VBox content = new VBox(26);
+        VBox content = new VBox(32);
         content.setMaxWidth(448);
         content.setPrefWidth(448);
+        content.getStyleClass().add("login-content");
 
         Label heading = new Label("Portal Login");
         heading.getStyleClass().add("login-heading");
@@ -122,38 +134,59 @@ public class LoginController {
         Label subtitle = new Label("Enter your university credentials to continue");
         subtitle.getStyleClass().add("login-subheading");
 
-        VBox titleBlock = new VBox(6, heading, subtitle);
+        VBox titleBlock = new VBox(8, heading, subtitle);
 
         Label userLabel = new Label("University ID / Username");
-        userLabel.getStyleClass().add("field-label");
+        userLabel.getStyleClass().add("login-field-label");
         usernameField.setPromptText("e.g. 2023211000");
+        usernameField.getStyleClass().add("login-input-field");
+        HBox usernameInput = buildInputShell(
+                IconFactory.glyph(IconFactory.IconType.USER, 13, Color.web("#94a3b8")),
+                usernameField,
+                null
+        );
+        VBox usernameBlock = new VBox(8, userLabel, usernameInput);
 
         Label passLabel = new Label("Password");
-        passLabel.getStyleClass().add("field-label");
+        passLabel.getStyleClass().add("login-field-label");
 
         Label forgotLabel = new Label("Forgot password?");
-        forgotLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #354a5f;");
+        forgotLabel.getStyleClass().add("login-forgot-link");
 
         HBox passwordHeader = new HBox();
         passwordHeader.setAlignment(Pos.CENTER_LEFT);
-        passwordHeader.getChildren().addAll(passLabel);
-        HBox spacer = new HBox();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        passwordHeader.getChildren().addAll(spacer, forgotLabel);
+        Region passwordSpacer = new Region();
+        HBox.setHgrow(passwordSpacer, Priority.ALWAYS);
+        passwordHeader.getChildren().addAll(passLabel, passwordSpacer, forgotLabel);
 
-        passwordField.setPromptText("********");
+        passwordField.setPromptText("••••••••");
+        passwordField.getStyleClass().add("login-input-field");
+
+        Button eyeButton = new Button();
+        eyeButton.setFocusTraversable(false);
+        eyeButton.setMouseTransparent(true);
+        eyeButton.getStyleClass().add("login-eye-button");
+        eyeButton.setGraphic(IconFactory.glyph(IconFactory.IconType.EYE, 13, Color.web("#94a3b8")));
+        HBox passwordInput = buildInputShell(
+                IconFactory.glyph(IconFactory.IconType.LOCK, 13, Color.web("#94a3b8")),
+                passwordField,
+                eyeButton
+        );
+        VBox passwordBlock = new VBox(8, passwordHeader, passwordInput);
+
+        VBox fieldsBlock = new VBox(20, usernameBlock, passwordBlock);
 
         CheckBox keepLogin = new CheckBox("Keep me logged in on this device");
-        keepLogin.setStyle("-fx-text-fill: #475569; -fx-font-size: 14px;");
+        keepLogin.getStyleClass().add("login-keep-checkbox");
 
         Button loginButton = new Button("LOGIN TO PORTAL");
-        loginButton.getStyleClass().add("primary-button");
+        loginButton.getStyleClass().add("login-primary-button");
         loginButton.setPrefHeight(44);
         loginButton.setMaxWidth(Double.MAX_VALUE);
         loginButton.setOnAction(event -> doLogin());
 
         Button resetButton = new Button("Reset");
-        resetButton.getStyleClass().add("secondary-button");
+        resetButton.getStyleClass().add("login-secondary-button");
         resetButton.setPrefHeight(44);
         resetButton.setPrefWidth(96);
         resetButton.setOnAction(event -> {
@@ -163,13 +196,18 @@ public class LoginController {
 
         HBox actions = new HBox(12, loginButton, resetButton);
         HBox.setHgrow(loginButton, Priority.ALWAYS);
+        actions.setMaxWidth(Double.MAX_VALUE);
+
+        VBox form = new VBox(24, fieldsBlock, keepLogin, actions);
 
         Region divider = new Region();
+        divider.getStyleClass().add("login-divider");
         divider.setPrefHeight(1);
-        divider.setStyle("-fx-background-color: #e2e8f0;");
+        divider.setMaxWidth(Double.MAX_VALUE);
 
         HBox footerLinks = new HBox();
         footerLinks.setAlignment(Pos.CENTER_LEFT);
+        footerLinks.setMaxWidth(Double.MAX_VALUE);
 
         Label access = new Label("EXTERNAL ACCESS");
         access.getStyleClass().add("login-footer-links");
@@ -183,24 +221,41 @@ public class LoginController {
         Label privacy = new Label("PRIVACY");
         privacy.getStyleClass().add("login-footer-links");
 
-        footerLinks.getChildren().addAll(access, footerSpacer, support, new Label("   "), privacy);
-
-        Label testHint = new Label("Demo password: Password123!  (ta001 / mo001 / admin)");
-        testHint.setStyle("-fx-font-size: 11px; -fx-text-fill: #94a3b8;");
+        HBox rightLinks = new HBox(16, support, privacy);
+        footerLinks.getChildren().addAll(access, footerSpacer, rightLinks);
 
         content.getChildren().addAll(
                 titleBlock,
-                userLabel, usernameField,
-                passwordHeader, passwordField,
-                keepLogin,
-                actions,
+                form,
                 divider,
-                footerLinks,
-                testHint
+                footerLinks
         );
 
         right.getChildren().add(content);
         return right;
+    }
+
+    private HBox buildInputShell(Node leftIcon, TextField field, Node rightNode) {
+        HBox shell = new HBox(10);
+        shell.getStyleClass().add("login-input-shell");
+        shell.setAlignment(Pos.CENTER_LEFT);
+        shell.setMaxWidth(Double.MAX_VALUE);
+
+        StackPane leftIconBox = new StackPane(leftIcon);
+        leftIconBox.getStyleClass().add("login-input-icon-left");
+        shell.getChildren().add(leftIconBox);
+
+        field.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(field, Priority.ALWAYS);
+        shell.getChildren().add(field);
+
+        if (rightNode != null) {
+            StackPane rightIconBox = new StackPane(rightNode);
+            rightIconBox.getStyleClass().add("login-input-icon-right");
+            shell.getChildren().add(rightIconBox);
+        }
+
+        return shell;
     }
 
     private void doLogin() {

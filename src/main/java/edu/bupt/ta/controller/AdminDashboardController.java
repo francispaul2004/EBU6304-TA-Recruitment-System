@@ -109,7 +109,7 @@ public class AdminDashboardController {
 
     private HBox buildTopBar() {
         Label title = new Label("Workload Monitoring");
-        title.setStyle("-fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: #1e293b;");
+        title.setStyle("-fx-font-size: 22px; -fx-font-weight: 900; -fx-text-fill: #1e293b;");
 
         searchField.setPromptText("Search TA by name or ID...");
         searchField.setPrefWidth(340);
@@ -123,7 +123,7 @@ public class AdminDashboardController {
         refreshButton.setOnAction(event -> refresh());
 
         Button export = new Button("Export Report");
-        export.setStyle("-fx-background-color: #354a5f; -fx-text-fill: white; -fx-font-weight: 700; -fx-background-radius: 8; -fx-padding: 10 16 10 16;");
+        export.setStyle("-fx-background-color: #354a5f; -fx-text-fill: white; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 10 16 10 16;");
         export.setOnAction(event -> exportWorkload());
 
         Region spacer = new Region();
@@ -169,16 +169,16 @@ public class AdminDashboardController {
 
         Label trend = new Label(delta);
         trend.getStyleClass().add("metric-subtle");
-        trend.setStyle("-fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: " + accent + ";");
+        trend.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: " + accent + ";");
 
         Label titleNode = new Label(title);
         titleNode.getStyleClass().add("metric-kicker");
-        titleNode.setStyle("-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #94a3b8;");
+        titleNode.setStyle("-fx-font-size: 11px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;");
 
         valueLabel.getStyleClass().add("metric-value");
-        valueLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        valueLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
         if (danger) {
-            valueLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: 800; -fx-text-fill: #e11d48;");
+            valueLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: 900; -fx-text-fill: #e11d48;");
         }
 
         card.getChildren().addAll(top);
@@ -194,10 +194,10 @@ public class AdminDashboardController {
 
         VBox titleBlock = new VBox(4);
         Label heading = new Label("Workload Monitoring Table");
-        heading.setStyle("-fx-font-size: 16px; -fx-font-weight: 800; -fx-text-fill: #1e293b;");
+        heading.setStyle("-fx-font-size: 16px; -fx-font-weight: 900; -fx-text-fill: #1e293b;");
 
         Label subtitle = new Label("Real-time tracking of weekly teaching hours per student");
-        subtitle.setStyle("-fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: #94a3b8;");
+        subtitle.setStyle("-fx-font-size: 13px; -fx-font-weight: 400; -fx-text-fill: #94a3b8;");
         titleBlock.getChildren().addAll(heading, subtitle);
 
         Region spacer = new Region();
@@ -228,13 +228,13 @@ public class AdminDashboardController {
                 Label avatar = new Label(initials(row.applicantName()));
                 avatar.setMinSize(30, 30);
                 avatar.setAlignment(Pos.CENTER);
-                avatar.setStyle("-fx-background-color: #eef2f7; -fx-text-fill: #64748b; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999;");
+                avatar.setStyle("-fx-background-color: #eef2f7; -fx-text-fill: #64748b; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999;");
 
                 Label name = new Label(row.applicantName());
                 name.setWrapText(false);
                 name.setTextOverrun(OverrunStyle.ELLIPSIS);
                 name.setMaxWidth(180);
-                name.setStyle("-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: #1f2937;");
+                name.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #1f2937;");
 
                 HBox box = new HBox(12, avatar, name);
                 box.setAlignment(Pos.CENTER_LEFT);
@@ -279,7 +279,7 @@ public class AdminDashboardController {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? null : item.intValue() + "h");
                 if (!empty) {
-                    setStyle("-fx-text-fill: #94a3b8; -fx-font-weight: 700;");
+                    setStyle("-fx-text-fill: #94a3b8; -fx-font-weight: 600;");
                 } else {
                     setStyle("");
                 }
@@ -319,7 +319,7 @@ public class AdminDashboardController {
                 Label note = new Label(item);
                 note.setWrapText(true);
                 note.setTextFill(Color.web(noteColor(item)));
-                note.setStyle("-fx-font-size: 12px; -fx-font-weight: 700;");
+                note.setStyle("-fx-font-size: 12px; -fx-font-weight: 600;");
                 setGraphic(note);
                 setText(null);
             }
@@ -343,7 +343,7 @@ public class AdminDashboardController {
         card.setPadding(new Insets(18));
 
         Label heading = new Label("Audit Log");
-        heading.setStyle("-fx-font-size: 16px; -fx-font-weight: 800; -fx-text-fill: #1e293b;");
+        heading.setStyle("-fx-font-size: 16px; -fx-font-weight: 900; -fx-text-fill: #1e293b;");
 
         Label subtitle = new Label("Recent system actions recorded for jobs, applications, and review decisions");
         subtitle.getStyleClass().add("body-muted");
@@ -450,7 +450,7 @@ public class AdminDashboardController {
                 super.updateItem(item, empty);
                 setText(empty ? null : item);
                 if (!empty) {
-                    setStyle("-fx-text-fill: #94a3b8; -fx-font-weight: 500;");
+                    setStyle("-fx-text-fill: #94a3b8; -fx-font-weight: 400;");
                 } else {
                     setStyle("");
                 }
@@ -466,7 +466,7 @@ public class AdminDashboardController {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? null : String.valueOf(item.intValue()));
                 if (!empty) {
-                    setStyle("-fx-font-weight: 700; -fx-text-fill: #1f2937;");
+                    setStyle("-fx-font-weight: 600; -fx-text-fill: #1f2937;");
                 } else {
                     setStyle("");
                 }
@@ -503,7 +503,7 @@ public class AdminDashboardController {
 
     private Label coloredValueLabel(String text, String color) {
         Label label = new Label(text);
-        label.setStyle("-fx-font-size: 12px; -fx-font-weight: 800; -fx-text-fill: " + color + ";");
+        label.setStyle("-fx-font-size: 12px; -fx-font-weight: 900; -fx-text-fill: " + color + ";");
         return label;
     }
 
@@ -634,9 +634,9 @@ public class AdminDashboardController {
 
     private String riskChipStyle(String riskLevel) {
         return switch (riskLevel == null ? "" : riskLevel) {
-            case "HIGH" -> "-fx-background-color: #fff1f2; -fx-text-fill: #ef4444; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
-            case "MEDIUM" -> "-fx-background-color: #fff7ed; -fx-text-fill: #f59e0b; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
-            default -> "-fx-background-color: #ecfdf3; -fx-text-fill: #10b981; -fx-font-size: 11px; -fx-font-weight: 800; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
+            case "HIGH" -> "-fx-background-color: #fff1f2; -fx-text-fill: #ef4444; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
+            case "MEDIUM" -> "-fx-background-color: #fff7ed; -fx-text-fill: #f59e0b; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
+            default -> "-fx-background-color: #ecfdf3; -fx-text-fill: #10b981; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 10 4 10;";
         };
     }
 

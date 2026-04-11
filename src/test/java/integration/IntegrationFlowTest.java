@@ -12,7 +12,7 @@ import support.TestDataSupport;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -43,7 +43,7 @@ class IntegrationFlowTest {
         job.setType(JobType.MODULE_TA);
         job.setWeeklyHours(2);
         job.setPositions(1);
-        job.setDeadline(LocalDate.now().plusDays(10));
+        job.setDeadline(LocalDateTime.now().plusDays(10));
         job.setOrganiserId("U101");
         job.setStatus(JobStatus.OPEN);
 

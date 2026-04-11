@@ -4,14 +4,22 @@ import edu.bupt.ta.dto.ApplicantReviewDTO;
 import edu.bupt.ta.enums.Role;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
+import edu.bupt.ta.util.DisplayPlaceholders;
 import edu.bupt.ta.util.ValidationResult;
+import javafx.geometry.Pos;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+
+import java.awt.Desktop;
+import java.nio.file.Path;
+import java.util.Optional;
 
 public class ApplicantReviewController {
 
@@ -42,7 +50,7 @@ public class ApplicantReviewController {
         view.getStyleClass().add("app-surface");
 
         Label title = new Label(dto.applicantName());
-        title.setStyle("-fx-font-size: 40px; -fx-font-weight: 800; -fx-text-fill: #0f172a;");
+        title.setStyle("-fx-font-size: 40px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
 
         Label subtitle = new Label("Applicant ID: " + dto.applicantId());
         subtitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #64748b;");
@@ -54,10 +62,10 @@ public class ApplicantReviewController {
         basicInfo.getChildren().addAll(
                 info("Technical Skills", String.join(", ", dto.technicalSkills())),
                 info("Availability", String.join(", ", dto.availability())),
-                info("Match Score", dto.matchScore() + "%"),
+                info("Match Score", DisplayPlaceholders.MATCH_VALUE),
             info("Matched Skills", safeJoin(dto.matchedSkills())),
                 info("Missing Skills", dto.missingSkills().isEmpty() ? "None" : String.join(", ", dto.missingSkills())),
-            info("Match Explanation", blankToDash(dto.matchExplanation())),
+            info("Match Explanation", DisplayPlaceholders.MATCH_DETAILS),
                 info("Workload", "Current " + dto.currentHours() + "h, Projected " + dto.projectedHours()
                         + "h / Max " + dto.maxWeeklyHours() + "h (" + dto.riskLevel() + ")"),
                 info("Statement", dto.statement())
@@ -72,9 +80,18 @@ public class ApplicantReviewController {
 
         decisionNote.setPromptText("Add observation or justification for the recruitment decision...");
         decisionNote.setPrefRowCount(4);
-        decisionNote.setText("");
+        decisionNote.setText(dto.decisionNote() == null ? "" : dto.decisionNote());
 
-        noteCard.getChildren().addAll(noteLabel, decisionNote);
+        Button previewCv = new Button("Preview CV");
+        previewCv.getStyleClass().add("secondary-button");
+        previewCv.setOnAction(event -> openCvFile(dto.applicantId()));
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        HBox noteHeader = new HBox(8, noteLabel, spacer, previewCv);
+        noteHeader.setAlignment(Pos.CENTER_LEFT);
+
+        noteCard.getChildren().addAll(noteHeader, decisionNote);
 
         Button accept = new Button("Accept Candidate");
         accept.getStyleClass().add("primary-button");
@@ -94,7 +111,7 @@ public class ApplicantReviewController {
     private VBox info(String title, String value) {
         VBox box = new VBox(2);
         Label t = new Label(title);
-        t.setStyle("-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #94a3b8;");
+        t.setStyle("-fx-font-size: 11px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;");
         Label v = new Label(value == null || value.isBlank() ? "-" : value);
         v.setWrapText(true);
         v.setStyle("-fx-font-size: 13px; -fx-text-fill: #334155;");
@@ -159,5 +176,33 @@ public class ApplicantReviewController {
 
     private boolean isAdmin() {
         return user.getRole() == Role.ADMIN;
+    }
+
+    private void openCvFile(String applicantId) {
+        Optional<Path> filePath = services.resumeService().getCvFilePath(applicantId);
+        if (filePath.isEmpty()) {
+            DialogControllerFactory.info("CV Not Found",
+                    "No uploaded CV file exists for this account.",
+                    view.getScene() == null ? null : view.getScene().getWindow());
+            return;
+        }
+        try {
+            if (!Desktop.isDesktopSupported()) {
+                DialogControllerFactory.operationFailed("Open CV Failed",
+                        "Desktop open action is not supported in this environment.",
+                        view.getScene() == null ? null : view.getScene().getWindow());
+                return;
+            }
+            Desktop desktop = Desktop.getDesktop();
+            if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                desktop.browse(filePath.get().toUri());
+            } else {
+                desktop.open(filePath.get().toFile());
+            }
+        } catch (Exception ex) {
+            DialogControllerFactory.operationFailed("Open CV Failed",
+                    "Unable to open file: " + ex.getMessage(),
+                    view.getScene() == null ? null : view.getScene().getWindow());
+        }
     }
 }

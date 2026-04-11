@@ -148,7 +148,7 @@ public class JobService {
         boolean changed = false;
         for (Job job : jobs) {
             if (job.getStatus() == JobStatus.OPEN && job.getDeadline() != null
-                    && job.getDeadline().isBefore(DateTimeUtils.today())) {
+                    && job.getDeadline().isBefore(DateTimeUtils.now())) {
                 job.setStatus(JobStatus.EXPIRED);
                 changed = true;
             }

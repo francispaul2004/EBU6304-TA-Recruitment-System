@@ -57,7 +57,7 @@ public class ApplicationService {
         if (job.getStatus() != JobStatus.OPEN) {
             return ValidationResult.fail("Only OPEN jobs can be applied.");
         }
-        if (job.getDeadline() != null && job.getDeadline().isBefore(DateTimeUtils.today())) {
+        if (job.getDeadline() != null && job.getDeadline().isBefore(DateTimeUtils.now())) {
             return ValidationResult.fail("Job deadline has passed.");
         }
 

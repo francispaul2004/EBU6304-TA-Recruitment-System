@@ -1,6 +1,5 @@
 package edu.bupt.ta.dto;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,7 +14,7 @@ public record AdminJobRowDTO(String jobId,
                              String statusLabel,
                              int weeklyHours,
                              int positions,
-                             LocalDate deadline,
+                             LocalDateTime deadline,
                              LocalDateTime createdAt,
                              int applicantCount,
                              List<String> requiredSkills,
