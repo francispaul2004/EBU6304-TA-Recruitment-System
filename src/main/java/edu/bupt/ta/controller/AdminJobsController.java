@@ -197,15 +197,21 @@ public class AdminJobsController {
 
                 Label title = new Label(row.title());
                 title.setWrapText(true);
-                title.setMaxWidth(340);
+                title.setMaxWidth(420);
+                title.setAlignment(Pos.CENTER);
+                title.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
                 title.setStyle("-fx-font-size: 15px; -fx-font-weight: 900; -fx-text-fill: #334155;");
 
                 Label id = new Label("ID: " + row.jobId());
                 id.setWrapText(true);
-                id.setMaxWidth(340);
+                id.setMaxWidth(420);
+                id.setAlignment(Pos.CENTER);
+                id.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
                 id.setStyle("-fx-font-size: 11px; -fx-text-fill: #94a3b8; -fx-font-weight: 600;");
 
                 VBox box = new VBox(3, title, id);
+                box.setAlignment(Pos.CENTER);
+                setAlignment(Pos.CENTER);
                 setGraphic(box);
                 setText(null);
             }
@@ -226,15 +232,22 @@ public class AdminJobsController {
 
                 Label title = new Label(row.moduleName());
                 title.setWrapText(true);
-                title.setMaxWidth(280);
+                title.setMaxWidth(340);
+                title.setAlignment(Pos.CENTER);
+                title.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
                 title.setStyle("-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #475569;");
 
                 Label meta = new Label(row.moduleCode());
                 meta.setWrapText(true);
-                meta.setMaxWidth(280);
+                meta.setMaxWidth(340);
+                meta.setAlignment(Pos.CENTER);
+                meta.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
                 meta.setStyle("-fx-font-size: 11px; -fx-text-fill: #94a3b8;");
 
-                setGraphic(new VBox(4, title, meta));
+                VBox box = new VBox(4, title, meta);
+                box.setAlignment(Pos.CENTER);
+                setAlignment(Pos.CENTER);
+                setGraphic(box);
                 setText(null);
             }
         });
@@ -252,6 +265,7 @@ public class AdminJobsController {
                 }
                 Label badge = new Label(String.valueOf(item.intValue()));
                 badge.setStyle("-fx-background-color: #eef2f7; -fx-text-fill: #475569; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 10 4 10;");
+                setAlignment(Pos.CENTER);
                 setGraphic(badge);
                 setText(null);
             }
@@ -270,6 +284,7 @@ public class AdminJobsController {
                 }
                 Label chip = new Label(item);
                 chip.setStyle(statusChipStyle(item));
+                setAlignment(Pos.CENTER);
                 setGraphic(chip);
                 setText(null);
             }
@@ -299,13 +314,14 @@ public class AdminJobsController {
 
                 AdminJobRowDTO row = getTableView().getItems().get(getIndex());
                 detailButton.setOnAction(event -> showJobDetailWindow(row));
+                setAlignment(Pos.CENTER);
                 setGraphic(detailButton);
                 setText(null);
             }
         });
 
-        titleCol.setPrefWidth(290);
-        departmentCol.setPrefWidth(240);
+        titleCol.setPrefWidth(360);
+        departmentCol.setPrefWidth(290);
         applicantsCol.setPrefWidth(100);
         statusCol.setPrefWidth(120);
         createdCol.setPrefWidth(130);
@@ -313,6 +329,7 @@ public class AdminJobsController {
         table.getColumns().setAll(titleCol, departmentCol, applicantsCol, statusCol, createdCol, actionCol);
         table.getStyleClass().add("job-table-spaced");
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setFixedCellSize(88);
         table.setPrefHeight(560);
         table.setPlaceholder(new Label("No jobs match the current filters."));
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldJob, newJob) -> {
@@ -738,6 +755,7 @@ public class AdminJobsController {
                 super.updateItem(item, empty);
                 setText(empty ? null : item);
                 if (!empty) {
+                    setAlignment(Pos.CENTER);
                     setStyle("-fx-text-fill: #94a3b8; -fx-font-weight: 600;");
                 } else {
                     setStyle("");

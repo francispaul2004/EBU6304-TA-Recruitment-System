@@ -197,15 +197,22 @@ public class AdminApplicationsController {
 
                 Label name = new Label(row.applicantName());
                 name.setWrapText(true);
-                name.setMaxWidth(420);
+                name.setMaxWidth(520);
+                name.setAlignment(Pos.CENTER);
+                name.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
                 name.setStyle("-fx-font-size: 14px; -fx-font-weight: 900; -fx-text-fill: #334155;");
 
                 Label meta = new Label(row.jobTitle() + "  |  " + row.applicationId());
                 meta.setWrapText(true);
-                meta.setMaxWidth(420);
+                meta.setMaxWidth(520);
+                meta.setAlignment(Pos.CENTER);
+                meta.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
                 meta.setStyle("-fx-font-size: 11px; -fx-text-fill: #94a3b8;");
 
-                setGraphic(new VBox(3, name, meta));
+                VBox box = new VBox(3, name, meta);
+                box.setAlignment(Pos.CENTER);
+                setAlignment(Pos.CENTER);
+                setGraphic(box);
                 setText(null);
             }
         });
@@ -223,6 +230,7 @@ public class AdminApplicationsController {
                 }
                 Label chip = new Label(item.replace('_', ' '));
                 chip.setStyle(statusChipStyle(item));
+                setAlignment(Pos.CENTER);
                 setGraphic(chip);
                 setText(null);
             }
@@ -236,6 +244,7 @@ public class AdminApplicationsController {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? null : DisplayPlaceholders.MATCH_VALUE);
                 if (!empty) {
+                    setAlignment(Pos.CENTER);
                     setStyle("-fx-font-weight: 900; -fx-text-fill: #334155;");
                 } else {
                     setStyle("");
@@ -257,6 +266,7 @@ public class AdminApplicationsController {
                 }
                 Label chip = new Label(item);
                 chip.setStyle(riskChipStyle(item));
+                setAlignment(Pos.CENTER);
                 setGraphic(chip);
                 setText(null);
             }
@@ -282,12 +292,13 @@ public class AdminApplicationsController {
 
                 AdminApplicationRowDTO row = getTableView().getItems().get(getIndex());
                 detailButton.setOnAction(event -> showApplicationDetailWindow(row));
+                setAlignment(Pos.CENTER);
                 setGraphic(detailButton);
                 setText(null);
             }
         });
 
-        applicantCol.setPrefWidth(420);
+        applicantCol.setPrefWidth(520);
         statusCol.setPrefWidth(120);
         matchCol.setPrefWidth(90);
         riskCol.setPrefWidth(100);
@@ -295,6 +306,7 @@ public class AdminApplicationsController {
         table.getColumns().setAll(applicantCol, statusCol, matchCol, riskCol, detailCol);
         table.getStyleClass().add("job-table-spaced");
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setFixedCellSize(78);
         table.setPrefHeight(680);
         table.setPlaceholder(new Label("No applications match the current filters."));
 
