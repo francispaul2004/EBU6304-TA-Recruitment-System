@@ -42,6 +42,7 @@ public class MainShellController {
     private final Label breadcrumbCurrent = new Label();
     private final Map<String, Button> navButtons = new LinkedHashMap<>();
     private String preferredApplicantJobId;
+    private String preferredManagementJobId;
 
     public MainShellController(ServiceRegistry services, User user, Runnable onLogout) {
         this.services = services;
@@ -71,7 +72,7 @@ public class MainShellController {
         if (user.getRole() == Role.TA) {
             navigateTo("dashboard");
         } else if (user.getRole() == Role.MO) {
-            navigateTo("jobManagement");
+            navigateTo("moDashboard");
         } else {
             navigateTo("adminDashboard");
         }
@@ -127,6 +128,7 @@ public class MainShellController {
             )));
         } else if (user.getRole() == Role.MO) {
             navArea.getChildren().add(buildSection("RECRUITMENT", List.of(
+                    new NavEntry("Dashboard", "moDashboard", IconFactory.IconType.DASHBOARD),
                     new NavEntry("Job Management", "jobManagement", IconFactory.IconType.BRIEFCASE),
                     new NavEntry("Applicant List", "applicantList", IconFactory.IconType.USERS),
                     new NavEntry("Profile", "moProfile", IconFactory.IconType.USER)
@@ -286,10 +288,21 @@ public class MainShellController {
             }
             case "jobManagement" -> {
                 breadcrumbCurrent.setText("Job Management");
-                page = new JobManagementController(services, user, this::openApplicantListForJob).getView();
+                page = new JobManagementController(services, user, this::openApplicantListForJob, preferredManagementJobId).getView();
+                preferredManagementJobId = null;
+            }
+            case "moDashboard" -> {
+                breadcrumbCurrent.setText("Dashboard");
+                page = new MODashboardController(
+                        services,
+                        user,
+                        this::openJobManagementForJob,
+                        () -> navigateTo("applicantList"),
+                        () -> navigateTo("moProfile")
+                ).getView();
             }
             case "applicantList" -> {
-                breadcrumbCurrent.setText("CS101 TA Applicants");
+                breadcrumbCurrent.setText("Applicant List");
                 page = new ApplicantListController(services, user, preferredApplicantJobId).getView();
             }
             case "adminDashboard" -> {
@@ -328,6 +341,11 @@ public class MainShellController {
     private void openApplicantListForJob(Job job) {
         preferredApplicantJobId = job == null ? null : job.getJobId();
         navigateTo("applicantList");
+    }
+
+    private void openJobManagementForJob(Job job) {
+        preferredManagementJobId = job == null ? null : job.getJobId();
+        navigateTo("jobManagement");
     }
 
     private void deactivateButton(Button button) {

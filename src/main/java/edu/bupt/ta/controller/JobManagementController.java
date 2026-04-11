@@ -44,6 +44,7 @@ public class JobManagementController {
     private final ServiceRegistry services;
     private final User user;
     private final Consumer<Job> onViewApplicants;
+    private final String preferredJobId;
 
     private final VBox view = new VBox(18);
     private final TableView<JobTableRow> table = new TableView<>();
@@ -70,9 +71,14 @@ public class JobManagementController {
     private final Button closeButton = new Button("Close Job");
 
     public JobManagementController(ServiceRegistry services, User user, Consumer<Job> onViewApplicants) {
+        this(services, user, onViewApplicants, null);
+    }
+
+    public JobManagementController(ServiceRegistry services, User user, Consumer<Job> onViewApplicants, String preferredJobId) {
         this.services = services;
         this.user = user;
         this.onViewApplicants = onViewApplicants;
+        this.preferredJobId = preferredJobId;
         initialize();
         refresh();
     }
@@ -393,7 +399,7 @@ public class JobManagementController {
 
     private void refresh() {
         Job selected = table.getSelectionModel().getSelectedItem() == null ? null : table.getSelectionModel().getSelectedItem().job();
-        String selectedJobId = selected == null ? null : selected.getJobId();
+        String selectedJobId = preferredJobId != null ? preferredJobId : selected == null ? null : selected.getJobId();
 
         List<Job> jobs = services.jobService().getJobsByOrganiser(user.getUserId());
         if (currentFilterStatus != null) {

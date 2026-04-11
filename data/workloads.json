@@ -1,26 +1,42 @@
-[ {
-  "applicantId" : "A001",
-  "acceptedJobIds" : [ "J001", "J006" ],
-  "currentWeeklyHours" : 8,
-  "riskLevel" : "MEDIUM"
-}, {
-  "applicantId" : "A002",
-  "acceptedJobIds" : [ "J005" ],
-  "currentWeeklyHours" : 8,
-  "riskLevel" : "MEDIUM"
-}, {
-  "applicantId" : "A003",
-  "acceptedJobIds" : [ ],
-  "currentWeeklyHours" : 2,
-  "riskLevel" : "LOW"
-}, {
-  "applicantId" : "A004",
-  "acceptedJobIds" : [ "J002", "J006" ],
-  "currentWeeklyHours" : 12,
-  "riskLevel" : "HIGH"
-}, {
-  "applicantId" : "A005",
-  "acceptedJobIds" : [ "J008" ],
-  "currentWeeklyHours" : 5,
-  "riskLevel" : "LOW"
-} ]
+[
+  {
+    "applicantId": "A001",
+    "acceptedJobIds": [
+      "J103"
+    ],
+    "currentWeeklyHours": 4,
+    "riskLevel": "LOW"
+  },
+  {
+    "applicantId": "A002",
+    "acceptedJobIds": [],
+    "currentWeeklyHours": 0,
+    "riskLevel": "LOW"
+  },
+  {
+    "applicantId": "A003",
+    "acceptedJobIds": [
+      "J107",
+      "J112"
+    ],
+    "currentWeeklyHours": 7,
+    "riskLevel": "HIGH"
+  },
+  {
+    "applicantId": "A004",
+    "acceptedJobIds": [
+      "J102",
+      "J111"
+    ],
+    "currentWeeklyHours": 7,
+    "riskLevel": "MEDIUM"
+  },
+  {
+    "applicantId": "A005",
+    "acceptedJobIds": [
+      "J109"
+    ],
+    "currentWeeklyHours": 3,
+    "riskLevel": "LOW"
+  }
+]
