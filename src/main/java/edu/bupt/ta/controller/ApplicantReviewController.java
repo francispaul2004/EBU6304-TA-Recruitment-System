@@ -2,22 +2,29 @@ package edu.bupt.ta.controller;
 
 import edu.bupt.ta.dto.ApplicantReviewDTO;
 import edu.bupt.ta.enums.Role;
+import edu.bupt.ta.model.ResumeInfo;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
+import edu.bupt.ta.ui.IconFactory;
 import edu.bupt.ta.util.ValidationResult;
 import javafx.geometry.Pos;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 
 import java.awt.Desktop;
 import java.nio.file.Path;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 public class ApplicantReviewController {
@@ -25,15 +32,21 @@ public class ApplicantReviewController {
     private final ServiceRegistry services;
     private final User user;
     private final String applicationId;
+    private final boolean readOnly;
 
     private final VBox view = new VBox(14);
     private final TextArea decisionNote = new TextArea();
     private ApplicantReviewDTO reviewData;
 
     public ApplicantReviewController(ServiceRegistry services, User user, String applicationId) {
+        this(services, user, applicationId, false);
+    }
+
+    public ApplicantReviewController(ServiceRegistry services, User user, String applicationId, boolean readOnly) {
         this.services = services;
         this.user = user;
         this.applicationId = applicationId;
+        this.readOnly = readOnly;
         initialize();
     }
 
@@ -42,7 +55,8 @@ public class ApplicantReviewController {
     }
 
     private void initialize() {
-        ApplicantReviewDTO dto = services.reviewService().getApplicantReviewData(applicationId, user.getUserId(), isAdmin());
+        ApplicantReviewDTO dto = services.reviewService()
+                .getApplicantReviewData(applicationId, user.getUserId(), isAdmin() || readOnly);
         this.reviewData = dto;
 
         view.setPadding(new Insets(16));
@@ -57,59 +71,62 @@ public class ApplicantReviewController {
         VBox basicInfo = new VBox(8);
         basicInfo.getStyleClass().add("panel-card");
         basicInfo.setPadding(new Insets(14));
-
         basicInfo.getChildren().addAll(
                 info("Technical Skills", String.join(", ", dto.technicalSkills())),
                 info("Availability", String.join(", ", dto.availability())),
                 info("Match Score", dto.matchScore() + "%"),
-            info("Matched Skills", safeJoin(dto.matchedSkills())),
+                info("Matched Skills", safeJoin(dto.matchedSkills())),
                 info("Missing Skills", dto.missingSkills().isEmpty() ? "None" : String.join(", ", dto.missingSkills())),
-            info("Match Explanation", blankToDash(dto.matchExplanation())),
+                info("Match Explanation", blankToDash(dto.matchExplanation())),
                 info("Workload", "Current " + dto.currentHours() + "h, Projected " + dto.projectedHours()
                         + "h / Max " + dto.maxWeeklyHours() + "h (" + dto.riskLevel() + ")"),
                 info("Statement", dto.statement())
         );
 
-        VBox noteCard = new VBox(8);
-        noteCard.getStyleClass().add("panel-card");
-        noteCard.setPadding(new Insets(14));
+        VBox cvCard = buildCvCard(dto.applicantId());
 
-        Label noteLabel = new Label("Decision Note");
-        noteLabel.getStyleClass().add("field-label");
+        if (readOnly) {
+            // TA self-view: read-only decision note, no action buttons
+            VBox noteCard = new VBox(8);
+            noteCard.getStyleClass().add("panel-card");
+            noteCard.setPadding(new Insets(14));
+            Label noteLabel = new Label("Decision Note");
+            noteLabel.getStyleClass().add("field-label");
+            Label noteValue = new Label(dto.decisionNote() == null || dto.decisionNote().isBlank()
+                    ? "No decision note yet." : dto.decisionNote());
+            noteValue.setWrapText(true);
+            noteValue.setStyle("-fx-font-size: 13px; -fx-text-fill: #334155;");
+            noteCard.getChildren().addAll(noteLabel, noteValue);
+            view.getChildren().addAll(title, subtitle, basicInfo, cvCard, noteCard);
+        } else {
+            VBox noteCard = new VBox(8);
+            noteCard.getStyleClass().add("panel-card");
+            noteCard.setPadding(new Insets(14));
+            Label noteLabel = new Label("Decision Note");
+            noteLabel.getStyleClass().add("field-label");
+            decisionNote.setPromptText("Add observation or justification for the recruitment decision...");
+            decisionNote.setPrefRowCount(4);
+            decisionNote.setText(dto.decisionNote() == null ? "" : dto.decisionNote());
+            noteCard.getChildren().addAll(noteLabel, decisionNote);
 
-        decisionNote.setPromptText("Add observation or justification for the recruitment decision...");
-        decisionNote.setPrefRowCount(4);
-        decisionNote.setText(dto.decisionNote() == null ? "" : dto.decisionNote());
+            Button accept = new Button("Accept Candidate");
+            accept.getStyleClass().add("primary-button");
+            accept.setOnAction(event -> doAccept());
+            accept.setMaxWidth(Double.MAX_VALUE);
 
-        Button previewCv = new Button("Preview CV");
-        previewCv.getStyleClass().add("secondary-button");
-        previewCv.setOnAction(event -> openCvFile(dto.applicantId()));
+            Button reject = new Button("Reject Candidate");
+            reject.getStyleClass().add("danger-outline");
+            reject.setOnAction(event -> doReject());
+            reject.setMaxWidth(Double.MAX_VALUE);
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        HBox noteHeader = new HBox(8, noteLabel, spacer, previewCv);
-        noteHeader.setAlignment(Pos.CENTER_LEFT);
-
-        noteCard.getChildren().addAll(noteHeader, decisionNote);
-
-        Button accept = new Button("Accept Candidate");
-        accept.getStyleClass().add("primary-button");
-        accept.setOnAction(event -> doAccept());
-        accept.setMaxWidth(Double.MAX_VALUE);
-
-        Button reject = new Button("Reject Candidate");
-        reject.getStyleClass().add("danger-outline");
-        reject.setOnAction(event -> doReject());
-        reject.setMaxWidth(Double.MAX_VALUE);
-
-        HBox actions = new HBox(12, accept, reject);
-
-        view.getChildren().addAll(title, subtitle, basicInfo, noteCard, actions);
+            HBox actions = new HBox(12, accept, reject);
+            view.getChildren().addAll(title, subtitle, basicInfo, cvCard, noteCard, actions);
+        }
     }
 
-    private VBox info(String title, String value) {
+    private VBox info(String label, String value) {
         VBox box = new VBox(2);
-        Label t = new Label(title);
+        Label t = new Label(label);
         t.setStyle("-fx-font-size: 11px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;");
         Label v = new Label(value == null || value.isBlank() ? "-" : value);
         v.setWrapText(true);
@@ -119,10 +136,7 @@ public class ApplicantReviewController {
     }
 
     private String safeJoin(java.util.List<String> items) {
-        if (items == null || items.isEmpty()) {
-            return "None";
-        }
-        return String.join(", ", items);
+        return (items == null || items.isEmpty()) ? "None" : String.join(", ", items);
     }
 
     private String blankToDash(String value) {
@@ -135,26 +149,20 @@ public class ApplicantReviewController {
                     "Projected hours: " + reviewData.projectedHours() + "h / Max " + reviewData.maxWeeklyHours() + "h.",
                     view.getScene() == null ? null : view.getScene().getWindow());
         }
-        boolean confirmed = DialogControllerFactory.confirmAction(
-                "Accept Candidate",
+        boolean confirmed = DialogControllerFactory.confirmAction("Accept Candidate",
                 "Accept this applicant and update workload records?",
                 view.getScene() == null ? null : view.getScene().getWindow());
-        if (!confirmed) {
-            return;
-        }
+        if (!confirmed) return;
         ValidationResult result = services.reviewService()
                 .acceptApplication(applicationId, user.getUserId(), decisionNote.getText(), isAdmin());
         showResult("Accept Application", result);
     }
 
     private void doReject() {
-        boolean confirmed = DialogControllerFactory.confirmAction(
-                "Reject Candidate",
+        boolean confirmed = DialogControllerFactory.confirmAction("Reject Candidate",
                 "Reject this applicant for the selected job?",
                 view.getScene() == null ? null : view.getScene().getWindow());
-        if (!confirmed) {
-            return;
-        }
+        if (!confirmed) return;
         ValidationResult result = services.reviewService()
                 .rejectApplication(applicationId, user.getUserId(), decisionNote.getText(), isAdmin());
         showResult("Reject Application", result);
@@ -180,8 +188,7 @@ public class ApplicantReviewController {
     private void openCvFile(String applicantId) {
         Optional<Path> filePath = services.resumeService().getCvFilePath(applicantId);
         if (filePath.isEmpty()) {
-            DialogControllerFactory.info("CV Not Found",
-                    "No uploaded CV file exists for this account.",
+            DialogControllerFactory.info("CV Not Found", "No uploaded CV file exists for this account.",
                     view.getScene() == null ? null : view.getScene().getWindow());
             return;
         }
@@ -203,5 +210,75 @@ public class ApplicantReviewController {
                     "Unable to open file: " + ex.getMessage(),
                     view.getScene() == null ? null : view.getScene().getWindow());
         }
+    }
+
+    private VBox buildCvCard(String applicantId) {
+        ResumeInfo resume = services.resumeService().getOrCreateResume(applicantId);
+        boolean hasCv = resume.getCvStoredPath() != null && !resume.getCvStoredPath().isBlank()
+                && resume.getCvFileName() != null && !resume.getCvFileName().isBlank();
+
+        VBox card = new VBox(10);
+        card.getStyleClass().add("panel-card");
+        card.setPadding(new Insets(14));
+
+        HBox sectionHeader = new HBox(6);
+        sectionHeader.setAlignment(Pos.CENTER_LEFT);
+        sectionHeader.getChildren().addAll(
+                IconFactory.glyph(IconFactory.IconType.FILE, 13, Color.web("#354a5f")),
+                labelStyle("APPLICANT CV", "-fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: #94a3b8;")
+        );
+
+        HBox fileRow = new HBox(12);
+        fileRow.setAlignment(Pos.CENTER_LEFT);
+        fileRow.setStyle("-fx-background-color: #f8fafc; -fx-background-radius: 8; -fx-padding: 12;");
+
+        StackPane fileIcon = new StackPane();
+        fileIcon.setStyle("-fx-background-color: #fee2e2; -fx-background-radius: 8;");
+        fileIcon.setPrefSize(36, 36);
+        fileIcon.setMinSize(36, 36);
+        fileIcon.setMaxSize(36, 36);
+        fileIcon.getChildren().add(IconFactory.glyph(IconFactory.IconType.FILE, 16, Color.web("#ef4444")));
+
+        VBox fileMeta = new VBox(2);
+        fileMeta.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(fileMeta, Priority.ALWAYS);
+
+        Label fileName = labelStyle(hasCv ? resume.getCvFileName() : "No CV uploaded",
+                "-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: " + (hasCv ? "#0f172a" : "#94a3b8") + ";");
+        fileName.setMaxWidth(Double.MAX_VALUE);
+
+        String metaText = hasCv
+                ? readableSize(resume.getCvFileSizeBytes()) + "  ·  Uploaded "
+                  + (resume.getCvUploadedAt() != null
+                        ? resume.getCvUploadedAt().format(DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm"))
+                        : "Unknown date")
+                : "The applicant has not uploaded a CV file";
+        Label fileSub = labelStyle(metaText, "-fx-font-size: 11px; -fx-text-fill: #64748b;");
+        fileSub.setMaxWidth(Double.MAX_VALUE);
+        fileMeta.getChildren().addAll(fileName, fileSub);
+
+        Button openBtn = new Button("Open");
+        openBtn.getStyleClass().add("secondary-button");
+        openBtn.setGraphic(IconFactory.glyph(IconFactory.IconType.EYE, 13, Color.web("#354a5f")));
+        openBtn.setContentDisplay(ContentDisplay.LEFT);
+        openBtn.setTooltip(new Tooltip("Open CV file in system viewer"));
+        openBtn.setDisable(!hasCv);
+        openBtn.setOnAction(e -> openCvFile(applicantId));
+
+        fileRow.getChildren().addAll(fileIcon, fileMeta, openBtn);
+        card.getChildren().addAll(sectionHeader, fileRow);
+        return card;
+    }
+
+    private Label labelStyle(String text, String style) {
+        Label l = new Label(text);
+        l.setStyle(style);
+        return l;
+    }
+
+    private String readableSize(long bytes) {
+        if (bytes <= 0) return "0 KB";
+        if (bytes < 1024 * 1024) return Math.max(1, bytes / 1024) + " KB";
+        return String.format("%.1f MB", bytes / 1024.0 / 1024.0);
     }
 }

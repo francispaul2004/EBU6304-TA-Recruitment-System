@@ -32,6 +32,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javafx.scene.Scene;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 public class MyApplicationsController {
 
@@ -698,15 +701,22 @@ public class MyApplicationsController {
             return;
         }
 
-        Application app = row.application();
-        Job job = row.job();
-        String message = "Position: " + resolveCardTitle(job, app) + "\n"
-                + "Application ID: " + app.getApplicationId() + "\n"
-                + "Match Score: " + app.getMatchScore() + "%\n"
-                + "Missing Skills: " + (app.getMissingSkills().isEmpty() ? "None" : String.join(", ", app.getMissingSkills())) + "\n\n"
-                + "Statement:\n"
-                + (app.getStatement() == null || app.getStatement().isBlank() ? "(No statement)" : app.getStatement());
-        DialogControllerFactory.info("Application Detail", message, view.getScene() == null ? null : view.getScene().getWindow());
+        Stage stage = new Stage();
+        stage.initModality(Modality.APPLICATION_MODAL);
+        if (view.getScene() != null) {
+            stage.initOwner(view.getScene().getWindow());
+        }
+        stage.setTitle("Application Detail");
+
+        Parent reviewView = new ApplicantReviewController(
+                services, user, row.application().getApplicationId(), true).getView();
+        Scene scene = new Scene(reviewView, 980, 780);
+        if (MyApplicationsController.class.getResource("/styles/app.css") != null) {
+            scene.getStylesheets().add(
+                    MyApplicationsController.class.getResource("/styles/app.css").toExternalForm());
+        }
+        stage.setScene(scene);
+        stage.showAndWait();
     }
 
     private void withdrawSelectedApplication() {
