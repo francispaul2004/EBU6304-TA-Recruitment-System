@@ -120,7 +120,7 @@
   "weeklyHours" : 6,
   "positions" : 4,
   "organiserId" : "U101",
-  "status" : "CLOSED",
+  "status" : "OPEN",
   "createdAt" : "2026-04-01T16:00:00",
   "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-04-30T23:59:00"

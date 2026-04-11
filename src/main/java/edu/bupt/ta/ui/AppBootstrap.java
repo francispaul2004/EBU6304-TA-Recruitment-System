@@ -16,12 +16,8 @@ public class AppBootstrap {
 
     private static final double LOGIN_WIDTH = 1180;
     private static final double LOGIN_HEIGHT = 760;
-    private static final double LOGIN_MIN_WIDTH = 1180;
-    private static final double LOGIN_MIN_HEIGHT = 760;
     private static final double MAIN_WIDTH = 1280;
-    private static final double MAIN_HEIGHT = 860;
-    private static final double MAIN_MIN_WIDTH = 1280;
-    private static final double MAIN_MIN_HEIGHT = 860;
+    private static final double MAIN_HEIGHT = 800;
 
     private final ServiceRegistry services = new ServiceRegistry();
     private final StackPane root = new StackPane();
@@ -31,7 +27,7 @@ public class AppBootstrap {
         showLogin();
         Scene scene = new Scene(root, LOGIN_WIDTH, LOGIN_HEIGHT);
         scene.getStylesheets().add(getClass().getResource("/styles/app.css").toExternalForm());
-        Platform.runLater(() -> resizeWindow(LOGIN_WIDTH, LOGIN_HEIGHT, LOGIN_MIN_WIDTH, LOGIN_MIN_HEIGHT));
+        Platform.runLater(() -> resizeWindow(LOGIN_WIDTH, LOGIN_HEIGHT));
         return scene;
     }
 
@@ -54,7 +50,7 @@ public class AppBootstrap {
     private void showLogin() {
         LoginController loginController = new LoginController(services, this::showMainShell);
         root.getChildren().setAll(loginController.getView());
-        resizeWindow(LOGIN_WIDTH, LOGIN_HEIGHT, LOGIN_MIN_WIDTH, LOGIN_MIN_HEIGHT);
+        resizeWindow(LOGIN_WIDTH, LOGIN_HEIGHT);
     }
 
     private void showMainShell(User user) {
@@ -63,18 +59,16 @@ public class AppBootstrap {
             showLogin();
         });
         root.getChildren().setAll(shellController.getView());
-        resizeWindow(MAIN_WIDTH, MAIN_HEIGHT, MAIN_MIN_WIDTH, MAIN_MIN_HEIGHT);
+        resizeWindow(MAIN_WIDTH, MAIN_HEIGHT);
     }
 
-    private void resizeWindow(double width, double height, double minWidth, double minHeight) {
+    private void resizeWindow(double width, double height) {
         if (root.getScene() == null || !(root.getScene().getWindow() instanceof Stage stage)) {
             return;
         }
         if (stage.isMaximized()) {
             stage.setMaximized(false);
         }
-        stage.setMinWidth(minWidth);
-        stage.setMinHeight(minHeight);
         stage.setWidth(width);
         stage.setHeight(height);
         stage.centerOnScreen();

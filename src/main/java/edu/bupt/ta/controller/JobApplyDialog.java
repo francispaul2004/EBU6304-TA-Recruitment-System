@@ -48,7 +48,7 @@ public final class JobApplyDialog {
         stage.initModality(Modality.WINDOW_MODAL);
         stage.setTitle("Apply for: " + (job != null && job.getTitle() != null ? job.getTitle() : ""));
 
-        Label hint = new Label("Information below is from your CV (read only).");
+        Label hint = new Label("If you want to modify the following content, please go to My CV to edit it.");
         hint.setWrapText(true);
         hint.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748b;");
 
@@ -80,10 +80,9 @@ public final class JobApplyDialog {
         grid.getColumnConstraints().addAll(c0, c1);
 
         Label stmtTitle = new Label("Application Statement");
-        stmtTitle.setStyle("-fx-font-size: 12px; -fx-font-weight: 800; -fx-text-fill: #334155;");
+        stmtTitle.setStyle("-fx-font-size: 12px; -fx-font-weight: 900; -fx-text-fill: #334155;");
 
-        Label stmtHint = new Label(
-                "Briefly explain why you are applying and what strengths you bring. Please write in English.");
+        Label stmtHint = new Label("Please explain your motivation and strengths for this role in English.");
         stmtHint.setWrapText(true);
         stmtHint.setStyle("-fx-font-size: 11px; -fx-text-fill: #94a3b8;");
 

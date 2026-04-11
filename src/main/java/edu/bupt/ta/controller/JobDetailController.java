@@ -117,6 +117,7 @@ public class JobDetailController {
         populateResponsibilities(job);
         populateModuleInfo(job);
         updateApplyButton();
+        view.setVvalue(0);
     }
 
     public void setMatchExplanation(MatchExplanationDTO dto) {
@@ -184,7 +185,7 @@ public class JobDetailController {
         applyButton.getStyleClass().add("position-apply-button");
         applyButton.setMaxWidth(Double.MAX_VALUE);
         applyButton.setMinWidth(0);
-        applyButton.setPrefHeight(68);
+        applyButton.setPrefHeight(44);
         applyButton.setOnAction(event -> {
             if (onApplyAction != null && currentJob != null) {
                 onApplyAction.run();

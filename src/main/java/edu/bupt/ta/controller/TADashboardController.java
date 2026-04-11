@@ -85,6 +85,8 @@ public class TADashboardController {
         ScrollPane scrollPane = new ScrollPane(page);
         scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setPannable(true);
+        scrollPane.setVvalue(0.0);
         scrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;");
 
         view.setCenter(scrollPane);
@@ -452,13 +454,10 @@ public class TADashboardController {
         Label title = new Label("Quick Actions");
         title.setStyle("-fx-font-size: 22px; -fx-font-weight: 900; -fx-text-fill: white;");
 
-        int profileCompletion = services.applicantProfileService().calculateProfileCompletion(applicantId);
-
         Button profileButton = quickActionButton("Complete Profile", IconFactory.IconType.PENCIL);
         profileButton.setOnAction(event -> openProfileModal());
 
-        Label pending = buildMiniPill(profileCompletion >= 100 ? "DONE" : "PENDING", profileCompletion >= 100 ? "success" : "warning");
-        HBox profileRow = new HBox(profileButton, pending);
+        HBox profileRow = new HBox(profileButton);
         HBox.setHgrow(profileButton, Priority.ALWAYS);
         profileRow.setAlignment(Pos.CENTER_LEFT);
 
@@ -694,7 +693,7 @@ public class TADashboardController {
         if (row.primaryAction()) {
             applyToJob(row.job());
         } else {
-            openJobBrowserModal();
+            openJobDetailModal(row.job());
         }
     }
 
@@ -732,6 +731,33 @@ public class TADashboardController {
 
     private void openJobBrowserModal() {
         showModal("Browse Jobs", new JobBrowserController(services, user).getView(), 1320, 860);
+    }
+
+    private void openJobDetailModal(Job job) {
+        JobDetailController detailCtrl = new JobDetailController(services);
+        ApplicationStatus appStatus = services.applicationService().getApplicationStatus(applicantId, job.getJobId()).orElse(null);
+        detailCtrl.setJobWithApplicationStatus(job, applicantId, appStatus);
+
+        detailCtrl.setOnApply(() -> {
+            applyToJob(job);
+        });
+        detailCtrl.setOnCancel(cancelledApplicantId -> {
+            cancelApplication(job);
+        });
+
+        showModal("Job Detail", detailCtrl.getView(), 800, 820);
+    }
+
+    private void cancelApplication(Job job) {
+        ValidationResult result = services.applicationService().cancelApplication(applicantId, job.getJobId());
+        if (!result.isValid()) {
+            DialogControllerFactory.operationFailed("Cancel Failed", String.join("\n", result.getErrors()),
+                    view.getScene() == null ? null : view.getScene().getWindow());
+            return;
+        }
+        DialogControllerFactory.success("Cancel Success", "Application cancelled successfully.",
+                view.getScene() == null ? null : view.getScene().getWindow());
+        initialize();
     }
 
     private void openApplicationsModal() {

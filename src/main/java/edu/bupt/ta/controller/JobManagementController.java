@@ -53,7 +53,6 @@ public class JobManagementController {
     private final ServiceRegistry services;
     private final User user;
     private final Consumer<Job> onViewApplicants;
-    private final String preferredJobId;
 
     private final VBox view = new VBox(18);
     private final TableView<JobTableRow> table = new TableView<>();
@@ -94,14 +93,9 @@ public class JobManagementController {
     private String lastPollFingerprint = "";
 
     public JobManagementController(ServiceRegistry services, User user, Consumer<Job> onViewApplicants) {
-        this(services, user, onViewApplicants, null);
-    }
-
-    public JobManagementController(ServiceRegistry services, User user, Consumer<Job> onViewApplicants, String preferredJobId) {
         this.services = services;
         this.user = user;
         this.onViewApplicants = onViewApplicants;
-        this.preferredJobId = preferredJobId;
         initialize();
         refresh();
         installPeriodicJobStatusRefresh();

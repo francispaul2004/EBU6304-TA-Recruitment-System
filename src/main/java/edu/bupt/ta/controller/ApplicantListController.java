@@ -6,7 +6,6 @@ import edu.bupt.ta.model.Application;
 import edu.bupt.ta.model.Job;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
-import edu.bupt.ta.util.DisplayPlaceholders;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -412,11 +411,11 @@ public class ApplicantListController {
 
         ApplicantReviewDTO dto = services.reviewService().getApplicantReviewData(row.applicationId, user.getUserId(), false);
         detailName.setText(row.applicantName);
-        detailMeta.setText(row.programme + (row.year > 0 ? ", Year " + row.year : "") + "  •  Match " + DisplayPlaceholders.MATCH_VALUE + "  •  " + humanStatus(row.status));
+        detailMeta.setText(row.programme + (row.year > 0 ? ", Year " + row.year : "") + "  •  Match " + row.matchScore + "%  •  " + humanStatus(row.status));
 
         skillsBox.getChildren().add(detailCard(
                 dto.matchedSkills().isEmpty() ? "Relevant skills pending" : dto.matchedSkills().get(0),
-                DisplayPlaceholders.MATCH_DETAILS
+                dto.matchExplanation().isBlank() ? "Match score " + dto.matchScore() + "% based on current overlap." : dto.matchExplanation()
         ));
         skillsBox.getChildren().add(detailCard(
                 "Teaching Availability",
@@ -555,7 +554,7 @@ public class ApplicantListController {
             top.getChildren().addAll(name, spacer, status);
 
             Label meta = new Label(item.programme + (item.year > 0 ? ", Year " + item.year : "")
-                    + "   •   Score " + DisplayPlaceholders.MATCH_VALUE);
+                    + "   •   Score " + item.matchScore + "%");
             meta.setWrapText(true);
             meta.setStyle("-fx-font-size: 12px; -fx-font-weight: 400; -fx-text-fill: #64748b;");
 
