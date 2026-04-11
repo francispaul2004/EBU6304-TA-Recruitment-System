@@ -143,9 +143,11 @@ public class JobEditorController {
         ColumnConstraints leftColumn = new ColumnConstraints();
         leftColumn.setPercentWidth(50);
         leftColumn.setHgrow(Priority.ALWAYS);
+        leftColumn.setFillWidth(true);
         ColumnConstraints rightColumn = new ColumnConstraints();
         rightColumn.setPercentWidth(50);
         rightColumn.setHgrow(Priority.ALWAYS);
+        rightColumn.setFillWidth(true);
         basicGrid.getColumnConstraints().setAll(leftColumn, rightColumn);
         basicGrid.add(field("Job Title", fields.title, true), 0, 0);
         basicGrid.add(field("Module Code", fields.moduleCode, true), 1, 0);
@@ -154,8 +156,7 @@ public class JobEditorController {
         basicGrid.add(field("Semester", fields.semester, true), 0, 2);
         basicGrid.add(field("Positions", fields.positions, true), 1, 2);
         basicGrid.add(field("Campus", campusField(fields), true), 0, 3, 2, 1);
-        basicGrid.add(field("Deadline", deadlineField(fields), true), 0, 4);
-        basicGrid.add(field("Publication Status", fields.status), 1, 4);
+        basicGrid.add(deadlineCompositeField(fields), 0, 4, 2, 1);
         int descriptionRow = 5;
         if (showOrganiserField) {
             basicGrid.add(field("Organiser", fields.organiser, true), 0, 5, 2, 1);
@@ -192,6 +193,82 @@ public class JobEditorController {
         skillSection.getChildren().addAll(buildSectionTitle("Skills & Requirements"), essentialTitle, fields.requiredSkillChips, gradeTitle, gradeRow, skillsGrid, note);
 
         wrapper.getChildren().addAll(basicSection, skillSection);
+        return wrapper;
+    }
+
+    private Parent deadlineCompositeField(EditorFields fields) {
+        VBox wrapper = new VBox(8);
+        fields.deadlineHour.getItems().setAll(buildHourOptions());
+        fields.deadlineMinute.getItems().setAll(buildMinuteOptions());
+        fields.deadlineHour.setPromptText("Hour");
+        fields.deadlineMinute.setPromptText("Minute");
+
+        GridPane labels = new GridPane();
+        labels.setHgap(16);
+        GridPane controls = new GridPane();
+        controls.setHgap(16);
+
+        for (GridPane grid : List.of(labels, controls)) {
+            ColumnConstraints c1 = new ColumnConstraints();
+            c1.setPercentWidth(25);
+            c1.setHgrow(Priority.ALWAYS);
+            c1.setFillWidth(true);
+            ColumnConstraints c2 = new ColumnConstraints();
+            c2.setPercentWidth(25);
+            c2.setHgrow(Priority.ALWAYS);
+            c2.setFillWidth(true);
+            ColumnConstraints c3 = new ColumnConstraints();
+            c3.setPercentWidth(25);
+            c3.setHgrow(Priority.ALWAYS);
+            c3.setFillWidth(true);
+            ColumnConstraints c4 = new ColumnConstraints();
+            c4.setPercentWidth(25);
+            c4.setHgrow(Priority.ALWAYS);
+            c4.setFillWidth(true);
+            grid.getColumnConstraints().setAll(c1, c2, c3, c4);
+        }
+
+        HBox deadlineLabelRow = new HBox(4);
+        deadlineLabelRow.setAlignment(Pos.CENTER_LEFT);
+        Label deadlineLabel = new Label("Deadline");
+        deadlineLabel.getStyleClass().add("field-label");
+        Label requiredMark = new Label("*");
+        requiredMark.getStyleClass().add("required-asterisk");
+        deadlineLabelRow.getChildren().addAll(deadlineLabel, requiredMark);
+
+        Label hourLabel = new Label("Hour");
+        hourLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: #94a3b8;");
+        Label minuteLabel = new Label("Minute");
+        minuteLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: #94a3b8;");
+        HBox statusLabelRow = new HBox(4);
+        statusLabelRow.setAlignment(Pos.CENTER_LEFT);
+        Label statusLabel = new Label("Publication Status");
+        statusLabel.getStyleClass().add("field-label");
+        Label statusRequiredMark = new Label("*");
+        statusRequiredMark.getStyleClass().add("required-asterisk");
+        statusLabelRow.getChildren().addAll(statusLabel, statusRequiredMark);
+
+        labels.add(deadlineLabelRow, 0, 0);
+        labels.add(hourLabel, 1, 0);
+        labels.add(minuteLabel, 2, 0);
+        labels.add(statusLabelRow, 3, 0);
+
+        fields.deadline.setPrefWidth(280);
+        fields.deadline.setMinWidth(200);
+        configureTimeCombo(fields.deadlineHour);
+        configureTimeCombo(fields.deadlineMinute);
+        fields.status.setMaxWidth(Double.MAX_VALUE);
+
+        controls.add(fields.deadline, 0, 0);
+        controls.add(fields.deadlineHour, 1, 0);
+        controls.add(fields.deadlineMinute, 2, 0);
+        controls.add(fields.status, 3, 0);
+
+        ((Region) fields.deadline).setMaxWidth(Double.MAX_VALUE);
+        fields.deadlineHour.setMaxWidth(Double.MAX_VALUE);
+        fields.deadlineMinute.setMaxWidth(Double.MAX_VALUE);
+
+        wrapper.getChildren().addAll(labels, controls);
         return wrapper;
     }
 
@@ -403,30 +480,6 @@ public class JobEditorController {
         fields.campusShahe.getStyleClass().add("campus-checkbox");
         HBox row = new HBox(20, fields.campusHaidian, fields.campusShahe);
         row.setAlignment(Pos.CENTER_LEFT);
-        return row;
-    }
-
-    private Parent deadlineField(EditorFields fields) {
-        fields.deadlineHour.getItems().setAll(buildHourOptions());
-        fields.deadlineMinute.getItems().setAll(buildMinuteOptions());
-        fields.deadlineHour.setPromptText("Hour");
-        fields.deadlineMinute.setPromptText("Minute");
-        fields.deadline.setPrefWidth(280);
-        fields.deadline.setMinWidth(200);
-        configureTimeCombo(fields.deadlineHour);
-        configureTimeCombo(fields.deadlineMinute);
-
-        Label hourCaption = new Label("Hour");
-        hourCaption.getStyleClass().add("deadline-time-caption");
-        VBox hourColumn = new VBox(6, hourCaption, fields.deadlineHour);
-
-        Label minuteCaption = new Label("Minute");
-        minuteCaption.getStyleClass().add("deadline-time-caption");
-        VBox minuteColumn = new VBox(6, minuteCaption, fields.deadlineMinute);
-
-        HBox row = new HBox(14, fields.deadline, hourColumn, minuteColumn);
-        row.setAlignment(Pos.BOTTOM_LEFT);
-        HBox.setHgrow(fields.deadline, Priority.ALWAYS);
         return row;
     }
 

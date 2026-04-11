@@ -79,6 +79,9 @@ public class JobManagementController {
     private final Label ovApplyBy = new Label("-");
     private final Label ovApplications = new Label("-");
     private final Label descriptionBody = new Label("-");
+    private final Label requiredSkillsBody = new Label("-");
+    private final Label preferredSkillsBody = new Label("-");
+    private final Label minimumGradeBody = new Label("-");
     private final Label appliedCount = new Label("0");
     private final Label reviewCount = new Label("0");
     private final Label hiredCount = new Label("0");
@@ -669,6 +672,20 @@ public class JobManagementController {
 
         descriptionCard.getChildren().addAll(descriptionKicker, descriptionBody);
 
+        VBox requirementCard = new VBox(12);
+        requirementCard.getStyleClass().add("soft-info-card");
+        requirementCard.setPadding(new Insets(16));
+
+        Label requirementKicker = new Label("SKILLS & REQUIREMENTS");
+        requirementKicker.getStyleClass().add("tiny-kicker");
+
+        requirementCard.getChildren().addAll(
+                requirementKicker,
+                detailSpecCell("Required Skills", requiredSkillsBody),
+                detailSpecCell("Preferred Skills", preferredSkillsBody),
+                detailSpecCell("Minimum Academic Grade", minimumGradeBody)
+        );
+
         VBox applicantCard = new VBox(12);
         applicantCard.getStyleClass().add("soft-info-card");
         applicantCard.setPadding(new Insets(16));
@@ -696,7 +713,7 @@ public class JobManagementController {
         closeButton.setMaxWidth(Double.MAX_VALUE);
         closeButton.setOnAction(event -> onClose());
 
-        VBox detailContent = new VBox(22, hero, overviewCard, descriptionCard, applicantCard);
+        VBox detailContent = new VBox(22, hero, overviewCard, descriptionCard, requirementCard, applicantCard);
         ScrollPane scrollPane = new ScrollPane(detailContent);
         scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
@@ -889,6 +906,9 @@ public class JobManagementController {
             detailSubtitle.setText("Choose a row to view job details.");
             detailBadges.getChildren().clear();
             clearOverviewFields();
+            requiredSkillsBody.setText("-");
+            preferredSkillsBody.setText("-");
+            minimumGradeBody.setText("-");
             descriptionBody.setText("—");
             appliedCount.setText("0");
             reviewCount.setText("0");
@@ -906,6 +926,9 @@ public class JobManagementController {
         detailTitle.setText(fallback(job.getTitle(), "Untitled Job"));
         detailSubtitle.setText(detailHeroSubtitle(job));
         populateOverviewFields(job, applications.size());
+        requiredSkillsBody.setText(joinOrFallback(job.getRequiredSkills(), "Not specified"));
+        preferredSkillsBody.setText(joinOrFallback(job.getPreferredSkills(), "Not specified"));
+        minimumGradeBody.setText(fallback(job.getMinimumAcademicGrade(), "Not specified"));
         detailBadges.getChildren().addAll(
                 buildMiniChip(fallback(job.getModuleCode(), "MODULE"), "#eff6ff", "#2563eb"),
                 buildJobTypeChip(job.getType()),
@@ -991,6 +1014,23 @@ public class JobManagementController {
         String module = fallback(job.getModuleName(), "Module");
         String semester = fallback(job.getSemester(), "Semester TBD");
         return module + " · " + semester + " · Deadline " + formatTimestamp(job.getDeadline());
+    }
+
+    private String joinOrFallback(List<String> values, String fallbackValue) {
+        if (values == null || values.isEmpty()) {
+            return fallbackValue;
+        }
+        StringBuilder builder = new StringBuilder();
+        for (String value : values) {
+            if (value == null || value.isBlank()) {
+                continue;
+            }
+            if (builder.length() > 0) {
+                builder.append(", ");
+            }
+            builder.append(value.trim());
+        }
+        return builder.length() == 0 ? fallbackValue : builder.toString();
     }
 
     private Label buildMiniChip(String text, String background, String color) {

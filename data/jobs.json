@@ -310,7 +310,7 @@
   "moduleCode" : "DA220",
   "moduleName" : "Data Analytics Coursework",
   "semester" : "AUTUMN_2026",
-  "type" : "OTHER",
+  "type" : "MODULE_TA",
   "description" : "Assist rubric checks, spreadsheet validation, and submission triage.",
   "minimumAcademicGrade" : "A / 90+",
   "requiredSkills" : [ "Excel", "Statistics" ],
