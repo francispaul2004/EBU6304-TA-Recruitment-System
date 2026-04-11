@@ -49,7 +49,6 @@ public class JobDetailController {
     private final Label organiserAvatarLabel = new Label("U");
 
     private final Label seatsMetricValue = new Label("-");
-    private final Label hoursMetricValue = new Label("-");
     private final Label deadlineMetricValue = new Label("-");
 
     private final Label descLabel = new Label("Choose a job card on the left to preview details.");
@@ -109,7 +108,6 @@ public class JobDetailController {
         organiserAvatarLabel.setText(initialsFromName(organiserNameLabel.getText()));
 
         seatsMetricValue.setText(job.getPositions() + " Posts");
-        hoursMetricValue.setText(job.getWeeklyHours() + " Hours");
         deadlineMetricValue.setText(formatMetricDeadline(job.getDeadline()));
 
         descLabel.setText(job.getDescription() == null || job.getDescription().isBlank()
@@ -238,13 +236,11 @@ public class JobDetailController {
 
     private HBox buildMetrics() {
         VBox seats = metricCard("AVAILABLE", "SEATS", seatsMetricValue, IconFactory.IconType.USERS);
-        VBox hours = metricCard("WEEKLY", "COMMITMENT", hoursMetricValue, IconFactory.IconType.INFO_CIRCLE);
         VBox deadline = metricCard("APPLICATION", "DEADLINE", deadlineMetricValue, IconFactory.IconType.CALENDAR);
 
-        HBox row = new HBox(16, seats, hours, deadline);
+        HBox row = new HBox(14, seats, deadline);
         row.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(seats, Priority.ALWAYS);
-        HBox.setHgrow(hours, Priority.ALWAYS);
         HBox.setHgrow(deadline, Priority.ALWAYS);
         return row;
     }
@@ -261,14 +257,14 @@ public class JobDetailController {
         valueLabel.setMaxWidth(Double.MAX_VALUE);
         valueLabel.setTextOverrun(OverrunStyle.ELLIPSIS);
 
-        HBox valueRow = new HBox(8, IconFactory.glyph(iconType, 15, Color.web("#00c29f")), valueLabel);
+        HBox valueRow = new HBox(6, IconFactory.glyph(iconType, 15, Color.web("#00c29f")), valueLabel);
         valueRow.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(valueLabel, Priority.ALWAYS);
 
-        VBox card = new VBox(8, kicker, valueRow);
+        VBox card = new VBox(6, kicker, valueRow);
         card.getStyleClass().add("position-metric-card");
-        card.setPadding(new Insets(14, 14, 14, 14));
-        card.setMinHeight(120);
+        card.setPadding(new Insets(12, 14, 12, 14));
+        card.setMinHeight(104);
         card.setMinWidth(0);
         HBox.setHgrow(card, Priority.ALWAYS);
         return card;
@@ -384,7 +380,6 @@ public class JobDetailController {
         organiserDeptLabel.setText("-");
         organiserAvatarLabel.setText("U");
         seatsMetricValue.setText("-");
-        hoursMetricValue.setText("-");
         deadlineMetricValue.setText("-");
         descLabel.setText("Choose a job card on the left to preview details.");
 

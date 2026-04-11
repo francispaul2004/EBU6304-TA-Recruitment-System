@@ -956,15 +956,15 @@
 }
 
 .position-metric-kicker {
-    -fx-font-size: 10px;
-    -fx-font-weight: 700;
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
     -fx-text-fill: #94a3b8;
     -fx-letter-spacing: 1px;
 }
 
 .position-metric-value {
-    -fx-font-size: 20px;
-    -fx-font-weight: 800;
+    -fx-font-size: 24px;
+    -fx-font-weight: 900;
     -fx-text-fill: #0f172a;
 }
 
