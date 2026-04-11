@@ -7,6 +7,8 @@ import edu.bupt.ta.model.Job;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
 import edu.bupt.ta.ui.IconFactory;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -22,6 +24,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.util.Duration;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -31,6 +34,8 @@ import java.util.Locale;
 import java.util.function.Consumer;
 
 public class MODashboardController {
+    private static final Duration JOB_STATUS_POLL_INTERVAL = Duration.seconds(5);
+
     private static final DateTimeFormatter DEADLINE_FORMAT = DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH);
     private static final double KPI_CARD_HEIGHT = 154;
     private static final int RECENT_JOB_MONTHS = 3;
@@ -46,6 +51,10 @@ public class MODashboardController {
 
     private final BorderPane view = new BorderPane();
 
+    private Timeline jobStatusRefreshTimeline;
+
+    private String lastPollFingerprint = "";
+
     public MODashboardController(ServiceRegistry services,
                                  User user,
                                  Consumer<Job> openJobManagement,
@@ -57,6 +66,7 @@ public class MODashboardController {
         this.openApplicantList = openApplicantList;
         this.openProfile = openProfile;
         initialize();
+        installPeriodicJobStatusRefresh();
     }
 
     public Parent getView() {
@@ -68,7 +78,34 @@ public class MODashboardController {
         refresh();
     }
 
+    private void installPeriodicJobStatusRefresh() {
+        jobStatusRefreshTimeline = new Timeline(new KeyFrame(JOB_STATUS_POLL_INTERVAL, event -> {
+            if (view.getScene() != null) {
+                refreshFromPoll();
+            }
+        }));
+        jobStatusRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
+        view.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene == null) {
+                jobStatusRefreshTimeline.stop();
+            } else {
+                jobStatusRefreshTimeline.play();
+            }
+        });
+        if (view.getScene() != null) {
+            jobStatusRefreshTimeline.play();
+        }
+    }
+
+    private void refreshFromPoll() {
+        refresh(true);
+    }
+
     private void refresh() {
+        refresh(false);
+    }
+
+    private void refresh(boolean pollOnly) {
         List<Job> jobs = services.jobService().getJobsByOrganiser(user.getUserId()).stream()
                 .sorted(Comparator.comparing(Job::getCreatedAt,
                         Comparator.nullsLast(Comparator.reverseOrder())))
@@ -82,6 +119,12 @@ public class MODashboardController {
         long underReview = applications.stream()
                 .filter(app -> app.getStatus() == ApplicationStatus.UNDER_REVIEW)
                 .count();
+
+        String fingerprint = buildDashboardFingerprint(jobs, applications, openJobs, underReview);
+        if (pollOnly && fingerprint.equals(lastPollFingerprint)) {
+            return;
+        }
+        lastPollFingerprint = fingerprint;
 
         VBox page = new VBox(22);
         page.getStyleClass().add("app-surface");
@@ -97,6 +140,22 @@ public class MODashboardController {
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;");
         view.setCenter(scrollPane);
+    }
+
+    private static String buildDashboardFingerprint(List<Job> jobs, List<Application> applications,
+                                                    long openJobs, long underReview) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(jobs.size()).append('|').append(applications.size()).append('|')
+                .append(openJobs).append('|').append(underReview).append('|');
+        for (Job job : jobs) {
+            sb.append(job.getJobId()).append(':').append(job.getStatus()).append(':')
+                    .append(job.getTitle() == null ? "" : job.getTitle().replace('|', ' ')).append(';');
+        }
+        sb.append('|');
+        for (Application app : applications) {
+            sb.append(app.getApplicationId()).append(':').append(app.getStatus()).append(';');
+        }
+        return sb.toString();
     }
 
     private HBox buildHero(int jobCount, int applicationCount) {

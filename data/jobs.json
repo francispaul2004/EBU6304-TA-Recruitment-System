@@ -14,6 +14,7 @@
   "organiserId" : "U101",
   "status" : "EXPIRED",
   "createdAt" : "2026-04-01T09:30:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-04-09T12:54:00"
 }, {
   "jobId" : "J102",
@@ -31,6 +32,7 @@
   "organiserId" : "U101",
   "status" : "CLOSED",
   "createdAt" : "2026-03-10T11:00:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-03-25T23:59:00"
 }, {
   "jobId" : "J103",
@@ -48,6 +50,7 @@
   "organiserId" : "U101",
   "status" : "CLOSED",
   "createdAt" : "2026-03-12T14:15:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-04-10T23:59:00"
 }, {
   "jobId" : "J104",
@@ -65,6 +68,7 @@
   "organiserId" : "U101",
   "status" : "DRAFT",
   "createdAt" : "2026-04-01T10:05:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-04-28T23:59:00"
 }, {
   "jobId" : "J105",
@@ -82,6 +86,7 @@
   "organiserId" : "U102",
   "status" : "OPEN",
   "createdAt" : "2026-04-01T15:20:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-10-18T23:59:00"
 }, {
   "jobId" : "J106",
@@ -99,6 +104,7 @@
   "organiserId" : "U102",
   "status" : "DRAFT",
   "createdAt" : "2026-04-01T15:28:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-10-05T23:59:00"
 }, {
   "jobId" : "J107",
@@ -116,6 +122,7 @@
   "organiserId" : "U101",
   "status" : "CLOSED",
   "createdAt" : "2026-04-01T16:00:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-04-30T23:59:00"
 }, {
   "jobId" : "J108",
@@ -133,6 +140,7 @@
   "organiserId" : "U101",
   "status" : "DRAFT",
   "createdAt" : "2026-04-01T16:10:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-08-15T23:59:00"
 }, {
   "jobId" : "J109",
@@ -150,6 +158,7 @@
   "organiserId" : "U101",
   "status" : "EXPIRED",
   "createdAt" : "2026-03-05T09:45:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-03-20T23:59:00"
 }, {
   "jobId" : "J110",
@@ -167,6 +176,7 @@
   "organiserId" : "U102",
   "status" : "OPEN",
   "createdAt" : "2026-04-01T16:20:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-11-20T23:59:00"
 }, {
   "jobId" : "J111",
@@ -184,6 +194,7 @@
   "organiserId" : "U102",
   "status" : "CLOSED",
   "createdAt" : "2026-03-01T13:30:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-03-18T23:59:00"
 }, {
   "jobId" : "J112",
@@ -201,6 +212,7 @@
   "organiserId" : "U101",
   "status" : "CLOSED",
   "createdAt" : "2026-04-01T16:40:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-10-01T23:59:00"
 }, {
   "jobId" : "J113",
@@ -218,6 +230,7 @@
   "organiserId" : "U101",
   "status" : "OPEN",
   "createdAt" : "2026-04-02T09:00:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-10-25T23:59:00"
 }, {
   "jobId" : "J114",
@@ -235,6 +248,7 @@
   "organiserId" : "U101",
   "status" : "OPEN",
   "createdAt" : "2026-04-02T10:10:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-10-30T23:59:00"
 }, {
   "jobId" : "J115",
@@ -252,6 +266,7 @@
   "organiserId" : "U101",
   "status" : "CLOSED",
   "createdAt" : "2026-04-02T11:20:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-07-12T23:59:00"
 }, {
   "jobId" : "J116",
@@ -269,6 +284,7 @@
   "organiserId" : "U101",
   "status" : "EXPIRED",
   "createdAt" : "2026-04-02T13:00:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-06-10T23:59:00"
 }, {
   "jobId" : "J117",
@@ -286,6 +302,7 @@
   "organiserId" : "U101",
   "status" : "OPEN",
   "createdAt" : "2026-04-02T14:15:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-11-05T23:59:00"
 }, {
   "jobId" : "J118",
@@ -295,13 +312,14 @@
   "semester" : "AUTUMN_2026",
   "type" : "OTHER",
   "description" : "Assist rubric checks, spreadsheet validation, and submission triage.",
-  "minimumAcademicGrade" : null,
+  "minimumAcademicGrade" : "A / 90+",
   "requiredSkills" : [ "Excel", "Statistics" ],
   "preferredSkills" : [ "Python" ],
   "weeklyHours" : 3,
   "positions" : 2,
   "organiserId" : "U101",
-  "status" : "OPEN",
+  "status" : "EXPIRED",
   "createdAt" : "2026-04-02T15:05:00",
-  "deadline" : "2026-11-12T23:59:00"
+  "campuses" : [ "Haidian Campus", "Shahe Campus" ],
+  "deadline" : "2026-04-11T20:30:00"
 } ]

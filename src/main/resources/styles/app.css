@@ -612,6 +612,12 @@
     -fx-text-fill: #dc2626;
 }
 
+.deadline-time-caption {
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #64748b;
+}
+
 /* Shell */
 .shell-root {
     -fx-background-color: -ta-bg;
@@ -734,6 +740,9 @@
     -fx-border-radius: 14;
     -fx-background-radius: 14;
     -fx-padding: 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-background-insets: 0;
 }
 
 .table-view .column-header-background {
@@ -778,11 +787,31 @@
 }
 
 .table-view.job-table-spaced {
-    -fx-padding: 6;
+    -fx-padding: 10;
+    -fx-background-insets: 0;
+    -fx-border-insets: 0;
+}
+
+.table-view.job-table-spaced:focused {
+    -fx-background-insets: 0;
+    -fx-border-insets: 0;
+}
+
+.table-view.job-table-spaced > .virtual-flow,
+.table-view.job-table-spaced > .virtual-flow > .clipped-container,
+.table-view.job-table-spaced > .virtual-flow > .clipped-container > .sheet {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.table-view.job-table-spaced > .virtual-flow {
+    -fx-padding: 0 14 0 0;
 }
 
 .table-view.job-table-spaced .column-header-background {
     -fx-background-radius: 12 12 0 0;
+    -fx-padding: 0 14 0 0;
 }
 
 .table-view.job-table-spaced .column-header .label {
@@ -797,6 +826,69 @@
 .table-view.job-table-spaced .table-cell {
     -fx-alignment: CENTER;
     -fx-padding: 8 10 8 10;
+}
+
+.table-view.job-table-spaced .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-pref-height: 0;
+    -fx-max-height: 0;
+}
+
+.table-view.job-table-spaced .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 12;
+    -fx-min-width: 12;
+    -fx-max-width: 12;
+    -fx-padding: 2 0 2 0;
+}
+
+.table-view.job-table-spaced .scroll-bar:vertical:pressed,
+.table-view.job-table-spaced .scroll-bar:vertical:hover {
+    -fx-background-color: transparent;
+    -fx-pref-width: 12;
+    -fx-min-width: 12;
+    -fx-max-width: 12;
+    -fx-padding: 2 0 2 0;
+}
+
+.table-view.job-table-spaced .scroll-bar:vertical .track {
+    -fx-background-color: #f8fafc;
+    -fx-background-radius: 999;
+    -fx-background-insets: 0;
+}
+
+.table-view.job-table-spaced .scroll-bar:vertical .thumb {
+    -fx-background-color: #cbd5e1;
+    -fx-background-radius: 999;
+    -fx-background-insets: 0;
+}
+
+.table-view.job-table-spaced .scroll-bar:vertical .thumb:hover,
+.table-view.job-table-spaced .scroll-bar:vertical .thumb:pressed {
+    -fx-background-color: #cbd5e1;
+    -fx-background-radius: 999;
+    -fx-background-insets: 0;
+}
+
+.table-view.job-table-spaced .scroll-bar:vertical .increment-button,
+.table-view.job-table-spaced .scroll-bar:vertical .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+    -fx-min-height: 0;
+    -fx-max-height: 0;
+}
+
+.table-view.job-table-spaced .scroll-bar:vertical .increment-arrow,
+.table-view.job-table-spaced .scroll-bar:vertical .decrement-arrow {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-shape: "";
+}
+
+.table-view.job-table-spaced > .corner {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
 }
 
 .open-positions-panel {
