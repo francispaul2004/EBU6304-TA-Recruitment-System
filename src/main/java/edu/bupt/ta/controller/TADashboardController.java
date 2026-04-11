@@ -259,7 +259,7 @@ public class TADashboardController {
 
     private HBox buildMainArea() {
         VBox left = new VBox(18, buildRecentJobsCard(), buildRecommendedCard());
-        VBox right = new VBox(18, buildQuickActionsCard(), buildStatusCheckCard(), buildDeadlineCard());
+        VBox right = new VBox(18, buildQuickActionsCard(), buildDeadlineCard());
 
         HBox.setHgrow(left, Priority.ALWAYS);
         right.setMinWidth(260);
@@ -291,10 +291,6 @@ public class TADashboardController {
         table.setPrefHeight(250);
         table.setPlaceholder(new Label("No recent jobs available."));
 
-        TableColumn<JobSummaryRow, String> courseCol = new TableColumn<>("COURSE CODE");
-        courseCol.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().job().getModuleCode()));
-        courseCol.setCellFactory(column -> mutedTableCell());
-
         TableColumn<JobSummaryRow, JobSummaryRow> titleCol = new TableColumn<>("JOB TITLE");
         titleCol.setCellValueFactory(cell -> new SimpleObjectProperty<>(cell.getValue()));
         titleCol.setCellFactory(column -> new TableCell<>() {
@@ -307,14 +303,14 @@ public class TADashboardController {
                     return;
                 }
                 Label title = new Label(item.job().getTitle());
-                title.setWrapText(false);
-                title.setTextOverrun(OverrunStyle.ELLIPSIS);
+                title.setWrapText(true);
                 title.setMinWidth(0);
                 title.setMaxWidth(Double.MAX_VALUE);
                 title.prefWidthProperty().bind(getTableColumn().widthProperty().subtract(26));
                 title.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #1f2937;");
 
-                Label meta = new Label(item.job().getWeeklyHours() + " hrs/week");
+                String code = item.job().getModuleCode();
+                Label meta = new Label(code == null || code.isBlank() ? "-" : code);
                 meta.setStyle("-fx-font-size: 11px; -fx-font-weight: 400; -fx-text-fill: #94a3b8;");
 
                 VBox box = new VBox(2, title, meta);
@@ -365,7 +361,6 @@ public class TADashboardController {
             }
         });
 
-        courseCol.setPrefWidth(130);
         titleCol.setPrefWidth(380);
         deptCol.setPrefWidth(260);
         statusCol.setPrefWidth(120);
@@ -373,7 +368,7 @@ public class TADashboardController {
         statusCol.setStyle("-fx-alignment: CENTER;");
         actionCol.setStyle("-fx-alignment: CENTER;");
 
-        table.getColumns().setAll(courseCol, titleCol, deptCol, statusCol, actionCol);
+        table.getColumns().setAll(titleCol, deptCol, statusCol, actionCol);
 
         List<JobSummaryRow> rows = services.jobService().searchJobs(null).stream()
                 .filter(job -> job.getStatus() == JobStatus.OPEN)
@@ -388,6 +383,7 @@ public class TADashboardController {
     }
 
     private VBox buildRecommendedCard() {
+    private VBox buildRecommendedCard() {
         VBox card = new VBox(14);
         card.getStyleClass().add("panel-card");
         card.setPadding(new Insets(18));
@@ -395,31 +391,48 @@ public class TADashboardController {
         Label title = new Label("Recommended for You");
         title.setStyle("-fx-font-size: 18px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
 
-        List<Job> recommendations = services.jobService().searchJobs(null).stream()
-                .filter(job -> job.getStatus() == JobStatus.OPEN)
-                .filter(job -> services.applicationService().getApplicationStatus(applicantId, job.getJobId()).isEmpty())
-                .sorted(Comparator.comparingInt((Job job) -> recommendationScore(job)).reversed())
-                .limit(2)
-                .toList();
-
-        HBox row = new HBox(14);
-        if (recommendations.isEmpty()) {
-            VBox empty = new VBox(6);
-            empty.getStyleClass().add("soft-info-card");
-            empty.setPadding(new Insets(18));
-            Label emptyTitle = new Label("More recommendations will appear here");
-            emptyTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: #334155;");
-            Label emptyMeta = new Label("Complete your profile and CV to improve recommendations.");
-            emptyMeta.setWrapText(true);
-            emptyMeta.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748b;");
-            empty.getChildren().addAll(emptyTitle, emptyMeta);
-            row.getChildren().add(empty);
-        } else {
-            recommendations.forEach(job -> row.getChildren().add(recommendationCard(job)));
-        }
-
+        HBox row = new HBox(14, placeholderRecommendCard(), placeholderRecommendCard());
         card.getChildren().addAll(title, row);
         return card;
+    }
+
+    private VBox placeholderRecommendCard() {
+        VBox box = new VBox(10);
+        box.getStyleClass().add("soft-info-card");
+        box.setPadding(new Insets(14));
+        HBox.setHgrow(box, Priority.ALWAYS);
+
+        Region tagBar = skeletonBar(60, 16);
+        Region titleBar1 = skeletonBar(Double.MAX_VALUE, 14);
+        Region titleBar2 = skeletonBar(160, 14);
+        Region descBar1 = skeletonBar(Double.MAX_VALUE, 10);
+        Region descBar2 = skeletonBar(Double.MAX_VALUE, 10);
+        Region descBar3 = skeletonBar(120, 10);
+
+        Region hoursBar = skeletonBar(60, 10);
+        Region deadlineBar = skeletonBar(80, 10);
+        Region footerSpacer = new Region();
+        HBox.setHgrow(footerSpacer, Priority.ALWAYS);
+        HBox footer = new HBox(hoursBar, footerSpacer, deadlineBar);
+        footer.setAlignment(Pos.CENTER_LEFT);
+
+        box.getChildren().addAll(tagBar, titleBar1, titleBar2, descBar1, descBar2, descBar3, footer);
+        return box;
+    }
+
+    private Region skeletonBar(double width, double height) {
+        Region bar = new Region();
+        bar.setStyle("-fx-background-color: #e2e8f0; -fx-background-radius: 4;");
+        bar.setPrefHeight(height);
+        bar.setMinHeight(height);
+        bar.setMaxHeight(height);
+        if (width == Double.MAX_VALUE) {
+            bar.setMaxWidth(Double.MAX_VALUE);
+        } else {
+            bar.setPrefWidth(width);
+            bar.setMaxWidth(width);
+        }
+        return bar;
     }
 
     private VBox recommendationCard(Job job) {
