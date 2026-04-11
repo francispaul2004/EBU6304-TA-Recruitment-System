@@ -377,6 +377,22 @@
     -fx-alignment: CENTER_LEFT;
 }
 
+/* Browse Jobs：为纵向滚动条留出右侧空隙，避免挡住卡片右上角状态角标 */
+.job-open-positions-list {
+    -fx-padding: 0;
+}
+.job-open-positions-list .list-cell {
+    -fx-padding: 4 36 10 10;
+    -fx-graphic-text-gap: 0;
+}
+.job-open-positions-list .list-cell:empty {
+    -fx-padding: 0;
+}
+.job-open-positions-list .virtual-flow .clipped-container,
+.job-open-positions-list .virtual-flow .sheet {
+    -fx-background-color: transparent;
+}
+
 .text-area:focused .content {
     -fx-background-color: white;
     -fx-background-radius: 8;
