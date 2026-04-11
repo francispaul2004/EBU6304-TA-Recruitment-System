@@ -13,8 +13,6 @@ public class ApplicantProfile implements Identifiable<String> {
     private int year;
     private String email;
     private String phone;
-    private String campus;
-    private boolean acceptCrossCampus;
     private LocalDateTime lastUpdated;
 
     public ApplicantProfile() {
@@ -100,22 +98,6 @@ public class ApplicantProfile implements Identifiable<String> {
 
     public void setPhone(String phone) {
         this.phone = phone;
-    }
-
-    public String getCampus() {
-        return campus;
-    }
-
-    public void setCampus(String campus) {
-        this.campus = campus;
-    }
-
-    public boolean isAcceptCrossCampus() {
-        return acceptCrossCampus;
-    }
-
-    public void setAcceptCrossCampus(boolean acceptCrossCampus) {
-        this.acceptCrossCampus = acceptCrossCampus;
     }
 
     public LocalDateTime getLastUpdated() {

@@ -4,6 +4,40 @@
     -fx-text-fill: #0f172a;
 }
 
+.scroll-bar:vertical,
+.scroll-bar:horizontal {
+    -fx-pref-width: 10;
+    -fx-pref-height: 10;
+    -fx-min-width: 10;
+    -fx-min-height: 10;
+}
+
+.scroll-bar:vertical .track,
+.scroll-bar:horizontal .track {
+    -fx-background-color: transparent;
+    -fx-background-radius: 5;
+}
+
+.scroll-bar:vertical .thumb,
+.scroll-bar:horizontal .thumb {
+    -fx-background-radius: 5;
+    -fx-background-insets: 0 2 0 2;
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+}
+
+.scroll-bar:vertical .increment-button,
+.scroll-bar:vertical .decrement-button,
+.scroll-bar:horizontal .increment-button,
+.scroll-bar:horizontal .decrement-button {
+    -fx-pref-width: 0;
+    -fx-pref-height: 0;
+}
+
 /* Tokens */
 * {
     -ta-navy: #354a5f;
@@ -375,22 +409,6 @@
 
 .combo-box-popup .list-view .list-cell {
     -fx-alignment: CENTER_LEFT;
-}
-
-/* Browse Jobs：为纵向滚动条留出右侧空隙，避免挡住卡片右上角状态角标 */
-.job-open-positions-list {
-    -fx-padding: 0;
-}
-.job-open-positions-list .list-cell {
-    -fx-padding: 4 36 10 10;
-    -fx-graphic-text-gap: 0;
-}
-.job-open-positions-list .list-cell:empty {
-    -fx-padding: 0;
-}
-.job-open-positions-list .virtual-flow .clipped-container,
-.job-open-positions-list .virtual-flow .sheet {
-    -fx-background-color: transparent;
 }
 
 .text-area:focused .content {
@@ -778,25 +796,19 @@
 }
 
 .table-view.job-table-spaced {
-    -fx-padding: 6;
+    -fx-padding: 10;
 }
 
 .table-view.job-table-spaced .column-header-background {
     -fx-background-radius: 12 12 0 0;
 }
 
-.table-view.job-table-spaced .column-header .label {
-    -fx-alignment: CENTER;
-    -fx-text-alignment: CENTER;
-}
-
 .table-view.job-table-spaced .table-row-cell {
-    -fx-background-insets: 0 0 2 0;
+    -fx-background-insets: 0 0 8 0;
 }
 
 .table-view.job-table-spaced .table-cell {
-    -fx-alignment: CENTER;
-    -fx-padding: 8 10 8 10;
+    -fx-padding: 14 12 14 12;
 }
 
 .open-positions-panel {

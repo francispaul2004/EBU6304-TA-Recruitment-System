@@ -146,13 +146,7 @@ public class MyCvController {
                 infoCell("PHONE", safe(profile.getPhone()))
         );
 
-        HBox row3 = new HBox(24,
-                infoCell("CAMPUS", safe(profile.getCampus())),
-                infoCell("ACCEPT CROSS-CAMPUS", profile.isAcceptCrossCampus() ? "Yes" : "No"),
-                infoCell("ACADEMIC YEAR", profile.getYear() > 0 ? "Year " + profile.getYear() : "-")
-        );
-
-        body.getChildren().addAll(row1, row2, row3);
+        body.getChildren().addAll(row1, row2);
         card.getChildren().addAll(header, body);
         return card;
     }

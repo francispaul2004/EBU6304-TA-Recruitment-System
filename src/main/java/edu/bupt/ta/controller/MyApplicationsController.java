@@ -5,7 +5,6 @@ import edu.bupt.ta.model.Application;
 import edu.bupt.ta.model.Job;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
-import edu.bupt.ta.util.DisplayPlaceholders;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
@@ -703,7 +702,7 @@ public class MyApplicationsController {
         Job job = row.job();
         String message = "Position: " + resolveCardTitle(job, app) + "\n"
                 + "Application ID: " + app.getApplicationId() + "\n"
-                + "Match Score: " + DisplayPlaceholders.MATCH_VALUE + "\n"
+                + "Match Score: " + app.getMatchScore() + "%\n"
                 + "Missing Skills: " + (app.getMissingSkills().isEmpty() ? "None" : String.join(", ", app.getMissingSkills())) + "\n\n"
                 + "Statement:\n"
                 + (app.getStatement() == null || app.getStatement().isBlank() ? "(No statement)" : app.getStatement());

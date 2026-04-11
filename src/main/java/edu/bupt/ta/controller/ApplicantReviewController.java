@@ -4,7 +4,6 @@ import edu.bupt.ta.dto.ApplicantReviewDTO;
 import edu.bupt.ta.enums.Role;
 import edu.bupt.ta.model.User;
 import edu.bupt.ta.service.ServiceRegistry;
-import edu.bupt.ta.util.DisplayPlaceholders;
 import edu.bupt.ta.util.ValidationResult;
 import javafx.geometry.Pos;
 import javafx.geometry.Insets;
@@ -62,10 +61,10 @@ public class ApplicantReviewController {
         basicInfo.getChildren().addAll(
                 info("Technical Skills", String.join(", ", dto.technicalSkills())),
                 info("Availability", String.join(", ", dto.availability())),
-                info("Match Score", DisplayPlaceholders.MATCH_VALUE),
+                info("Match Score", dto.matchScore() + "%"),
             info("Matched Skills", safeJoin(dto.matchedSkills())),
                 info("Missing Skills", dto.missingSkills().isEmpty() ? "None" : String.join(", ", dto.missingSkills())),
-            info("Match Explanation", DisplayPlaceholders.MATCH_DETAILS),
+            info("Match Explanation", blankToDash(dto.matchExplanation())),
                 info("Workload", "Current " + dto.currentHours() + "h, Projected " + dto.projectedHours()
                         + "h / Max " + dto.maxWeeklyHours() + "h (" + dto.riskLevel() + ")"),
                 info("Statement", dto.statement())
