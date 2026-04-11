@@ -55,8 +55,20 @@ public class ApplicantReviewController {
     }
 
     private void initialize() {
-        ApplicantReviewDTO dto = services.reviewService()
-                .getApplicantReviewData(applicationId, user.getUserId(), isAdmin() || readOnly);
+        ApplicantReviewDTO dto;
+        try {
+            dto = services.reviewService()
+                    .getApplicantReviewData(applicationId, user.getUserId(), isAdmin() || readOnly);
+        } catch (Exception e) {
+            view.setPadding(new Insets(32));
+            view.getStyleClass().add("app-surface");
+            view.setAlignment(javafx.geometry.Pos.CENTER);
+            Label msg = new Label("Unable to load application details.\n" + e.getMessage());
+            msg.setWrapText(true);
+            msg.setStyle("-fx-font-size: 14px; -fx-text-fill: #64748b; -fx-text-alignment: center;");
+            view.getChildren().add(msg);
+            return;
+        }
         this.reviewData = dto;
 
         view.setPadding(new Insets(16));
