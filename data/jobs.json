@@ -65,6 +65,7 @@
   "organiserId" : "U101",
   "status" : "EXPIRED",
   "createdAt" : "2026-04-01T09:30:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-04-09T12:54:00"
 }, {
   "jobId" : "J102",
@@ -82,6 +83,7 @@
   "organiserId" : "U101",
   "status" : "CLOSED",
   "createdAt" : "2026-03-10T11:00:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-03-25T23:59:00"
 }, {
   "jobId" : "J103",
@@ -99,6 +101,7 @@
   "organiserId" : "U101",
   "status" : "CLOSED",
   "createdAt" : "2026-03-12T14:15:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-04-10T23:59:00"
 }, {
   "jobId" : "J104",
@@ -116,6 +119,7 @@
   "organiserId" : "U101",
   "status" : "DRAFT",
   "createdAt" : "2026-04-01T10:05:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-04-28T23:59:00"
 }, {
   "jobId" : "J105",
@@ -133,6 +137,7 @@
   "organiserId" : "U102",
   "status" : "OPEN",
   "createdAt" : "2026-04-01T15:20:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-10-18T23:59:00"
 }, {
   "jobId" : "J106",
@@ -150,6 +155,7 @@
   "organiserId" : "U102",
   "status" : "DRAFT",
   "createdAt" : "2026-04-01T15:28:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-10-05T23:59:00"
 }, {
   "jobId" : "J107",
@@ -167,6 +173,7 @@
   "organiserId" : "U101",
   "status" : "OPEN",
   "createdAt" : "2026-04-01T16:00:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-04-30T23:59:00"
 }, {
   "jobId" : "J108",
@@ -184,6 +191,7 @@
   "organiserId" : "U101",
   "status" : "DRAFT",
   "createdAt" : "2026-04-01T16:10:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-08-15T23:59:00"
 }, {
   "jobId" : "J109",
@@ -201,6 +209,7 @@
   "organiserId" : "U101",
   "status" : "EXPIRED",
   "createdAt" : "2026-03-05T09:45:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-03-20T23:59:00"
 }, {
   "jobId" : "J110",
@@ -218,6 +227,7 @@
   "organiserId" : "U102",
   "status" : "OPEN",
   "createdAt" : "2026-04-01T16:20:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-11-20T23:59:00"
 }, {
   "jobId" : "J111",
@@ -235,6 +245,7 @@
   "organiserId" : "U102",
   "status" : "CLOSED",
   "createdAt" : "2026-03-01T13:30:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-03-18T23:59:00"
 }, {
   "jobId" : "J112",
@@ -252,5 +263,114 @@
   "organiserId" : "U101",
   "status" : "CLOSED",
   "createdAt" : "2026-04-01T16:40:00",
+  "campuses" : [ "Haidian Campus" ],
   "deadline" : "2026-10-01T23:59:00"
+}, {
+  "jobId" : "J113",
+  "title" : "TA for CS330 - Database Systems",
+  "moduleCode" : "CS330",
+  "moduleName" : "Database Systems",
+  "semester" : "AUTUMN_2026",
+  "type" : "MODULE_TA",
+  "description" : "Support SQL lab clinics and coursework troubleshooting.",
+  "minimumAcademicGrade" : null,
+  "requiredSkills" : [ "SQL", "Databases" ],
+  "preferredSkills" : [ "Java", "Communication" ],
+  "weeklyHours" : 4,
+  "positions" : 2,
+  "organiserId" : "U101",
+  "status" : "OPEN",
+  "createdAt" : "2026-04-02T09:00:00",
+  "campuses" : [ "Haidian Campus" ],
+  "deadline" : "2026-10-25T23:59:00"
+}, {
+  "jobId" : "J114",
+  "title" : "Lab Mentor - CS240 Computer Networks",
+  "moduleCode" : "CS240",
+  "moduleName" : "Computer Networks",
+  "semester" : "AUTUMN_2026",
+  "type" : "MODULE_TA",
+  "description" : "Guide packet analysis labs and support troubleshooting sessions.",
+  "minimumAcademicGrade" : null,
+  "requiredSkills" : [ "Networking" ],
+  "preferredSkills" : [ "Wireshark", "Linux" ],
+  "weeklyHours" : 3,
+  "positions" : 2,
+  "organiserId" : "U101",
+  "status" : "OPEN",
+  "createdAt" : "2026-04-02T10:10:00",
+  "campuses" : [ "Haidian Campus" ],
+  "deadline" : "2026-10-30T23:59:00"
+}, {
+  "jobId" : "J115",
+  "title" : "Seminar Support - Academic Writing Clinic",
+  "moduleCode" : "AW201",
+  "moduleName" : "Academic Writing Clinic",
+  "semester" : "SUMMER_2026",
+  "type" : "ACTIVITY_SUPPORT",
+  "description" : "Support attendance, peer review groups, and workshop logistics.",
+  "minimumAcademicGrade" : null,
+  "requiredSkills" : [ "Writing" ],
+  "preferredSkills" : [ "Presentation", "Organisation" ],
+  "weeklyHours" : 2,
+  "positions" : 1,
+  "organiserId" : "U101",
+  "status" : "CLOSED",
+  "createdAt" : "2026-04-02T11:20:00",
+  "campuses" : [ "Haidian Campus" ],
+  "deadline" : "2026-07-12T23:59:00"
+}, {
+  "jobId" : "J116",
+  "title" : "Project Assistant - SE305 Agile Workshop",
+  "moduleCode" : "SE305",
+  "moduleName" : "Agile Workshop",
+  "semester" : "SUMMER_2026",
+  "type" : "ACTIVITY_SUPPORT",
+  "description" : "Help facilitate sprint reviews and maintain project workshop materials.",
+  "minimumAcademicGrade" : null,
+  "requiredSkills" : [ "Agile" ],
+  "preferredSkills" : [ "Scrum", "Communication" ],
+  "weeklyHours" : 2,
+  "positions" : 2,
+  "organiserId" : "U101",
+  "status" : "EXPIRED",
+  "createdAt" : "2026-04-02T13:00:00",
+  "campuses" : [ "Haidian Campus" ],
+  "deadline" : "2026-06-10T23:59:00"
+}, {
+  "jobId" : "J117",
+  "title" : "Tutorial Support - CS150 Web Development",
+  "moduleCode" : "CS150",
+  "moduleName" : "Web Development",
+  "semester" : "AUTUMN_2026",
+  "type" : "MODULE_TA",
+  "description" : "Support frontend tutorials and weekly code clinic drop-ins.",
+  "minimumAcademicGrade" : null,
+  "requiredSkills" : [ "HTML", "CSS", "JavaScript" ],
+  "preferredSkills" : [ "React", "Git" ],
+  "weeklyHours" : 4,
+  "positions" : 3,
+  "organiserId" : "U101",
+  "status" : "OPEN",
+  "createdAt" : "2026-04-02T14:15:00",
+  "campuses" : [ "Haidian Campus" ],
+  "deadline" : "2026-11-05T23:59:00"
+}, {
+  "jobId" : "J118",
+  "title" : "Assessment Support - Data Analytics Coursework",
+  "moduleCode" : "DA220",
+  "moduleName" : "Data Analytics Coursework",
+  "semester" : "AUTUMN_2026",
+  "type" : "MODULE_TA",
+  "description" : "Assist rubric checks, spreadsheet validation, and submission triage.",
+  "minimumAcademicGrade" : "A / 90+",
+  "requiredSkills" : [ "Excel", "Statistics" ],
+  "preferredSkills" : [ "Python" ],
+  "weeklyHours" : 3,
+  "positions" : 2,
+  "organiserId" : "U101",
+  "status" : "EXPIRED",
+  "createdAt" : "2026-04-02T15:05:00",
+  "campuses" : [ "Haidian Campus", "Shahe Campus" ],
+  "deadline" : "2026-04-11T20:30:00"
 } ]

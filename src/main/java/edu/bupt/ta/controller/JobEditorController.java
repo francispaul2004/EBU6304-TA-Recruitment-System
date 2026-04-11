@@ -9,6 +9,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.DatePicker;
@@ -142,9 +143,11 @@ public class JobEditorController {
         ColumnConstraints leftColumn = new ColumnConstraints();
         leftColumn.setPercentWidth(50);
         leftColumn.setHgrow(Priority.ALWAYS);
+        leftColumn.setFillWidth(true);
         ColumnConstraints rightColumn = new ColumnConstraints();
         rightColumn.setPercentWidth(50);
         rightColumn.setHgrow(Priority.ALWAYS);
+        rightColumn.setFillWidth(true);
         basicGrid.getColumnConstraints().setAll(leftColumn, rightColumn);
         basicGrid.add(field("Job Title", fields.title, true), 0, 0);
         basicGrid.add(field("Module Code", fields.moduleCode, true), 1, 0);
@@ -152,12 +155,12 @@ public class JobEditorController {
         basicGrid.add(field("Job Type", fields.type), 1, 1);
         basicGrid.add(field("Semester", fields.semester, true), 0, 2);
         basicGrid.add(field("Positions", fields.positions, true), 1, 2);
-        basicGrid.add(field("Deadline", deadlineField(fields), true), 0, 3);
-        basicGrid.add(field("Publication Status", fields.status), 1, 3);
-        int descriptionRow = 4;
+        basicGrid.add(field("Campus", campusField(fields), true), 0, 3, 2, 1);
+        basicGrid.add(deadlineCompositeField(fields), 0, 4, 2, 1);
+        int descriptionRow = 5;
         if (showOrganiserField) {
-            basicGrid.add(field("Organiser", fields.organiser, true), 0, 4, 2, 1);
-            descriptionRow = 5;
+            basicGrid.add(field("Organiser", fields.organiser, true), 0, 5, 2, 1);
+            descriptionRow = 6;
         }
         basicGrid.add(areaField("Job Description / Key Responsibilities", fields.description, 6), 0, descriptionRow, 2, 1);
 
@@ -193,6 +196,82 @@ public class JobEditorController {
         return wrapper;
     }
 
+    private Parent deadlineCompositeField(EditorFields fields) {
+        VBox wrapper = new VBox(8);
+        fields.deadlineHour.getItems().setAll(buildHourOptions());
+        fields.deadlineMinute.getItems().setAll(buildMinuteOptions());
+        fields.deadlineHour.setPromptText("Hour");
+        fields.deadlineMinute.setPromptText("Minute");
+
+        GridPane labels = new GridPane();
+        labels.setHgap(16);
+        GridPane controls = new GridPane();
+        controls.setHgap(16);
+
+        for (GridPane grid : List.of(labels, controls)) {
+            ColumnConstraints c1 = new ColumnConstraints();
+            c1.setPercentWidth(25);
+            c1.setHgrow(Priority.ALWAYS);
+            c1.setFillWidth(true);
+            ColumnConstraints c2 = new ColumnConstraints();
+            c2.setPercentWidth(25);
+            c2.setHgrow(Priority.ALWAYS);
+            c2.setFillWidth(true);
+            ColumnConstraints c3 = new ColumnConstraints();
+            c3.setPercentWidth(25);
+            c3.setHgrow(Priority.ALWAYS);
+            c3.setFillWidth(true);
+            ColumnConstraints c4 = new ColumnConstraints();
+            c4.setPercentWidth(25);
+            c4.setHgrow(Priority.ALWAYS);
+            c4.setFillWidth(true);
+            grid.getColumnConstraints().setAll(c1, c2, c3, c4);
+        }
+
+        HBox deadlineLabelRow = new HBox(4);
+        deadlineLabelRow.setAlignment(Pos.CENTER_LEFT);
+        Label deadlineLabel = new Label("Deadline");
+        deadlineLabel.getStyleClass().add("field-label");
+        Label requiredMark = new Label("*");
+        requiredMark.getStyleClass().add("required-asterisk");
+        deadlineLabelRow.getChildren().addAll(deadlineLabel, requiredMark);
+
+        Label hourLabel = new Label("Hour");
+        hourLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: #94a3b8;");
+        Label minuteLabel = new Label("Minute");
+        minuteLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: #94a3b8;");
+        HBox statusLabelRow = new HBox(4);
+        statusLabelRow.setAlignment(Pos.CENTER_LEFT);
+        Label statusLabel = new Label("Publication Status");
+        statusLabel.getStyleClass().add("field-label");
+        Label statusRequiredMark = new Label("*");
+        statusRequiredMark.getStyleClass().add("required-asterisk");
+        statusLabelRow.getChildren().addAll(statusLabel, statusRequiredMark);
+
+        labels.add(deadlineLabelRow, 0, 0);
+        labels.add(hourLabel, 1, 0);
+        labels.add(minuteLabel, 2, 0);
+        labels.add(statusLabelRow, 3, 0);
+
+        fields.deadline.setPrefWidth(280);
+        fields.deadline.setMinWidth(200);
+        configureTimeCombo(fields.deadlineHour);
+        configureTimeCombo(fields.deadlineMinute);
+        fields.status.setMaxWidth(Double.MAX_VALUE);
+
+        controls.add(fields.deadline, 0, 0);
+        controls.add(fields.deadlineHour, 1, 0);
+        controls.add(fields.deadlineMinute, 2, 0);
+        controls.add(fields.status, 3, 0);
+
+        ((Region) fields.deadline).setMaxWidth(Double.MAX_VALUE);
+        fields.deadlineHour.setMaxWidth(Double.MAX_VALUE);
+        fields.deadlineMinute.setMaxWidth(Double.MAX_VALUE);
+
+        wrapper.getChildren().addAll(labels, controls);
+        return wrapper;
+    }
+
     private VBox buildPreviewPanel(EditorFields fields) {
         VBox preview = new VBox(18);
         preview.setPadding(new Insets(24));
@@ -224,11 +303,12 @@ public class JobEditorController {
         metricTitle.setStyle("-fx-font-size: 10px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;");
 
         Label semester = metricLine("Semester", "-");
+        Label campus = metricLine("Campus", "-");
         Label positions = metricLine("Positions", "-");
         Label deadline = metricLine("Deadline", "-");
         Label organiser = metricLine("Organiser", "-");
 
-        metrics.getChildren().addAll(metricTitle, semester, positions, deadline, organiser);
+        metrics.getChildren().addAll(metricTitle, semester, campus, positions, deadline, organiser);
 
         VBox requirementCard = new VBox(8);
         requirementCard.setPadding(new Insets(14));
@@ -265,7 +345,7 @@ public class JobEditorController {
 
         preview.getChildren().addAll(heading, card, metrics, requirementCard, editorCard);
 
-        Runnable updater = () -> updatePreview(fields, cardTitle, cardMeta, semester, positions, deadline, organiser, requiredLine, preferredLine, gradeLine);
+        Runnable updater = () -> updatePreview(fields, cardTitle, cardMeta, semester, campus, positions, deadline, organiser, requiredLine, preferredLine, gradeLine);
 
         bindPreviewListeners(fields, updater);
         updater.run();
@@ -395,17 +475,19 @@ public class JobEditorController {
     }
 
 
-    private Parent deadlineField(EditorFields fields) {
-        fields.deadlineHour.getItems().setAll(buildHourOptions());
-        fields.deadlineMinute.getItems().setAll(buildMinuteOptions());
-        fields.deadlineHour.setPromptText("HH");
-        fields.deadlineMinute.setPromptText("MM");
-        fields.deadline.setPrefWidth(320);
-        fields.deadlineHour.setPrefWidth(140);
-        fields.deadlineMinute.setPrefWidth(140);
-        HBox row = new HBox(10, fields.deadline, fields.deadlineHour, fields.deadlineMinute);
-        HBox.setHgrow(fields.deadline, Priority.ALWAYS);
+    private HBox campusField(EditorFields fields) {
+        fields.campusHaidian.getStyleClass().add("campus-checkbox");
+        fields.campusShahe.getStyleClass().add("campus-checkbox");
+        HBox row = new HBox(20, fields.campusHaidian, fields.campusShahe);
+        row.setAlignment(Pos.CENTER_LEFT);
         return row;
+    }
+
+    private void configureTimeCombo(ComboBox<String> combo) {
+        combo.setMinWidth(200);
+        combo.setPrefWidth(220);
+        combo.setMaxWidth(260);
+        combo.setVisibleRowCount(10);
     }
 
   
@@ -429,6 +511,8 @@ public class JobEditorController {
             fields.semester.setText("Spring Semester 2026");
            
             selectOrganiser(fields.organiser, organiserId);
+            fields.campusHaidian.setSelected(false);
+            fields.campusShahe.setSelected(false);
 
             return;
         }
@@ -455,6 +539,9 @@ public class JobEditorController {
         fields.preferredSkills.setText(String.join(", ", source.getPreferredSkills()));
         fields.defaultOrganiserId = source.getOrganiserId();
         selectOrganiser(fields.organiser, source.getOrganiserId());
+        List<String> campuses = source.getCampuses();
+        fields.campusHaidian.setSelected(campuses.contains(Job.CAMPUS_HAIDIAN) || campuses.contains("海淀校区"));
+        fields.campusShahe.setSelected(campuses.contains(Job.CAMPUS_SHAHE) || campuses.contains("沙河校区"));
     }
 
     private void configureStatusSelector(ChoiceBox<JobStatus> statusBox) {
@@ -559,6 +646,9 @@ public class JobEditorController {
         if (organiserId == null || organiserId.isBlank()) {
             errors.add("Organiser ID is required.");
         }
+        if (!fields.campusHaidian.isSelected() && !fields.campusShahe.isSelected()) {
+            errors.add("Select at least one campus (Haidian / Shahe).");
+        }
         return errors;
     }
 
@@ -585,6 +675,14 @@ public class JobEditorController {
         job.setRequiredSkills(parseSkills(fields.requiredSkills.getText()));
         job.setPreferredSkills(parseSkills(fields.preferredSkills.getText()));
         job.setOrganiserId(resolveOrganiserId(fields));
+        List<String> campuses = new ArrayList<>();
+        if (fields.campusHaidian.isSelected()) {
+            campuses.add(Job.CAMPUS_HAIDIAN);
+        }
+        if (fields.campusShahe.isSelected()) {
+            campuses.add(Job.CAMPUS_SHAHE);
+        }
+        job.setCampuses(campuses);
         return job;
     }
 
@@ -601,12 +699,15 @@ public class JobEditorController {
         fields.preferredSkills.textProperty().addListener((obs, oldValue, newValue) -> updater.run());
         fields.organiser.valueProperty().addListener((obs, oldValue, newValue) -> updater.run());
         fields.minimumGradeGroup.selectedToggleProperty().addListener((obs, oldValue, newValue) -> updater.run());
+        fields.campusHaidian.selectedProperty().addListener((obs, oldValue, newValue) -> updater.run());
+        fields.campusShahe.selectedProperty().addListener((obs, oldValue, newValue) -> updater.run());
     }
 
     private void updatePreview(EditorFields fields,
                                Label cardTitle,
                                Label cardMeta,
                                Label semester,
+                               Label campus,
                                Label positions,
                                Label deadline,
                                Label organiser,
@@ -619,6 +720,7 @@ public class JobEditorController {
         cardMeta.setText(module + " | " + moduleName);
 
         semester.setText("Semester: " + fallback(fields.semester.getText(), "-"));
+        campus.setText("Campus: " + formatCampusPreview(fields));
         positions.setText("Positions: " + fallback(fields.positions.getText(), "-"));
 
         deadline.setText("Deadline: " + formatDeadline(fields.deadline.getValue(), parseTime(fields.deadlineHour.getValue(), fields.deadlineMinute.getValue())));
@@ -639,6 +741,17 @@ public class JobEditorController {
 
     private List<String> capThree(List<String> skills) {
         return skills.stream().limit(3).toList();
+    }
+
+    private String formatCampusPreview(EditorFields fields) {
+        List<String> labels = new ArrayList<>();
+        if (fields.campusHaidian.isSelected()) {
+            labels.add(Job.CAMPUS_HAIDIAN);
+        }
+        if (fields.campusShahe.isSelected()) {
+            labels.add(Job.CAMPUS_SHAHE);
+        }
+        return labels.isEmpty() ? "-" : String.join(", ", labels);
     }
 
     private Label metricLine(String title, String value) {
@@ -784,6 +897,8 @@ public class JobEditorController {
         private final ToggleGroup minimumGradeGroup = new ToggleGroup();
         private final RadioButton gradeA = new RadioButton("A / 90+");
         private final RadioButton gradeB = new RadioButton("B+ / 85+");
+        private final CheckBox campusHaidian = new CheckBox(Job.CAMPUS_HAIDIAN);
+        private final CheckBox campusShahe = new CheckBox(Job.CAMPUS_SHAHE);
         private String defaultOrganiserId;
     }
 }

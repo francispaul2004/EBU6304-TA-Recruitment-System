@@ -322,7 +322,7 @@ public class JobDetailController {
         grid.getColumnConstraints().setAll(c1, c2);
 
         grid.add(infoCell("Code", infoCodeValue), 0, 0);
-        grid.add(infoCell("Professor", infoProfessorValue), 1, 0);
+        grid.add(infoCell("Organiser", infoProfessorValue), 1, 0);
         grid.add(infoCell("Campus", infoCampusValue), 0, 1);
         grid.add(infoCell("Term", infoTermValue), 1, 1);
 
@@ -367,7 +367,7 @@ public class JobDetailController {
         int year = job.getDeadline() == null ? LocalDateTime.now().getYear() : job.getDeadline().getYear();
         infoCodeValue.setText((safe(job.getModuleCode()) + "-" + year).replace("--", "-"));
         infoProfessorValue.setText(resolveOrganiserName(job));
-        infoCampusValue.setText("Shahe Campus");
+        infoCampusValue.setText(formatCampuses(job));
         infoTermValue.setText(resolveTerm(job));
     }
 
@@ -529,6 +529,13 @@ public class JobDetailController {
             items.add("Support course activities and scheduled teaching duties.");
         }
         return items;
+    }
+
+    private static String formatCampuses(Job job) {
+        if (job.getCampuses() == null || job.getCampuses().isEmpty()) {
+            return "Not specified";
+        }
+        return String.join(", ", job.getCampuses());
     }
 
     private static String safe(String value) {

@@ -11,10 +11,22 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public class Job implements Identifiable<String> {
     private static final DateTimeFormatter DEADLINE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+    /** Stored value for jobs on Haidian campus (multi-select allowed). */
+    public static final String CAMPUS_HAIDIAN = "Haidian Campus";
+    /** Stored value for jobs on Shahe campus (multi-select allowed). */
+    public static final String CAMPUS_SHAHE = "Shahe Campus";
+
+    /** Legacy JSON values; normalized to {@link #CAMPUS_HAIDIAN} / {@link #CAMPUS_SHAHE} on next save. */
+    private static final String LEGACY_CAMPUS_HAIDIAN = "海淀校区";
+    private static final String LEGACY_CAMPUS_SHAHE = "沙河校区";
+
+    public static final List<String> ALLOWED_CAMPUSES = List.of(CAMPUS_HAIDIAN, CAMPUS_SHAHE);
 
     private String jobId;
     private String title;
@@ -32,6 +44,7 @@ public class Job implements Identifiable<String> {
     private String organiserId;
     private JobStatus status;
     private LocalDateTime createdAt;
+    private List<String> campuses = new ArrayList<>();
 
     public Job() {
     }
@@ -39,7 +52,8 @@ public class Job implements Identifiable<String> {
     public Job(String jobId, String title, String moduleCode, String moduleName, String semester, JobType type, String description,
                String minimumAcademicGrade,
                List<String> requiredSkills, List<String> preferredSkills, int weeklyHours, int positions,
-               LocalDateTime deadline, String organiserId, JobStatus status, LocalDateTime createdAt) {
+               LocalDateTime deadline, String organiserId, JobStatus status, LocalDateTime createdAt,
+               List<String> campuses) {
         this.jobId = jobId;
         this.title = title;
         this.moduleCode = moduleCode;
@@ -56,6 +70,7 @@ public class Job implements Identifiable<String> {
         this.organiserId = organiserId;
         this.status = status;
         this.createdAt = createdAt;
+        setCampuses(campuses);
     }
 
     @Override
@@ -208,5 +223,26 @@ public class Job implements Identifiable<String> {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public List<String> getCampuses() {
+        return campuses == null ? List.of() : List.copyOf(campuses);
+    }
+
+    public void setCampuses(List<String> campuses) {
+        if (campuses == null) {
+            this.campuses = new ArrayList<>();
+            return;
+        }
+        this.campuses = new ArrayList<>(new LinkedHashSet<>(campuses));
+    }
+
+    public static boolean isAllowedCampusLabel(String value) {
+        if (value == null) {
+            return false;
+        }
+        return ALLOWED_CAMPUSES.contains(value)
+                || LEGACY_CAMPUS_HAIDIAN.equals(value)
+                || LEGACY_CAMPUS_SHAHE.equals(value);
     }
 }
