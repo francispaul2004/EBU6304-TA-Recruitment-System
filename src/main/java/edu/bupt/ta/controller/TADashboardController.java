@@ -383,7 +383,6 @@ public class TADashboardController {
     }
 
     private VBox buildRecommendedCard() {
-    private VBox buildRecommendedCard() {
         VBox card = new VBox(14);
         card.getStyleClass().add("panel-card");
         card.setPadding(new Insets(18));
