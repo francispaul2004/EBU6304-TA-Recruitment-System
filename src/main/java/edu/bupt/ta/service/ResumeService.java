@@ -146,6 +146,15 @@ public class ResumeService {
             return Optional.empty();
         }
         Path path = Path.of(resume.getCvStoredPath());
+        // Security: ensure the stored path belongs to this applicant's directory
+        Path expectedDir = AppPaths.dataDir().resolve("cv").resolve(applicantId);
+        try {
+            if (!path.toAbsolutePath().normalize().startsWith(expectedDir.toAbsolutePath().normalize())) {
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+            return Optional.empty();
+        }
         return Files.exists(path) ? Optional.of(path) : Optional.empty();
     }
 
