@@ -319,7 +319,7 @@ public class MainShellController {
             }
             case "moProfile" -> {
                 breadcrumbCurrent.setText("Profile");
-                page = PlaceholderPage.simple("MO Profile", "Planned in next visual alignment phase.");
+                page = new MOProfileController(services, user).getView();
             }
             case "helpCenter" -> {
                 breadcrumbCurrent.setText("Help Center");
