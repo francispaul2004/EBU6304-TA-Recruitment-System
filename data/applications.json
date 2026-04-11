@@ -1,182 +1,121 @@
-[
-  {
-    "applicationId": "APP001",
-    "jobId": "J107",
-    "applicantId": "A001",
-    "applyDate": "2026-04-05T10:30:00",
-    "statement": "I have supported first-year Java labs and can help with debugging sessions.",
-    "status": "SUBMITTED",
-    "decisionNote": "",
-    "matchScore": 84,
-    "missingSkills": []
-  },
-  {
-    "applicationId": "APP002",
-    "jobId": "J107",
-    "applicantId": "A002",
-    "applyDate": "2026-04-04T14:20:00",
-    "statement": "I can support office hours and beginner programming workshops.",
-    "status": "UNDER_REVIEW",
-    "decisionNote": "Shortlisted for teaching demonstration.",
-    "matchScore": 81,
-    "missingSkills": []
-  },
-  {
-    "applicationId": "APP003",
-    "jobId": "J107",
-    "applicantId": "A003",
-    "applyDate": "2026-04-03T09:10:00",
-    "statement": "I have tutoring experience and can mentor students during lab sessions.",
-    "status": "ACCEPTED",
-    "decisionNote": "Strong communication skills and suitable schedule.",
-    "matchScore": 88,
-    "missingSkills": []
-  },
-  {
-    "applicationId": "APP004",
-    "jobId": "J107",
-    "applicantId": "A005",
-    "applyDate": "2026-04-06T16:05:00",
-    "statement": "I would like to help with grading and consultation hours.",
-    "status": "REJECTED",
-    "decisionNote": "Profile is stronger for marking roles than programming labs.",
-    "matchScore": 63,
-    "missingSkills": [
-      "Java"
-    ]
-  },
-  {
-    "applicationId": "APP005",
-    "jobId": "J112",
-    "applicantId": "A003",
-    "applyDate": "2026-04-02T11:40:00",
-    "statement": "My statistics and Python background fits research data cleaning tasks.",
-    "status": "ACCEPTED",
-    "decisionNote": "Good fit for spreadsheet cleaning and scheduling follow-up.",
-    "matchScore": 91,
-    "missingSkills": []
-  },
-  {
-    "applicationId": "APP006",
-    "jobId": "J103",
-    "applicantId": "A001",
-    "applyDate": "2026-03-20T13:15:00",
-    "statement": "I can support project clinics, Git workflows, and code review discussions.",
-    "status": "ACCEPTED",
-    "decisionNote": "Accepted based on prior software engineering tutoring experience.",
-    "matchScore": 89,
-    "missingSkills": []
-  },
-  {
-    "applicationId": "APP007",
-    "jobId": "J103",
-    "applicantId": "A002",
-    "applyDate": "2026-03-22T10:00:00",
-    "statement": "I can help with team coordination and repository setup.",
-    "status": "REJECTED",
-    "decisionNote": "Another applicant had a closer technical match for this post.",
-    "matchScore": 72,
-    "missingSkills": [
-      "Java"
-    ]
-  },
-  {
-    "applicationId": "APP008",
-    "jobId": "J102",
-    "applicantId": "A004",
-    "applyDate": "2026-03-18T08:45:00",
-    "statement": "I have hands-on electronics lab experience and can assist with safety checks.",
-    "status": "ACCEPTED",
-    "decisionNote": "Excellent hardware lab background.",
-    "matchScore": 93,
-    "missingSkills": []
-  },
-  {
-    "applicationId": "APP009",
-    "jobId": "J109",
-    "applicantId": "A005",
-    "applyDate": "2026-03-10T12:00:00",
-    "statement": "I am confident in algebra grading and structured rubric marking.",
-    "status": "ACCEPTED",
-    "decisionNote": "Strong match for marking and spreadsheet-based review.",
-    "matchScore": 87,
-    "missingSkills": []
-  },
-  {
-    "applicationId": "APP010",
-    "jobId": "J105",
-    "applicantId": "A002",
-    "applyDate": "2026-04-08T15:25:00",
-    "statement": "I can assist with Linux debugging and shell-based lab support.",
-    "status": "SUBMITTED",
-    "decisionNote": "",
-    "matchScore": 78,
-    "missingSkills": [
-      "C"
-    ]
-  },
-  {
-    "applicationId": "APP011",
-    "jobId": "J105",
-    "applicantId": "A001",
-    "applyDate": "2026-04-09T09:55:00",
-    "statement": "I am interested in helping with systems lab troubleshooting.",
-    "status": "UNDER_REVIEW",
-    "decisionNote": "Pending organiser review for OS lab suitability.",
-    "matchScore": 74,
-    "missingSkills": [
-      "Linux"
-    ]
-  },
-  {
-    "applicationId": "APP012",
-    "jobId": "J110",
-    "applicantId": "A003",
-    "applyDate": "2026-04-10T18:20:00",
-    "statement": "I can support distributed systems demos and documentation walkthroughs.",
-    "status": "SUBMITTED",
-    "decisionNote": "",
-    "matchScore": 69,
-    "missingSkills": [
-      "Networking"
-    ]
-  },
-  {
-    "applicationId": "APP013",
-    "jobId": "J111",
-    "applicantId": "A004",
-    "applyDate": "2026-03-12T14:35:00",
-    "statement": "I can coordinate room logistics and invigilation procedures carefully.",
-    "status": "ACCEPTED",
-    "decisionNote": "Reliable schedule and strong organisational record.",
-    "matchScore": 85,
-    "missingSkills": []
-  },
-  {
-    "applicationId": "APP014",
-    "jobId": "J101",
-    "applicantId": "A005",
-    "applyDate": "2026-04-06T11:10:00",
-    "statement": "I want to support DS tutorials and simple coding help sessions.",
-    "status": "REJECTED",
-    "decisionNote": "Required algorithms background was not strong enough.",
-    "matchScore": 58,
-    "missingSkills": [
-      "Java",
-      "Algorithms"
-    ]
-  },
-  {
-    "applicationId": "APP015",
-    "jobId": "J112",
-    "applicantId": "A001",
-    "applyDate": "2026-04-03T17:25:00",
-    "statement": "I can help with participant coordination and spreadsheet maintenance.",
-    "status": "REJECTED",
-    "decisionNote": "Another candidate had a closer research-support skill match.",
-    "matchScore": 67,
-    "missingSkills": [
-      "Statistics"
-    ]
-  }
-]
+[ {
+  "applicationId" : "APP001",
+  "jobId" : "J001",
+  "applicantId" : "A001",
+  "applyDate" : "2026-03-18T09:00:00",
+  "statement" : "I have completed Java modules.",
+  "status" : "ACCEPTED",
+  "decisionNote" : "",
+  "matchScore" : 82,
+  "missingSkills" : [ "JavaFX" ]
+}, {
+  "applicationId" : "APP002",
+  "jobId" : "J001",
+  "applicantId" : "A002",
+  "applyDate" : "2026-03-18T09:10:00",
+  "statement" : "I can support debugging sessions.",
+  "status" : "REJECTED",
+  "decisionNote" : "Awaiting MO interview",
+  "matchScore" : 75,
+  "missingSkills" : [ "Java" ]
+}, {
+  "applicationId" : "APP003",
+  "jobId" : "J002",
+  "applicantId" : "A004",
+  "applyDate" : "2026-03-18T09:20:00",
+  "statement" : "I have circuit lab experience.",
+  "status" : "ACCEPTED",
+  "decisionNote" : "Strong lab background",
+  "matchScore" : 90,
+  "missingSkills" : [ ]
+}, {
+  "applicationId" : "APP004",
+  "jobId" : "J003",
+  "applicantId" : "A005",
+  "applyDate" : "2026-03-18T09:25:00",
+  "statement" : "Confident in probability grading.",
+  "status" : "UNDER_REVIEW",
+  "decisionNote" : "",
+  "matchScore" : 84,
+  "missingSkills" : [ ]
+}, {
+  "applicationId" : "APP005",
+  "jobId" : "J003",
+  "applicantId" : "A003",
+  "applyDate" : "2026-03-18T09:30:00",
+  "statement" : "Good statistics and communication.",
+  "status" : "REJECTED",
+  "decisionNote" : "Need more probability module depth",
+  "matchScore" : 61,
+  "missingSkills" : [ "Advanced Probability" ]
+}, {
+  "applicationId" : "APP006",
+  "jobId" : "J005",
+  "applicantId" : "A002",
+  "applyDate" : "2026-03-18T09:35:00",
+  "statement" : "I enjoy workshop facilitation.",
+  "status" : "ACCEPTED",
+  "decisionNote" : "Fits activity profile",
+  "matchScore" : 88,
+  "missingSkills" : [ ]
+}, {
+  "applicationId" : "APP007",
+  "jobId" : "J005",
+  "applicantId" : "A001",
+  "applyDate" : "2026-03-18T09:40:00",
+  "statement" : "Can support coding camp.",
+  "status" : "REJECTED",
+  "decisionNote" : "",
+  "matchScore" : 73,
+  "missingSkills" : [ "Python" ]
+}, {
+  "applicationId" : "APP008",
+  "jobId" : "J006",
+  "applicantId" : "A001",
+  "applyDate" : "2026-03-18T09:50:00",
+  "statement" : "Interested in project clinics.",
+  "status" : "ACCEPTED",
+  "decisionNote" : "Position already filled",
+  "matchScore" : 70,
+  "missingSkills" : [ ]
+}, {
+  "applicationId" : "APP009",
+  "jobId" : "J008",
+  "applicantId" : "A003",
+  "applyDate" : "2026-03-18T10:00:00",
+  "statement" : "Frontend tutoring experience.",
+  "status" : "REJECTED",
+  "decisionNote" : "-",
+  "matchScore" : 79,
+  "missingSkills" : [ "Git" ]
+}, {
+  "applicationId" : "APP010",
+  "jobId" : "J008",
+  "applicantId" : "A005",
+  "applyDate" : "2026-03-18T10:10:00",
+  "statement" : "Can help with labs and grading.",
+  "status" : "ACCEPTED",
+  "decisionNote" : "TEST",
+  "matchScore" : 74,
+  "missingSkills" : [ "JavaScript" ]
+}, {
+  "applicationId" : "APP011",
+  "jobId" : "J110",
+  "applicantId" : "A001",
+  "applyDate" : "2026-04-10T01:11:25.569316",
+  "statement" : "",
+  "status" : "SUBMITTED",
+  "decisionNote" : "",
+  "matchScore" : 50,
+  "missingSkills" : [ "Networking" ]
+}, {
+  "applicationId" : "APP012",
+  "jobId" : "J107",
+  "applicantId" : "A001",
+  "applyDate" : "2026-04-10T02:04:58.922162",
+  "statement" : "",
+  "status" : "UNDER_REVIEW",
+  "decisionNote" : "",
+  "matchScore" : 80,
+  "missingSkills" : [ ]
+} ]

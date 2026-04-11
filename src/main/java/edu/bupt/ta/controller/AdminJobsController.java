@@ -20,7 +20,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -33,7 +32,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
@@ -198,16 +196,22 @@ public class AdminJobsController {
                 AdminJobRowDTO row = getTableView().getItems().get(getIndex());
 
                 Label title = new Label(row.title());
-                title.setWrapText(false);
-                title.setTextOverrun(OverrunStyle.ELLIPSIS);
-                title.setMaxWidth(250);
+                title.setWrapText(true);
+                title.setMaxWidth(420);
+                title.setAlignment(Pos.CENTER);
+                title.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
                 title.setStyle("-fx-font-size: 15px; -fx-font-weight: 900; -fx-text-fill: #334155;");
 
                 Label id = new Label("ID: " + row.jobId());
-                id.setTextOverrun(OverrunStyle.ELLIPSIS);
+                id.setWrapText(true);
+                id.setMaxWidth(420);
+                id.setAlignment(Pos.CENTER);
+                id.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
                 id.setStyle("-fx-font-size: 11px; -fx-text-fill: #94a3b8; -fx-font-weight: 600;");
 
                 VBox box = new VBox(3, title, id);
+                box.setAlignment(Pos.CENTER);
+                setAlignment(Pos.CENTER);
                 setGraphic(box);
                 setText(null);
             }
@@ -227,15 +231,23 @@ public class AdminJobsController {
                 AdminJobRowDTO row = getTableView().getItems().get(getIndex());
 
                 Label title = new Label(row.moduleName());
-                title.setWrapText(false);
-                title.setTextOverrun(OverrunStyle.ELLIPSIS);
-                title.setMaxWidth(220);
+                title.setWrapText(true);
+                title.setMaxWidth(340);
+                title.setAlignment(Pos.CENTER);
+                title.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
                 title.setStyle("-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #475569;");
 
                 Label meta = new Label(row.moduleCode());
+                meta.setWrapText(true);
+                meta.setMaxWidth(340);
+                meta.setAlignment(Pos.CENTER);
+                meta.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
                 meta.setStyle("-fx-font-size: 11px; -fx-text-fill: #94a3b8;");
 
-                setGraphic(new VBox(4, title, meta));
+                VBox box = new VBox(4, title, meta);
+                box.setAlignment(Pos.CENTER);
+                setAlignment(Pos.CENTER);
+                setGraphic(box);
                 setText(null);
             }
         });
@@ -253,6 +265,7 @@ public class AdminJobsController {
                 }
                 Label badge = new Label(String.valueOf(item.intValue()));
                 badge.setStyle("-fx-background-color: #eef2f7; -fx-text-fill: #475569; -fx-font-size: 11px; -fx-font-weight: 900; -fx-background-radius: 999; -fx-padding: 4 10 4 10;");
+                setAlignment(Pos.CENTER);
                 setGraphic(badge);
                 setText(null);
             }
@@ -271,6 +284,7 @@ public class AdminJobsController {
                 }
                 Label chip = new Label(item);
                 chip.setStyle(statusChipStyle(item));
+                setAlignment(Pos.CENTER);
                 setGraphic(chip);
                 setText(null);
             }
@@ -280,102 +294,51 @@ public class AdminJobsController {
         createdCol.setCellValueFactory(cell -> new SimpleStringProperty(formatDate(cell.getValue().createdAt())));
         createdCol.setCellFactory(column -> mutedStringCell());
 
-        TableColumn<AdminJobRowDTO, String> actionCol = new TableColumn<>("ACTIONS");
-        actionCol.setCellValueFactory(cell -> new SimpleStringProperty("..."));
-        actionCol.setCellFactory(column -> centeredEllipsisCell());
+        TableColumn<AdminJobRowDTO, String> actionCol = new TableColumn<>("DETAIL");
+        actionCol.setCellValueFactory(cell -> new SimpleStringProperty("Detail"));
+        actionCol.setCellFactory(column -> new TableCell<>() {
+            private final Button detailButton = new Button("Detail");
 
-        titleCol.setPrefWidth(290);
-        departmentCol.setPrefWidth(240);
+            {
+                detailButton.getStyleClass().add("secondary-button");
+            }
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
+                    setGraphic(null);
+                    setText(null);
+                    return;
+                }
+
+                AdminJobRowDTO row = getTableView().getItems().get(getIndex());
+                detailButton.setOnAction(event -> showJobDetailWindow(row));
+                setAlignment(Pos.CENTER);
+                setGraphic(detailButton);
+                setText(null);
+            }
+        });
+
+        titleCol.setPrefWidth(360);
+        departmentCol.setPrefWidth(290);
         applicantsCol.setPrefWidth(100);
         statusCol.setPrefWidth(120);
         createdCol.setPrefWidth(130);
-        actionCol.setPrefWidth(80);
+        actionCol.setPrefWidth(120);
         table.getColumns().setAll(titleCol, departmentCol, applicantsCol, statusCol, createdCol, actionCol);
+        table.getStyleClass().add("job-table-spaced");
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        table.setFixedCellSize(72);
+        table.setFixedCellSize(88);
         table.setPrefHeight(560);
         table.setPlaceholder(new Label("No jobs match the current filters."));
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldJob, newJob) -> {
             updateActionButtons(newJob);
-            updateDetail(newJob);
         });
 
         listPanel.getChildren().add(table);
         HBox.setHgrow(listPanel, Priority.ALWAYS);
-
-        VBox detailContent = new VBox(18);
-        detailContent.setPadding(new Insets(18));
-
-        Label kicker = new Label("JOB DETAILS");
-        kicker.getStyleClass().add("section-kicker");
-
-        detailTitle.setWrapText(true);
-        detailTitle.setStyle("-fx-font-size: 32px; -fx-font-weight: 900; -fx-text-fill: #1e293b;");
-
-        detailSubline.setWrapText(true);
-        detailSubline.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748b; -fx-font-weight: 600;");
-
-        VBox moduleCard = new VBox(8,
-                sectionTitle("ASSOCIATED MODULE"),
-                detailModuleTitle,
-                detailModuleMeta,
-                detailModuleDescription);
-        moduleCard.getStyleClass().add("surface-toolbar");
-        detailModuleTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 900; -fx-text-fill: #334155;");
-        detailModuleMeta.setStyle("-fx-font-size: 12px; -fx-text-fill: #94a3b8;");
-        detailModuleDescription.setWrapText(true);
-        detailModuleDescription.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748b;");
-
-        VBox recruitmentCard = new VBox(10,
-                sectionTitle("JOB SUMMARY"),
-                detailLine("Organiser", detailOrganiser),
-                detailLine("Weekly Hours", detailWeeklyHours),
-                detailLine("Positions", detailPositions),
-                detailLine("Deadline", detailDeadline),
-                detailLine("Created", detailCreated),
-                detailLine("Required Skills", detailRequiredSkills),
-                detailLine("Preferred Skills", detailPreferredSkills)
-        );
-        recruitmentCard.getStyleClass().add("surface-toolbar");
-
-        VBox applicantStatusCard = new VBox(10,
-                sectionTitle("APPLICANT STATUS"),
-                statusRow("Applied", detailAppliedCount, "#2563eb"),
-                statusRow("In Review", detailReviewCount, "#8b5cf6"),
-                statusRow("Hired", detailAcceptedCount, "#10b981"),
-                applicantAvatarStrip
-        );
-        applicantStatusCard.getStyleClass().add("surface-toolbar");
-
-        VBox activityCard = new VBox(10, sectionTitle("ACTIVITY LOG"), activityLogBox);
-        activityCard.getStyleClass().add("surface-toolbar");
-
-        detailContent.getChildren().addAll(kicker, detailTitle, detailSubline, moduleCard, recruitmentCard, applicantStatusCard, activityCard);
-
-        ScrollPane detailScroll = new ScrollPane(detailContent);
-        detailScroll.setFitToWidth(true);
-        detailScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        detailScroll.getStyleClass().add("detail-scroll");
-        VBox.setVgrow(detailScroll, Priority.ALWAYS);
-
-        viewApplicationsButton.getStyleClass().add("primary-button");
-        viewApplicationsButton.setMaxWidth(Double.MAX_VALUE);
-        viewApplicationsButton.setOnAction(event -> openApplicationsModal());
-
-        detailEditButton.getStyleClass().add("secondary-button");
-        detailEditButton.setMaxWidth(Double.MAX_VALUE);
-        detailEditButton.setOnAction(event -> onEdit());
-
-        detailCloseButton.getStyleClass().add("secondary-button");
-        detailCloseButton.setMaxWidth(Double.MAX_VALUE);
-        detailCloseButton.setOnAction(event -> onClose());
-
-        VBox detailPanel = new VBox(12, detailScroll, viewApplicationsButton, detailEditButton, detailCloseButton);
-        detailPanel.getStyleClass().add("panel-card");
-        detailPanel.setPadding(new Insets(16));
-        detailPanel.setPrefWidth(360);
-
-        return new HBox(16, listPanel, detailPanel);
+        return new HBox(listPanel);
     }
 
     private void refresh() {
@@ -540,14 +503,18 @@ public class AdminJobsController {
             showError("Please select one job first.");
             return;
         }
+        onEdit(selectedRow);
+    }
 
+    private boolean onEdit(AdminJobRowDTO selectedRow) {
         Job source = services.jobService().getJob(selectedRow.jobId()).orElse(null);
         if (source == null) {
             showError("The selected job could not be loaded.");
             refresh();
-            return;
+            return false;
         }
 
+        final boolean[] updated = {false};
         JobEditorController editor = new JobEditorController();
         editor.show(source, source.getOrganiserId(), loadOrganisers()).ifPresent(job -> {
             ValidationResult result = services.jobService().updateJob(job, user.getUserId(), true);
@@ -555,8 +522,10 @@ public class AdminJobsController {
                 showError(String.join("\n", result.getErrors()));
                 return;
             }
+            updated[0] = true;
             refresh();
         });
+        return updated[0];
     }
 
     private void onClose() {
@@ -565,25 +534,29 @@ public class AdminJobsController {
             showError("Please select one job first.");
             return;
         }
+        onClose(selectedRow);
+    }
 
+    private boolean onClose(AdminJobRowDTO selectedRow) {
         boolean confirmed = DialogControllerFactory.confirmAction(
                 "Close Job",
                 "Close \"" + selectedRow.title() + "\" now? Closed jobs cannot receive new applications.",
                 view.getScene() == null ? null : view.getScene().getWindow());
         if (!confirmed) {
-            return;
+            return false;
         }
 
         ValidationResult result = services.jobService().closeJobWithValidation(selectedRow.jobId(), user.getUserId(), true);
         if (!result.isValid()) {
             showError(String.join("\n", result.getErrors()));
             refresh();
-            return;
+            return false;
         }
 
         DialogControllerFactory.success("Job Closed", "The job was set to CLOSED successfully.",
                 view.getScene() == null ? null : view.getScene().getWindow());
         refresh();
+        return true;
     }
 
     private void openApplicationsModal() {
@@ -592,15 +565,18 @@ public class AdminJobsController {
             showError("Please select one job first.");
             return;
         }
+        openApplicationsModal(selectedRow.jobId());
+    }
 
+    private void openApplicationsModal(String jobId) {
         Stage stage = new Stage();
         stage.initModality(Modality.APPLICATION_MODAL);
         if (view.getScene() != null) {
             stage.initOwner(view.getScene().getWindow());
         }
-        stage.setTitle("Applications for " + selectedRow.jobId());
+        stage.setTitle("Applications for " + jobId);
 
-        Parent content = new AdminApplicationsController(services, user, selectedRow.jobId()).getView();
+        Parent content = new AdminApplicationsController(services, user, jobId).getView();
         Scene scene = new Scene(content, 1440, 900);
         if (AdminJobsController.class.getResource("/styles/app.css") != null) {
             scene.getStylesheets().add(AdminJobsController.class.getResource("/styles/app.css").toExternalForm());
@@ -608,6 +584,116 @@ public class AdminJobsController {
         stage.setScene(scene);
         stage.showAndWait();
         refresh();
+    }
+
+    private void showJobDetailWindow(AdminJobRowDTO selectedRow) {
+        if (selectedRow == null) {
+            showError("Please select one job first.");
+            return;
+        }
+
+        table.getSelectionModel().select(selectedRow);
+        updateActionButtons(selectedRow);
+        updateDetail(selectedRow);
+
+        Stage stage = new Stage();
+        stage.initModality(Modality.APPLICATION_MODAL);
+        if (view.getScene() != null) {
+            stage.initOwner(view.getScene().getWindow());
+        }
+        stage.setTitle("Job Details");
+
+        Parent content = buildDetailWindow(stage, selectedRow);
+        Scene scene = new Scene(content, 780, 860);
+        if (AdminJobsController.class.getResource("/styles/app.css") != null) {
+            scene.getStylesheets().add(AdminJobsController.class.getResource("/styles/app.css").toExternalForm());
+        }
+        stage.setScene(scene);
+        stage.showAndWait();
+        refresh();
+    }
+
+    private Parent buildDetailWindow(Stage stage, AdminJobRowDTO selectedRow) {
+        VBox detailContent = new VBox(18);
+        detailContent.setPadding(new Insets(18));
+
+        Label kicker = new Label("JOB DETAILS");
+        kicker.getStyleClass().add("section-kicker");
+
+        detailTitle.setWrapText(true);
+        detailTitle.setStyle("-fx-font-size: 32px; -fx-font-weight: 900; -fx-text-fill: #1e293b;");
+
+        detailSubline.setWrapText(true);
+        detailSubline.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748b; -fx-font-weight: 600;");
+
+        VBox moduleCard = new VBox(8,
+                sectionTitle("ASSOCIATED MODULE"),
+                detailModuleTitle,
+                detailModuleMeta,
+                detailModuleDescription);
+        moduleCard.getStyleClass().add("surface-toolbar");
+        detailModuleTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 900; -fx-text-fill: #334155;");
+        detailModuleMeta.setStyle("-fx-font-size: 12px; -fx-text-fill: #94a3b8;");
+        detailModuleDescription.setWrapText(true);
+        detailModuleDescription.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748b;");
+
+        VBox recruitmentCard = new VBox(10,
+                sectionTitle("JOB SUMMARY"),
+                detailLine("Organiser", detailOrganiser),
+                detailLine("Weekly Hours", detailWeeklyHours),
+                detailLine("Positions", detailPositions),
+                detailLine("Deadline", detailDeadline),
+                detailLine("Created", detailCreated),
+                detailLine("Required Skills", detailRequiredSkills),
+                detailLine("Preferred Skills", detailPreferredSkills)
+        );
+        recruitmentCard.getStyleClass().add("surface-toolbar");
+
+        VBox applicantStatusCard = new VBox(10,
+                sectionTitle("APPLICANT STATUS"),
+                statusRow("Applied", detailAppliedCount, "#2563eb"),
+                statusRow("In Review", detailReviewCount, "#8b5cf6"),
+                statusRow("Hired", detailAcceptedCount, "#10b981"),
+                applicantAvatarStrip
+        );
+        applicantStatusCard.getStyleClass().add("surface-toolbar");
+
+        VBox activityCard = new VBox(10, sectionTitle("ACTIVITY LOG"), activityLogBox);
+        activityCard.getStyleClass().add("surface-toolbar");
+
+        detailContent.getChildren().addAll(kicker, detailTitle, detailSubline, moduleCard, recruitmentCard, applicantStatusCard, activityCard);
+
+        ScrollPane detailScroll = new ScrollPane(detailContent);
+        detailScroll.setFitToWidth(true);
+        detailScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        detailScroll.getStyleClass().add("detail-scroll");
+        VBox.setVgrow(detailScroll, Priority.ALWAYS);
+
+        viewApplicationsButton.getStyleClass().add("primary-button");
+        viewApplicationsButton.setMaxWidth(Double.MAX_VALUE);
+        viewApplicationsButton.setOnAction(event -> openApplicationsModal(selectedRow.jobId()));
+
+        detailEditButton.getStyleClass().add("secondary-button");
+        detailEditButton.setMaxWidth(Double.MAX_VALUE);
+        detailEditButton.setOnAction(event -> {
+            if (onEdit(selectedRow)) {
+                stage.close();
+            }
+        });
+
+        detailCloseButton.getStyleClass().add("secondary-button");
+        detailCloseButton.setMaxWidth(Double.MAX_VALUE);
+        detailCloseButton.setDisable(!"OPEN".equals(selectedRow.statusLabel()));
+        detailCloseButton.setOnAction(event -> {
+            if (onClose(selectedRow)) {
+                stage.close();
+            }
+        });
+
+        VBox detailPanel = new VBox(12, detailScroll, viewApplicationsButton, detailEditButton, detailCloseButton);
+        detailPanel.getStyleClass().addAll("app-surface", "panel-card");
+        detailPanel.setPadding(new Insets(16));
+        return detailPanel;
     }
 
     private List<User> loadOrganisers() {
@@ -669,29 +755,12 @@ public class AdminJobsController {
                 super.updateItem(item, empty);
                 setText(empty ? null : item);
                 if (!empty) {
+                    setAlignment(Pos.CENTER);
                     setStyle("-fx-text-fill: #94a3b8; -fx-font-weight: 600;");
                 } else {
                     setStyle("");
                 }
                 setGraphic(null);
-            }
-        };
-    }
-
-    private TableCell<AdminJobRowDTO, String> centeredEllipsisCell() {
-        return new TableCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
-                    setText(null);
-                    setGraphic(null);
-                    return;
-                }
-                Label dots = new Label("...");
-                dots.setStyle("-fx-font-size: 16px; -fx-font-weight: 900; -fx-text-fill: #94a3b8;");
-                setGraphic(dots);
-                setText(null);
             }
         };
     }
