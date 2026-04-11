@@ -8,6 +8,7 @@ import edu.bupt.ta.model.Application;
 import edu.bupt.ta.model.Job;
 import edu.bupt.ta.model.ResumeInfo;
 import edu.bupt.ta.model.User;
+import edu.bupt.ta.service.ApplicantProfileService;
 import edu.bupt.ta.service.ServiceRegistry;
 import edu.bupt.ta.ui.IconFactory;
 import edu.bupt.ta.util.ValidationResult;
@@ -134,28 +135,38 @@ public class TADashboardController {
     }
 
     private HBox buildStatRow() {
-        int profileCompletion = services.applicantProfileService().calculateProfileCompletion(applicantId);
+        int profileFilled = services.applicantProfileService().countFilledProfileFields(applicantId);
+        int profileTotal = ApplicantProfileService.PROFILE_TOTAL_FIELDS;
         int resumeCompletion = services.resumeService().calculateResumeCompletion(applicantId);
         int applicationCount = applications.size();
         boolean hasCv = resume.getCvFileName() != null && !resume.getCvFileName().isBlank();
 
         HBox row = new HBox(14,
-                buildProfileCard(profileCompletion),
+                buildProfileCard(profileFilled, profileTotal),
                 buildResumeCard(resumeCompletion, hasCv),
                 buildApplicationCard(applicationCount)
         );
         return row;
     }
 
-    private VBox buildProfileCard(int completion) {
+    private VBox buildProfileCard(int filled, int total) {
         VBox card = baseStatCard();
-        HBox top = new HBox(14, progressRing(completion, "#10bfa4"), profileTextBlock(
-                "PROFILE STATUS",
-                completion >= 85 ? "Almost Done" : completion >= 60 ? "In Progress" : "Needs Attention",
-                completion + "% complete"
-        ));
-        top.setAlignment(Pos.CENTER_LEFT);
-        card.getChildren().add(top);
+
+        Label pill = buildMiniPill(filled >= total ? "COMPLETE" : "INCOMPLETE", filled >= total ? "success" : "warning");
+        HBox header = metricHeader("PROFILE STATUS", pill);
+
+        HBox valueRow = new HBox(4);
+        Label filledLabel = new Label(String.valueOf(filled));
+        filledLabel.setStyle("-fx-font-size: 30px; -fx-font-weight: 900; -fx-text-fill: #0f172a;");
+        Label totalLabel = new Label("/ " + total + " fields");
+        totalLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: 600; -fx-text-fill: #94a3b8;");
+        valueRow.getChildren().addAll(filledLabel, totalLabel);
+        valueRow.setAlignment(Pos.BASELINE_LEFT);
+
+        Label sub = new Label(filled >= total ? "All fields filled" : (total - filled) + " field(s) remaining");
+        sub.setStyle("-fx-font-size: 12px; -fx-font-weight: 400; -fx-text-fill: #64748b;");
+
+        card.getChildren().addAll(header, valueRow, sub);
         return card;
     }
 

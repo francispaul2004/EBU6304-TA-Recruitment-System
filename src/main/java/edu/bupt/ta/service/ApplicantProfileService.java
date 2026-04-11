@@ -62,20 +62,30 @@ public class ApplicantProfileService {
         return ValidationResult.ok();
     }
 
+    public static final int PROFILE_TOTAL_FIELDS = 7;
+
     public int calculateProfileCompletion(String applicantId) {
         return profileRepository.findById(applicantId)
-                .map(profile -> {
-                    int total = 6;
-                    int complete = 0;
-                    if (notBlank(profile.getFullName())) complete++;
-                    if (notBlank(profile.getStudentId())) complete++;
-                    if (notBlank(profile.getProgramme())) complete++;
-                    if (profile.getYear() > 0) complete++;
-                    if (notBlank(profile.getEmail())) complete++;
-                    if (notBlank(profile.getPhone())) complete++;
-                    return complete * 100 / total;
-                })
+                .map(profile -> countFilled(profile) * 100 / PROFILE_TOTAL_FIELDS)
                 .orElse(0);
+    }
+
+    public int countFilledProfileFields(String applicantId) {
+        return profileRepository.findById(applicantId)
+                .map(this::countFilled)
+                .orElse(0);
+    }
+
+    private int countFilled(ApplicantProfile profile) {
+        int complete = 0;
+        if (notBlank(profile.getFullName())) complete++;
+        if (notBlank(profile.getStudentId())) complete++;
+        if (notBlank(profile.getProgramme())) complete++;
+        if (profile.getYear() > 0) complete++;
+        if (notBlank(profile.getEmail())) complete++;
+        if (notBlank(profile.getPhone())) complete++;
+        if (notBlank(profile.getCampus())) complete++;
+        return complete;
     }
 
     private boolean notBlank(String value) {
